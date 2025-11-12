@@ -1,0 +1,23 @@
+%% Diagrama de secuencia: flujo de login / autenticación
+
+sequenceDiagram
+    participant U as Usuario
+    participant S as Sistema (Laravel)
+    participant DB as BaseDatos
+
+    U->>S: Envía credenciales (correo + password)
+    S->>DB: Buscar usuario por correo
+    DB-->>S: Usuario encontrado / no encontrado
+    alt Usuario encontrado
+        S->>S: Verificar hash_password
+        alt Password válido
+            S->>U: Generar sesión / token (login exitoso)
+            S->>DB: Registrar ultimo_login (opcional)
+        else Password inválido
+            S-->>U: Error: credenciales inválidas
+        end
+    else Usuario no encontrado
+        S-->>U: Error: usuario no existe
+    end
+
+    %% Notas: autenticación basada en campo 'correo' y 'hash_password'.

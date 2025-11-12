@@ -1,0 +1,24 @@
+%% User Journey / Story Map — Movimiento de Bien
+
+flowchart TB
+  A[Usuario: Responsable] --> B[Inicia solicitud de movimiento]
+  B --> C[Completa formulario: bien, origen, destino, motivo]
+  C --> D[Sistema valida permisos y disponibilidad]
+  D --> E{Aprobado?}
+  E -- Si --> F[Movimiento en estado PENDIENTE]
+  F --> G[Encolar job: procesar movimiento]
+  G --> H[Worker procesa -> actualiza estado COMPLETADO]
+  H --> I[Notificar al Usuario y al responsable destino]
+  E -- No --> J[Mostrar error / solicitar correcciones]
+
+  %% Story map (líneas horizontales) simplificada
+  subgraph Activities
+    A1[Buscar Bien]
+    A2[Solicitar movimiento]
+    A3[Procesamiento]
+    A4[Confirmación]
+  end
+
+  A1 --> A2 --> A3 --> A4
+
+  %% Esta vista ayuda al PO a crear historias: validar permisos, UI de formulario, notificaciones, historial/auditoría.

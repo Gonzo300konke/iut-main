@@ -1,0 +1,45 @@
+%% Diagrama de componentes - Asesoría IUT (visión de alto nivel)
+
+flowchart TB
+  subgraph UI
+    Browser[Browser / Client]
+    Mobile[Mobile Client]
+  end
+
+  subgraph WebServer
+    Proxy[Nginx or Apache]
+    Vite[Vite - Assets]
+  end
+
+  subgraph App
+    Laravel[Laravel Application]
+    Controllers[Controllers]
+    Models[Models / Eloquent]
+    Jobs[Jobs / Queue]
+    Services[Services]
+  end
+
+  subgraph Infra
+  DB[MySQL database]
+    Storage[Storage - files]
+    Mail[SMTP / External Mail]
+    Cache[Cache / Session]
+    Queue[Queue Broker]
+  end
+
+  Browser -->|HTTP/HTTPS| Proxy
+  Mobile -->|HTTP/HTTPS| Proxy
+  Proxy --> Laravel
+  Vite --> Browser
+  Laravel --> Controllers
+  Controllers --> Models
+  Controllers --> Services
+  Services --> Models
+  Laravel --> Jobs
+  Jobs --> Queue
+  Laravel --> DB
+  Laravel --> Storage
+  Laravel --> Mail
+  Laravel --> Cache
+
+  %% Component notes: Auth custom with usuarios table; Resource controllers and validation; Eager loading and pagination

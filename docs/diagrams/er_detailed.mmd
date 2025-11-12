@@ -1,0 +1,90 @@
+%% Diagrama ER detallado — basado en las migrations del proyecto
+
+erDiagram
+    ORGANISMO {
+        bigInt id PK
+        string nombre
+    }
+    UNIDAD_ADMINISTRADORA {
+        bigInt id PK
+        string nombre
+        bigInt organismo_id FK
+    }
+    DEPENDENCIA {
+        bigInt id PK
+        string nombre
+        bigInt unidad_administradora_id FK
+    }
+    BIEN {
+        bigInt id PK
+        bigInt dependencia_id FK
+        bigInt responsable_id FK nullable
+        string codigo(50) unique
+        text descripcion
+        string ubicacion(255) nullable
+        enum estado {DAÑADO, ACTIVO, EN_REPARACION, EN_CAMINO, EXTRAVIADO}
+        timestamp fecha_cambio_estado nullable
+        timestamp fecha_registro
+        timestamps created_at, updated_at
+    }
+    MOVIMIENTO {
+        bigInt id PK
+        bigInt bien_id FK
+        string tipo(80)
+        timestamp fecha
+        text observaciones nullable
+        bigInt usuario_id FK nullable
+    }
+    HISTORIAL_MOVIMIENTO {
+        bigInt id PK
+        bigInt movimiento_id FK
+        timestamp fecha
+        text detalle
+    }
+    USUARIO {
+        bigInt id PK
+        bigInt rol_id FK
+        string cedula(20) unique
+        string nombre(150)
+        string correo(150) unique
+        string hash_password(255) nullable
+        boolean activo
+        timestamps
+    }
+    ROL {
+        bigInt id PK
+        string nombre
+    }
+    TIPO_RESPONSABLE {
+        bigInt id PK
+        string nombre(80) unique
+    }
+    RESPONSABLE {
+        bigInt id PK
+        bigInt tipo_id FK
+        string cedula(20) unique
+        string nombre(150)
+        string correo(150) nullable
+        string telefono(50) nullable
+    }
+    AUDITORIA {
+        bigInt id PK
+        string entidad
+        bigInt entidad_id
+        string accion
+        bigInt usuario_id FK
+        timestamp fecha
+    }
+
+    ORGANISMO ||--o{ UNIDAD_ADMINISTRADORA : tiene
+    UNIDAD_ADMINISTRADORA ||--o{ DEPENDENCIA : contiene
+    DEPENDENCIA ||--o{ BIEN : posee
+    BIEN ||--o{ MOVIMIENTO : tiene
+    MOVIMIENTO ||--o{ HISTORIAL_MOVIMIENTO : registra
+    USUARIO ||--o{ RESPONSABLE : puede_ser
+    RESPONSABLE ||--o{ BIEN : responsable_de
+    USUARIO ||--o{ MOVIMIENTO : crea
+    USUARIO ||--o{ AUDITORIA : realiza
+
+%% Este diagrama fue generado automáticamente a partir de las migrations disponibles
+%% (archivo: docs/diagrams/er_detailed.mmd). Puedes ajustar formatos y tipos según prefieras.

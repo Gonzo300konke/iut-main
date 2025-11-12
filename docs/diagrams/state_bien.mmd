@@ -1,0 +1,16 @@
+%% Diagrama de estados para la entidad Bien
+
+stateDiagram-v2
+    [*] --> ACTIVO
+    ACTIVO --> EN_REPARACION : reportar_falla
+    EN_REPARACION --> ACTIVO : reparar
+    ACTIVO --> EN_CAMINO : mover
+    EN_CAMINO --> ACTIVO : recibir
+    ACTIVO --> EXTRAVIADO : marcar_extraviado
+    ACTIVO --> DANADO : marcar_danado
+    DANADO --> EN_REPARACION : enviar_reparacion
+    EN_REPARACION --> DANADO : falla_recurrente
+    EXTRAVIADO --> [*]
+    DANADO --> [*]
+
+    %% Estados: ACTIVO, EN_REPARACION, EN_CAMINO, EXTRAVIADO, DANADO (DAÑADO)
