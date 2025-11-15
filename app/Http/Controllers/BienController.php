@@ -148,6 +148,8 @@ class BienController extends Controller
         // El responsable se obtiene dinámicamente a través de la dependencia; no lo almacenamos en la tabla bienes.
         $bien = Bien::create($validated);
 
+        // Los movimientos se registran mediante el observer de Bien (app/Observers/BienObserver.php)
+
         return redirect()
             ->route('bienes.index')
             ->with('success', 'Bien creado correctamente.');
@@ -241,39 +243,41 @@ class BienController extends Controller
 
             $observ = sprintf('Transferencia de dependencia: %s -> %s', $oldDep?->nombre ?? 'N/A', $newDep?->nombre ?? 'N/A');
 
-            $mov = \App\Models\Movimiento::create([
-                'bien_id' => $bien->id,
-                'tipo' => 'Transferencia',
-                'fecha' => now(),
-                'observaciones' => $observ,
-                'usuario_id' => auth()->id(),
-            ]);
-
-            // Crear entrada en historial
-            \App\Models\HistorialMovimiento::create([
-                'movimiento_id' => $mov->id,
-                'fecha' => now(),
-                'detalle' => $observ,
-            ]);
+            // El observer de Bien registrará el movimiento y el historial correspondiente.
         }
 
         // Si cambió el estado, registrar movimiento automático (ej. cambio de estado relevante)
-        if (array_key_exists('estado', $validated) && $validated['estado'] != $originalEstado) {
-            $observ = sprintf('Cambio de estado: %s -> %s', $originalEstado ?? 'N/A', $validated['estado']);
+        if (array_key_exists('estado', $validated)) {
+            // Normalizar valores para comparar (el modelo puede castear a Enum)
+            $originalEstadoValue = $originalEstado instanceof \App\Enums\EstadoBien ? $originalEstado->value : ($originalEstado ?? null);
 
-            $mov = \App\Models\Movimiento::create([
-                'bien_id' => $bien->id,
-                'tipo' => 'Estado',
-                'fecha' => now(),
-                'observaciones' => $observ,
-                'usuario_id' => auth()->id(),
-            ]);
+            $newEstadoRaw = $validated['estado'];
+            $newEstadoValue = $newEstadoRaw instanceof \App\Enums\EstadoBien ? $newEstadoRaw->value : $newEstadoRaw;
 
-            \App\Models\HistorialMovimiento::create([
-                'movimiento_id' => $mov->id,
-                'fecha' => now(),
-                'detalle' => $observ,
-            ]);
+            if ($newEstadoValue != $originalEstadoValue) {
+                // Preparar representaciones legibles
+                $origLabel = null;
+                if ($originalEstado instanceof \App\Enums\EstadoBien) {
+                    $origLabel = $originalEstado->label();
+                } elseif ($originalEstadoValue) {
+                    $try = \App\Enums\EstadoBien::tryFrom($originalEstadoValue);
+                    $origLabel = $try?->label() ?? (string) $originalEstadoValue;
+                } else {
+                    $origLabel = 'N/A';
+                }
+
+                $newLabel = null;
+                if ($newEstadoRaw instanceof \App\Enums\EstadoBien) {
+                    $newLabel = $newEstadoRaw->label();
+                } else {
+                    $try2 = \App\Enums\EstadoBien::tryFrom($newEstadoValue);
+                    $newLabel = $try2?->label() ?? (string) $newEstadoValue;
+                }
+
+                $observ = sprintf('Cambio de estado: %s -> %s', $origLabel, $newLabel);
+
+                // El observer de Bien registrará el movimiento y el historial correspondiente.
+            }
         }
 
         return redirect()
@@ -299,7 +303,7 @@ class BienController extends Controller
             Storage::disk('public')->delete($bien->fotografia);
         }
 
-        // Archivar en eliminados antes de borrar
+        // Archivar en eliminados antes de borrar; el observer registra la baja en deleting()
         \App\Services\EliminadosService::archiveModel($bien, auth()->id());
         $bien->delete();
 

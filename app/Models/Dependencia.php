@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\GeneratesMovimiento;
 
 /**
  * Eloquent model Dependencia.
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Dependencia extends Model
 {
-    use HasFactory;
+    use HasFactory, GeneratesMovimiento;
 
     /**
      * Nombre de la tabla asociada.

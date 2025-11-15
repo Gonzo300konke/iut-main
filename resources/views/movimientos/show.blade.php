@@ -18,7 +18,23 @@
             </div>
             <div>
                 <dt class="text-sm font-medium text-gray-600">Bien</dt>
-                <dd class="text-lg text-gray-800">{{ $movimiento->bien->codigo ?? '-' }} - {{ $movimiento->bien->descripcion ?? '-' }}</dd>
+                <dd class="text-lg text-gray-800">
+                    @if($movimiento->subject)
+                        <strong>{{ class_basename($movimiento->subject_type) }}</strong> -
+                        @php
+                            $s = $movimiento->subject;
+                            $label = null;
+                            if (isset($s->nombre_completo)) $label = $s->nombre_completo;
+                            elseif (isset($s->nombre)) $label = $s->nombre;
+                            elseif (isset($s->descripcion)) $label = $s->descripcion;
+                            elseif (isset($s->codigo)) $label = $s->codigo;
+                            else $label = 'ID '.$movimiento->subject_id;
+                        @endphp
+                        {{ $label }}
+                    @else
+                        {{ $movimiento->bien->codigo ?? '-' }} - {{ $movimiento->bien->descripcion ?? '-' }}
+                    @endif
+                </dd>
             </div>
             <div>
                 <dt class="text-sm font-medium text-gray-600">Usuario</dt>

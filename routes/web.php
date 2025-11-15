@@ -11,6 +11,8 @@ use App\Http\Controllers\ResponsableController;
 use App\Http\Controllers\UnidadAdministradoraController;
 use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Usuario;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,11 +25,14 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    if (auth()->check()) {
+    if (Auth::check()) {
         // Si ya está autenticado, redirigir según rol
-        return auth()->user()->isAdmin()
-            ? redirect()->route('usuarios.index')
-            : redirect()->route('bienes.index');
+        $user = Auth::user();
+        if ($user instanceof Usuario && $user->isAdmin()) {
+            return redirect()->route('usuarios.index');
+        }
+
+        return redirect()->route('bienes.index');
     }
 
     // Si no está autenticado, mostrar login

@@ -19,16 +19,40 @@ class EliminadosService
         $data = $model->toArray();
 
         // If we can resolve the user who performed the deletion, store a human-readable name inside the snapshot
+
         $archivedByName = null;
-        if (is_numeric($deletedBy)) {
-            try {
-                $user = \App\Models\Usuario::find((int) $deletedBy);
-                if ($user) {
-                    $archivedByName = $user->nombre_completo ?? $user->correo ?? null;
+        $deletedById = null;
+
+        try {
+            // If a Usuario instance is passed
+            if ($deletedBy instanceof \App\Models\Usuario) {
+                $deletedById = (int) $deletedBy->id;
+                $archivedByName = $deletedBy->nombre_completo ?? $deletedBy->correo ?? null;
+            } else {
+                // If numeric, treat as id
+                if (is_numeric($deletedBy)) {
+                    $u = \App\Models\Usuario::find((int) $deletedBy);
+                    if ($u) {
+                        $deletedById = (int) $u->id;
+                        $archivedByName = $u->nombre_completo ?? $u->correo ?? null;
+                    }
+                } elseif (is_string($deletedBy) && filter_var($deletedBy, FILTER_VALIDATE_EMAIL)) {
+                    // If it's an email, try to find the user by correo
+                    $u = \App\Models\Usuario::where('correo', $deletedBy)->first();
+                    if ($u) {
+                        $deletedById = (int) $u->id;
+                        $archivedByName = $u->nombre_completo ?? $u->correo ?? null;
+                    } else {
+                        // store the email as a human-readable archived name even if we can't resolve id
+                        $archivedByName = $deletedBy;
+                    }
+                } elseif (is_string($deletedBy) && ! empty($deletedBy)) {
+                    // If some other string was provided, keep it as a fallback name
+                    $archivedByName = $deletedBy;
                 }
-            } catch (\Throwable $e) {
-                // ignore
             }
+        } catch (\Throwable $e) {
+            report($e);
         }
 
         if ($archivedByName) {
@@ -39,7 +63,7 @@ class EliminadosService
             'model_type' => get_class($model),
             'model_id' => $model->getKey(),
             'data' => $data,
-            'deleted_by' => is_numeric($deletedBy) ? (int) $deletedBy : null,
+            'deleted_by' => $deletedById,
             'deleted_at' => now(),
         ]);
 

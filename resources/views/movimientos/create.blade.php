@@ -20,6 +20,21 @@
             </div>
 
             <div>
+                <label class="block text-sm font-medium text-gray-700">Sujeto (opcional)</label>
+                <select name="subject_type" class="mt-1 block w-full rounded-md border px-3 py-2">
+                    <option value="">-- Ninguno --</option>
+                    <option value="{{ \App\Models\Organismo::class }}">Organismo</option>
+                    <option value="{{ \App\Models\UnidadAdministradora::class }}">Unidad Administradora</option>
+                    <option value="{{ \App\Models\Dependencia::class }}">Dependencia</option>
+                    <option value="{{ \App\Models\Bien::class }}">Bien</option>
+                    <option value="{{ \App\Models\Usuario::class }}">Usuario</option>
+                </select>
+
+                <label class="block text-sm font-medium text-gray-700 mt-2">Sujeto ID (si aplica)</label>
+                <input type="number" name="subject_id" class="mt-1 block w-full rounded-md border px-3 py-2" placeholder="ID del sujeto (ej. id de Organismo, Unidad, Dependencia, Bien o Usuario)" />
+            </div>
+
+            <div>
                 <label class="block text-sm font-medium text-gray-700">Tipo</label>
                 <input type="text" name="tipo" class="mt-1 block w-full rounded-md border px-3 py-2" required />
             </div>

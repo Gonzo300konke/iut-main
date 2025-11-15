@@ -10,7 +10,8 @@ class Movimiento extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['bien_id', 'tipo', 'fecha', 'observaciones', 'usuario_id'];
+    // Allow storing a polymorphic subject (organismo, unidad, dependencia, bien, usuario, ...)
+    protected $fillable = ['bien_id', 'subject_type', 'subject_id', 'tipo', 'fecha', 'observaciones', 'usuario_id'];
 
     protected $casts = ['fecha' => 'datetime'];
 
@@ -27,5 +28,10 @@ class Movimiento extends Model
     public function historial()
     {
         return $this->hasMany(HistorialMovimiento::class, 'movimiento_id');
+    }
+
+    public function subject()
+    {
+        return $this->morphTo(null, 'subject_type', 'subject_id');
     }
 }

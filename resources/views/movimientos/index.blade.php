@@ -33,15 +33,32 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @foreach($movimientos as $mov)
                                     <tr>
-                                        <td class="px-6 py-3 text-sm text-gray-700">{{ $mov->fecha?->format('Y-m-d') ?? $mov->fecha }}</td>
-                                        <td class="px-6 py-3 text-sm text-gray-700">{{ $mov->tipo }}</td>
-                                        <td class="px-6 py-3 text-sm text-gray-700">{{ $mov->bien->descripcion ?? '-' }}</td>
-                                        <td class="px-6 py-3 text-sm text-gray-700">{{ $mov->usuario->nombre_completo ?? ($mov->usuario->nombre ?? '-') }}</td>
-                                        <td class="px-6 py-3 text-sm text-gray-700">{{ \Illuminate\Support\Str::limit($mov->observaciones, 80) }}</td>
-                                        <td class="px-6 py-3 text-right">
-                                            <a href="{{ route('movimientos.show', $mov->id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100">Ver</a>
-                                        </td>
-                                    </tr>
+                                            <td class="px-6 py-3 text-sm text-gray-700">{{ $mov->fecha?->format('Y-m-d') ?? $mov->fecha }}</td>
+                                            <td class="px-6 py-3 text-sm text-gray-700">{{ $mov->tipo }}</td>
+                                            <td class="px-6 py-3 text-sm text-gray-700">
+                                                @if($mov->subject)
+                                                    <strong>{{ class_basename($mov->subject_type) }}</strong>
+                                                    -
+                                                    @php
+                                                        $s = $mov->subject;
+                                                        $label = null;
+                                                        if (isset($s->nombre_completo)) $label = $s->nombre_completo;
+                                                        elseif (isset($s->nombre)) $label = $s->nombre;
+                                                        elseif (isset($s->descripcion)) $label = $s->descripcion;
+                                                        elseif (isset($s->codigo)) $label = $s->codigo;
+                                                        else $label = 'ID '.$mov->subject_id;
+                                                    @endphp
+                                                    {{ $label }}
+                                                @else
+                                                    {{ $mov->bien->descripcion ?? '-' }}
+                                                @endif
+                                            </td>
+                                            <td class="px-6 py-3 text-sm text-gray-700">{{ $mov->usuario->nombre_completo ?? ($mov->usuario->nombre ?? '-') }}</td>
+                                            <td class="px-6 py-3 text-sm text-gray-700">{{ \Illuminate\Support\Str::limit($mov->observaciones, 80) }}</td>
+                                            <td class="px-6 py-3 text-right">
+                                                <a href="{{ route('movimientos.show', $mov->id) }}" class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded hover:bg-blue-100">Ver</a>
+                                            </td>
+                                        </tr>
                                 @endforeach
                             </tbody>
                         </table>
