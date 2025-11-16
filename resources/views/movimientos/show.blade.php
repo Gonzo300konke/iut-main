@@ -10,41 +10,66 @@
         <dl class="grid grid-cols-1 gap-4">
             <div>
                 <dt class="text-sm font-medium text-gray-600">Fecha</dt>
-                <dd class="text-lg text-gray-800">{{ $movimiento->fecha->format('Y-m-d') ?? $movimiento->fecha }}</dd>
+                <dd class="text-lg text-gray-800">
+                    {{ optional($movimiento->fecha)->format('Y-m-d') ?? '-' }}
+                </dd>
             </div>
+
             <div>
                 <dt class="text-sm font-medium text-gray-600">Tipo</dt>
                 <dd class="text-lg text-gray-800">{{ $movimiento->tipo }}</dd>
             </div>
+
             <div>
-                <dt class="text-sm font-medium text-gray-600">Bien</dt>
+                <dt class="text-sm font-medium text-gray-600">Entidad relacionada</dt>
                 <dd class="text-lg text-gray-800">
-                    @if($movimiento->subject)
-                        <strong>{{ class_basename($movimiento->subject_type) }}</strong> -
-                        @php
-                            $s = $movimiento->subject;
-                            $label = null;
-                            if (isset($s->nombre_completo)) $label = $s->nombre_completo;
-                            elseif (isset($s->nombre)) $label = $s->nombre;
-                            elseif (isset($s->descripcion)) $label = $s->descripcion;
-                            elseif (isset($s->codigo)) $label = $s->codigo;
-                            else $label = 'ID '.$movimiento->subject_id;
-                        @endphp
-                        {{ $label }}
+                    @php
+                        $s = $movimiento->subject;
+                        $label = $s?->nombre_completo
+                            ?? $s?->nombre
+                            ?? $s?->descripcion
+                            ?? $s?->codigo
+                            ?? ($movimiento->bien?->codigo
+                                ? $movimiento->bien->codigo.' - '.$movimiento->bien->descripcion
+                                : 'ID '.$movimiento->subject_id);
+                    @endphp
+
+                    @if($s)
+                        <strong>{{ class_basename($movimiento->subject_type) }}</strong> - {{ $label }}
+                    @elseif($movimiento->bien)
+                        <strong>Bien</strong> - {{ $label }}
                     @else
-                        {{ $movimiento->bien->codigo ?? '-' }} - {{ $movimiento->bien->descripcion ?? '-' }}
+                        <span class="text-gray-500">Sin entidad asociada</span>
                     @endif
                 </dd>
             </div>
+
             <div>
                 <dt class="text-sm font-medium text-gray-600">Usuario</dt>
-                <dd class="text-lg text-gray-800">{{ $movimiento->usuario->nombre_completo ?? ($movimiento->usuario->nombre ?? '-') }}</dd>
+                <dd class="text-lg text-gray-800">
+                    {{ $movimiento->usuario->nombre_completo ?? $movimiento->usuario->nombre ?? '-' }}
+                </dd>
             </div>
+
             <div>
                 <dt class="text-sm font-medium text-gray-600">Observaciones</dt>
                 <dd class="text-lg text-gray-800">{{ $movimiento->observaciones }}</dd>
             </div>
         </dl>
+
+        @if($movimiento->tipo === 'Actualización' && $movimiento->historialMovimientos && $movimiento->historialMovimientos->isNotEmpty())
+            <div class="mt-6">
+                <h2 class="text-lg font-semibold mb-2">Historial de cambios</h2>
+                <ul class="list-disc pl-6 text-gray-700">
+                    @foreach($movimiento->historialMovimientos as $h)
+                        <li>
+                            <span class="font-medium">{{ optional($h->fecha)->format('Y-m-d H:i') ?? '-' }}</span>:
+                            {{ $h->detalle }}
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
         <div class="mt-4">
             <a href="{{ route('movimientos.index') }}" class="bg-gray-200 px-4 py-2 rounded">Volver</a>
@@ -52,3 +77,5 @@
     </div>
 </div>
 @endsection
+
+

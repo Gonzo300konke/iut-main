@@ -25,7 +25,7 @@ class Movimiento extends Model
         return $this->belongsTo(Usuario::class);
     }
 
-    public function historial()
+        public function historialMovimientos()
     {
         return $this->hasMany(HistorialMovimiento::class, 'movimiento_id');
     }
