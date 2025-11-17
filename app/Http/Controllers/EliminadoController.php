@@ -23,20 +23,19 @@ class EliminadoController extends Controller
         return view('eliminados.show', compact('eliminado'));
     }
 
-    public function restore(Eliminado $eliminado)
-    {
-        if (! auth()->user()->isAdmin()) {
-            abort(403, 'Solo administradores pueden restaurar registros eliminados.');
+            public function restore(Eliminado $eliminado)
+        {
+            if (! auth()->user()->isAdmin()) {
+                abort(403, 'Solo administradores pueden restaurar registros eliminados.');
+            }
+
+            $ok = \App\Services\EliminadosService::restoreEliminado($eliminado);
+
+            return $ok
+                ? redirect()->route('eliminados.index')->with('success', 'Registro restaurado correctamente.')
+                : redirect()->back()->with('error', 'No se pudo restaurar el registro. Revisa los logs.');
         }
 
-        $ok = EliminadosService::restoreEliminado($eliminado);
-
-        if (! $ok) {
-            return redirect()->back()->with('error', 'No se pudo restaurar el registro. Revisa los logs.');
-        }
-
-        return redirect()->route('eliminados.index')->with('success', 'Registro restaurado correctamente.');
-    }
 
     protected function authorizeIndex()
     {

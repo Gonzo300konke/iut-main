@@ -15,16 +15,32 @@ class UnidadAdministradoraController extends Controller
      * Listar todas las Unidades Administradoras.
      */
     public function index(Request $request)
-    {
-        $search = $request->input('search');
+{
+    $filters = $request->only([
+        'search',
+        'codigo',
+        'organismo_id',
+    ]);
 
-        $unidades = UnidadAdministradora::with(['organismo', 'dependencias'])
-            ->search($search)
-            ->paginate(10)
-            ->appends(['search' => $search]);
+    $unidades = UnidadAdministradora::with(['organismo', 'dependencias'])
+        ->when($filters['search'] ?? null, fn($q, $search) =>
+            $q->where('codigo', 'like', "%{$search}%")
+              ->orWhere('nombre', 'like', "%{$search}%")
+        )
+        ->when($filters['codigo'] ?? null, fn($q, $codigo) =>
+            $q->where('codigo', 'like', "%{$codigo}%")
+        )
+        ->when($filters['organismo_id'] ?? null, fn($q, $organismoId) =>
+            $q->where('organismo_id', $organismoId)
+        )
+        ->paginate(10)
+        ->appends($filters);
 
-        return view('unidades.index', compact('unidades', 'search'));
-    }
+    $organismos = \App\Models\Organismo::orderBy('nombre')->get();
+
+    return view('unidades.index', compact('unidades', 'filters', 'organismos'));
+}
+
 
     public function create()
     {

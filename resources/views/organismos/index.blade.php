@@ -15,6 +15,19 @@
         {{ session('success') }}
     </div>
 @endif
+            {{-- Buscador --}}
+        <div class="mb-4">
+            <form action="{{ route('organismos.index') }}" method="GET" class="flex gap-2">
+                <input type="text" name="search" value="{{ $search ?? '' }}"
+                    placeholder="Buscar por código o nombre..."
+                    class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                    Buscar
+                </button>
+            </form>
+        </div>
+
 
         {{-- Tabla de organismos --}}
         <div class="bg-white shadow-md rounded-lg overflow-hidden">

@@ -10,6 +10,19 @@
     </a>
 </div>
 
+{{-- Buscador --}}
+<div class="mb-4">
+    <form action="{{ route('usuarios.index') }}" method="GET" class="flex gap-2">
+        <input type="text" name="search" value="{{ $search ?? '' }}"
+               placeholder="Buscar por cédula, nombre o correo..."
+               class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button type="submit"
+                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+            Buscar
+        </button>
+    </form>
+</div>
+
 <div class="bg-white shadow rounded-lg overflow-hidden">
     <table class="w-full">
         <thead class="bg-gray-100 border-b">
@@ -69,3 +82,4 @@
     </div>
 @endif
 @endsection
+

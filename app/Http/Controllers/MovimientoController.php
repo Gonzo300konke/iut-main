@@ -12,11 +12,44 @@ class MovimientoController extends Controller
 {
     public function index()
     {
-        $movimientos = Movimiento::with(['bien', 'usuario', 'subject'])->orderByDesc('fecha')->paginate(10);
+        $filters = request()->only([
+            'search',
+            'model_type',
+            'usuario_id',
+            'fecha_desde',
+            'fecha_hasta',
+            'tipo',
+        ]);
+
+        $movimientos = Movimiento::with(['bien', 'usuario', 'subject'])
+            ->when($filters['search'] ?? null, fn($q, $search) =>
+                $q->where(function ($q) use ($search) {
+                    $q->where('observaciones', 'like', "%{$search}%")
+                      ->orWhereHas('usuario', fn($q) => $q->where('nombre_completo', 'like', "%{$search}%"));
+                })
+            )
+            ->when($filters['model_type'] ?? null, fn($q, $type) => $q->where('subject_type', $type))
+            ->when($filters['usuario_id'] ?? null, fn($q, $id) => $q->where('usuario_id', $id))
+            ->when($filters['fecha_desde'] ?? null, fn($q, $desde) => $q->whereDate('fecha', '>=', $desde))
+            ->when($filters['fecha_hasta'] ?? null, fn($q, $hasta) => $q->whereDate('fecha', '<=', $hasta))
+            ->when($filters['tipo'] ?? null, fn($q, $tipo) => $q->where('tipo', 'like', "%{$tipo}%"))
+            ->orderByDesc('fecha')
+            ->paginate(10);
 
         $eliminados = null;
         if (Auth::check() && Auth::user() instanceof Usuario && Auth::user()->isAdmin()) {
-            $eliminados = Eliminado::orderByDesc('deleted_at')->paginate(10, ['*'], 'eliminados_page');
+            $eliminados = Eliminado::when($filters['search'] ?? null, fn($q, $search) =>
+                    $q->where(function ($q) use ($search) {
+                        $q->where('data->observaciones', 'like', "%{$search}%")
+                          ->orWhere('data->_archived_by', 'like', "%{$search}%");
+                    })
+                )
+                ->when($filters['model_type'] ?? null, fn($q, $type) => $q->where('model_type', $type))
+                ->when($filters['usuario_id'] ?? null, fn($q, $id) => $q->where('deleted_by', $id))
+                ->when($filters['fecha_desde'] ?? null, fn($q, $desde) => $q->whereDate('deleted_at', '>=', $desde))
+                ->when($filters['fecha_hasta'] ?? null, fn($q, $hasta) => $q->whereDate('deleted_at', '<=', $hasta))
+                ->orderByDesc('deleted_at')
+                ->paginate(10, ['*'], 'eliminados_page');
 
             $userIds = $eliminados->pluck('deleted_by')->unique()->filter()->values()->all();
             $users = !empty($userIds)
@@ -32,12 +65,30 @@ class MovimientoController extends Controller
             });
         }
 
+        $modelos = [
+            \App\Models\Bien::class,
+            \App\Models\UnidadAdministradora::class,
+            \App\Models\Organismo::class,
+            \App\Models\Dependencia::class,
+            \App\Models\Usuario::class,
+        ];
+
+        $usuarios = Usuario::all();
+
         if (request()->wantsJson()) {
-            return response()->json(['movimientos' => $movimientos, 'eliminados' => $eliminados]);
+            return response()->json([
+                'movimientos' => $movimientos,
+                'eliminados' => $eliminados,
+                'modelos' => $modelos,
+                'usuarios' => $usuarios,
+                'filters' => $filters,
+            ]);
         }
 
-        return view('movimientos.index', compact('movimientos', 'eliminados'));
+        return view('movimientos.index', compact('movimientos', 'eliminados', 'modelos', 'usuarios', 'filters'));
     }
+
+    // Los demás métodos (create, store, edit, show, update, destroy, restoreEliminado) permanecen igual
 
     public function create()
     {
@@ -175,4 +226,3 @@ class MovimientoController extends Controller
         );
     }
 }
-

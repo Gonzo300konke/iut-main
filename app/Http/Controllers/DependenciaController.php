@@ -14,17 +14,33 @@ class DependenciaController extends Controller
     /**
      * Listar todas las dependencias.
      */
-    public function index(Request $request)
+        public function index(Request $request)
     {
-        $search = $request->input('search');
+        $filters = $request->only([
+            'search',
+            'codigo',
+            'unidad_id',
+        ]);
 
         $dependencias = Dependencia::with(['unidadAdministradora', 'bienes', 'responsable'])
-            ->search($search)
+            ->when($filters['search'] ?? null, fn($q, $search) =>
+                $q->where('codigo', 'like', "%{$search}%")
+                ->orWhere('nombre', 'like', "%{$search}%")
+            )
+            ->when($filters['codigo'] ?? null, fn($q, $codigo) =>
+                $q->where('codigo', 'like', "%{$codigo}%")
+            )
+            ->when($filters['unidad_id'] ?? null, fn($q, $unidadId) =>
+                $q->where('unidad_administradora_id', $unidadId)
+            )
             ->paginate(10)
-            ->appends(['search' => $search]);
+            ->appends($filters);
 
-        return view('dependencias.index', compact('dependencias', 'search'));
+        $unidades = UnidadAdministradora::orderBy('nombre')->get();
+
+        return view('dependencias.index', compact('dependencias', 'filters', 'unidades'));
     }
+
 
     /**
      * Guardar una nueva dependencia.
