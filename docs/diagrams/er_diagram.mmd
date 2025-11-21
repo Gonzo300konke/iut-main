@@ -1,0 +1,77 @@
+%% Diagrama ER (Entidades principales y relaciones)
+%% Basado en la jerarquía: Organismo -> UnidadAdministradora -> Dependencia -> Bien
+
+erDiagram
+    ORGANISMO {
+        int id PK "Clave"
+        string nombre
+    }
+    UNIDAD_ADMINISTRADORA {
+        int id PK
+        string nombre
+        int organismo_id FK
+    }
+    DEPENDENCIA {
+        int id PK
+        string nombre
+        int unidad_administradora_id FK
+    }
+    BIEN {
+        int id PK
+        string codigo
+        string descripcion
+        int dependencia_id FK
+        int responsable_id FK
+        int tipo_bien_id FK
+    }
+    USUARIO {
+        int id PK
+        string correo
+        string nombre
+        string apellido
+        string hash_password
+    }
+    RESPONSABLE {
+        int id PK
+        int usuario_id FK
+        int tipo_responsable_id FK
+    }
+    TIPO_RESPONSABLE {
+        int id PK
+        string nombre
+    }
+    MOVIMIENTO {
+        int id PK
+        int bien_id FK
+        int origen_dependencia_id FK
+        int destino_dependencia_id FK
+        datetime fecha
+        string estado
+    }
+    HISTORIAL_MOVIMIENTO {
+        int id PK
+        int movimiento_id FK
+        string detalle
+        datetime fecha
+    }
+    AUDITORIA {
+        int id PK
+        string entidad
+        int entidad_id
+        string accion
+        int usuario_id FK
+        datetime fecha
+    }
+
+    ORGANISMO ||--o{ UNIDAD_ADMINISTRADORA : "tiene"
+    UNIDAD_ADMINISTRADORA ||--o{ DEPENDENCIA : "contiene"
+    DEPENDENCIA ||--o{ BIEN : "posee"
+    USUARIO ||--o{ RESPONSABLE : "es"
+    RESPONSABLE ||--o{ BIEN : "responsable_de"
+    %% Relación: Un TipoResponsable puede aplicarse a muchos Responsables
+    TIPO_RESPONSABLE ||--o{ RESPONSABLE : "tipo_de"
+    BIEN ||--o{ MOVIMIENTO : "puede_tener"
+    MOVIMIENTO ||--o{ HISTORIAL_MOVIMIENTO : "registra"
+    BIEN ||--o{ AUDITORIA : "audita"
+
+%% Nota: Las tablas reales usan nombres en español y campos adicionales (ver models/ y migrations/ en el repo).

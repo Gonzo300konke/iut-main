@@ -1,0 +1,70 @@
+openapi: 3.0.3
+info:
+  title: Asesoria IUT API (stub)
+  version: 0.1.0
+servers:
+  - url: /api
+paths:
+  /bienes:
+    get:
+      summary: Listar bienes
+      responses:
+        '200':
+          description: Lista de bienes
+    post:
+      summary: Crear bien
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bien'
+      responses:
+        '201':
+          description: Bien creado
+  /bienes/{id}:
+    get:
+      summary: Obtener bien
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bien
+    put:
+      summary: Actualizar bien
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bien'
+      responses:
+        '200':
+          description: Bien actualizado
+    delete:
+      summary: Eliminar bien
+      responses:
+        '204':
+          description: Eliminado
+components:
+  schemas:
+    Bien:
+      type: object
+      properties:
+        id:
+          type: integer
+        codigo:
+          type: string
+        descripcion:
+          type: string
+        dependencia_id:
+          type: integer
+        responsable_id:
+          type: integer
+        estado:
+          type: string
+          enum: [DAÑADO, ACTIVO, EN_REPARACION, EN_CAMINO, EXTRAVIADO]
+      required: [codigo, descripcion, dependencia_id]

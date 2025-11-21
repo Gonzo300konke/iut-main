@@ -1,0 +1,35 @@
+%% Diagrama de capas - Asesoría IUT (presentacion, aplicacion, dominio, infraestructura)
+
+flowchart TB
+  subgraph Presentation [Presentation Layer]
+    UI[UI - Blade Views / JS]
+    Controllers[HTTP Controllers]
+  end
+
+  subgraph Application [Application Layer]
+    Services[Application Services]
+    Jobs[Background Jobs]
+  end
+
+  subgraph Domain [Domain Layer]
+    Models[Entities / Models]
+    Policies[Policies / Permissions]
+  end
+
+  subgraph Infrastructure [Infrastructure Layer]
+    Persistence[Database - Migrations / Eloquent]
+    Storage[File Storage]
+    Mail[Mail / External Services]
+    Queue[Queue Workers]
+  end
+
+  UI --> Controllers
+  Controllers --> Services
+  Services --> Models
+  Services --> Persistence
+  Models --> Persistence
+  Jobs --> Queue
+  Services --> Mail
+  Controllers --> Policies
+
+  %% This layered view shows responsibilities and typical dependencies: Presentation -> Application -> Domain -> Infrastructure

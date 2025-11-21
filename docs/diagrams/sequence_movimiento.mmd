@@ -1,0 +1,25 @@
+%% Diagrama de secuencia: flujo de movimiento de un bien
+
+sequenceDiagram
+    participant U as Usuario (responsable)
+    participant S as Sistema (Laravel)
+    participant DB as BaseDatos
+    participant Q as Queue/Worker
+
+    U->>S: Solicita movimiento del Bien (crear Movimiento)
+    S->>DB: Validar permisos y datos (Usuario, Bien, Dependencias)
+    DB-->>S: Resultado validación
+    alt Usuario con permiso
+        S->>DB: Crear registro Movimiento (estado: pendiente)
+        S->>Q: Encolar job: procesar movimiento / notificar
+        Q->>DB: Actualizar estado Movimiento (en_proceso -> completado)
+        Q->>DB: Crear HistorialMovimiento
+        Q->>S: Notificar resultado (correo / UI)
+        S-->>U: Mostrar confirmación y estado
+    else Sin permisos
+        S-->>U: Mostrar error (permiso denegado)
+    end
+
+%% Notas:
+%% - Validaciones: isAdmin(), canDeleteData(), check responsable y disponibilidad del bien.
+%% - HistorialMovimiento almacena trazabilidad para auditoría.

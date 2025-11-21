@@ -1,0 +1,31 @@
+%% Diagrama de flujo: Alta de Bien y asignación de Responsable (versión simplificada para compatibilidad del validador)
+
+flowchart TD
+  A[Iniciar alta de Bien]
+  B[Usuario autenticado? si/no]
+  C[Permisos para crear bienes? si/no]
+  Z[Redirigir a login]
+  E[Mostrar error: Sin permiso]
+  D[Formulario: datos del Bien]
+  F[Responsable existente? si/no]
+  G[Asignar Responsable existente al Bien]
+  H[Crear Responsable - Usuario o Responsable vinculado]
+  I[Guardar Bien en DB]
+  J[Registrar auditoría]
+  K[Confirmacion al usuario / Redirigir a lista]
+
+  A --> B
+  B --> C
+  B --> Z
+  C --> E
+  C --> D
+  D --> F
+  F --> G
+  F --> H
+  H --> G
+  G --> I
+  I --> J
+  J --> K
+
+  classDef step fill:#f8f9fa,stroke:#333,stroke-width:1px
+  class A,B,C,D,E,F,G,H,I,J,K step

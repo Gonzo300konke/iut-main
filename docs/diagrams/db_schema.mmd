@@ -1,0 +1,128 @@
+%% Diagrama ER del esquema de base de datos (generado desde los modelos)
+%% Archivo: docs/diagrams/db_schema.mmd
+
+erDiagram
+    %% Usuarios y Roles
+    USUARIOS {
+        int id PK
+        int rol_id FK
+        string cedula
+        string nombre
+        string apellido
+        string correo
+        string hash_password
+        boolean activo
+        boolean is_admin
+        datetime created_at
+        datetime updated_at
+    }
+
+    ROLES {
+        int id PK
+        string nombre
+        json permisos
+    }
+
+    %% Organización jerárquica
+    ORGANISMOS {
+        int id PK
+        string codigo
+        string nombre
+    }
+
+    UNIDADES_ADMINISTRADORAS {
+        int id PK
+        int organismo_id FK
+        string codigo
+        string nombre
+    }
+
+    DEPENDENCIAS {
+        int id PK
+        int unidad_administradora_id FK
+        string codigo
+        string nombre
+        int responsable_id FK
+    }
+
+    %% Responsables (entidad propia) y tipos
+    RESPONSABLES {
+        int id PK
+        int tipo_id FK
+        string cedula
+        string nombre
+        string correo
+        string telefono
+    }
+
+    TIPOS_RESPONSABLES {
+        int id PK
+        string nombre
+    }
+
+    %% Bienes
+    BIENES {
+        int id PK
+        int dependencia_id FK
+        string codigo
+        string descripcion
+        string ubicacion
+        string estado
+        datetime fecha_registro
+    }
+
+    %% Movimientos y su historial
+    MOVIMIENTOS {
+        int id PK
+        int bien_id FK
+        int usuario_id FK
+        string tipo
+        datetime fecha
+        string observaciones
+    }
+
+    HISTORIAL_MOVIMIENTOS {
+        int id PK
+        int movimiento_id FK
+        datetime fecha
+        string detalle
+    }
+
+    %% Reportes y auditoría
+    REPORTES {
+        int id PK
+        int usuario_id FK
+        string tipo
+        datetime fecha_generado
+        string archivo_pdf_path
+    }
+
+    AUDITORIA {
+        int id PK
+        int usuario_id FK
+        string tabla
+        int registro_id
+        string operacion
+        json valores_anteriores
+        json valores_nuevos
+        string descripcion
+        string ip_address
+        string user_agent
+        datetime created_at
+    }
+
+    %% Relaciones
+    USUARIOS ||--o{ ROLES : pertenece_a
+    ORGANISMOS ||--o{ UNIDADES_ADMINISTRADORAS : tiene
+    UNIDADES_ADMINISTRADORAS ||--o{ DEPENDENCIAS : contiene
+    DEPENDENCIAS ||--o{ BIENES : posee
+    RESPONSABLES ||--o{ DEPENDENCIAS : asignado_a
+    TIPOS_RESPONSABLES ||--o{ RESPONSABLES : tipo_de
+    BIENES ||--o{ MOVIMIENTOS : tiene
+    MOVIMIENTOS ||--o{ HISTORIAL_MOVIMIENTOS : registra
+    USUARIOS ||--o{ MOVIMIENTOS : realiza
+    USUARIOS ||--o{ REPORTES : genera
+    USUARIOS ||--o{ AUDITORIA : realiza
+
+%% Nota: Este diagrama refleja la estructura derivada de los modelos en `app/Models`.
+%% Algunas columnas (ej.: índices, constraints adicionales) pueden existir en migrations.

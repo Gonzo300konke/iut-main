@@ -1,0 +1,76 @@
+%% Diagrama de clases - Asesoría IUT (modelo simplificado)
+
+classDiagram
+    class Organismo {
+        +int id
+        +string nombre
+    }
+    class UnidadAdministradora {
+        +int id
+        +string nombre
+        +int organismo_id
+    }
+    class Dependencia {
+        +int id
+        +string nombre
+        +int unidad_administradora_id
+    }
+    class Bien {
+        +int id
+        +string codigo
+        +string descripcion
+        +int dependencia_id
+        +int responsable_id
+    }
+    class Usuario {
+        +int id
+        +string correo
+        +string nombre
+        +string apellido
+        +string hash_password
+    }
+    class Responsable {
+        +int id
+        +int usuario_id
+        +int tipo_responsable_id
+    }
+    class TipoResponsable {
+        +int id
+        +string nombre
+    }
+    class Movimiento {
+        +int id
+        +int bien_id
+        +int origen_dependencia_id
+        +int destino_dependencia_id
+        +datetime fecha
+        +string estado
+    }
+    class HistorialMovimiento {
+        +int id
+        +int movimiento_id
+        +string detalle
+        +datetime fecha
+    }
+    class Auditoria {
+        +int id
+        +string entidad
+        +int entidad_id
+        +string accion
+        +int usuario_id
+        +datetime fecha
+    }
+
+    %% Relaciones (asociaciones y agregaciones)
+    Organismo "1" -- "*" UnidadAdministradora : tiene
+    UnidadAdministradora "1" -- "*" Dependencia : contiene
+    Dependencia "1" -- "*" Bien : posee
+    Usuario "1" -- "*" Responsable : es
+    Responsable "1" -- "*" Bien : responsable_de
+    %% Relación agregada: TipoResponsable -> Responsable
+    TipoResponsable "1" -- "*" Responsable : tipo_de
+    Bien "1" -- "*" Movimiento : registros
+    Movimiento "1" -- "*" HistorialMovimiento : registra
+    Usuario "1" -- "*" Auditoria : realiza
+
+%% Nota: este diagrama es una representación simplificada para documentación y comunicación.

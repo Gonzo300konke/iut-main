@@ -1,0 +1,41 @@
+%% Diagrama de despliegue - Asesoría IUT
+%% Recursos y entornos (dev, staging, prod) - alto nivel
+
+flowchart LR
+  subgraph OnPrem [Servidor / Hosting]
+    WebServer[Nginx / Apache]
+    PHPFPM[PHP-FPM]
+    App[Laravel App]
+    Worker[Queue Workers]
+  Storage[File Storage]
+  DB[MySQL_database]
+  end
+
+  subgraph CI_CD [CI/CD]
+    Repo[GitHub]
+    Actions[GitHub Actions / CI]
+    Registry[Container Registry]
+  end
+
+  subgraph Users
+    Browser[Browser]
+  end
+
+  Browser -->|HTTPS| WebServer
+  WebServer --> PHPFPM
+  PHPFPM --> App
+  App --> DB
+  App --> Storage
+  App --> Worker
+  Worker --> DB
+
+  Repo --> Actions
+  Actions --> Registry
+  Actions --> App
+
+  %% Notes: En producción preferir RDBMS (MySQL/Postgres) y backups. Configurar DB_CONNECTION=mysql en .env
+  %% Workers: usar supervisord/systemd o containers en Kubernetes para mantener jobs.
+
+  %% Notas:
+  %% - En desarrollo se usa Vite para assets; en producción compilar assets con Vite.
+  %% - El proyecto puede usar MySQL (configurar DB_CONNECTION=mysql). En despliegues multi-nodo usar RDBMS compartido.
