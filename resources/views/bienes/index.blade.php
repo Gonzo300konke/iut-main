@@ -3,15 +3,29 @@
 @section('title', 'Bienes')
 
 @section('content')
+{{-- resources/views/bienes/index.blade.php --}}
+
 <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
         📦 Bienes
     </h1>
-    <a href="{{ route('bienes.create') }}"
-       class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
-        + Nuevo
-    </a>
+    <div class="flex gap-4">
+        {{-- Botón para ir a la galería completa --}}
+        <a href="{{ route('bienes.galeria') }}"
+           class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition">
+            🖼️ Ver Galería Completa
+        </a>
+
+        {{-- Botón existente para crear nuevo bien --}}
+        <a href="{{ route('bienes.create') }}"
+           class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
+            + Nuevo
+        </a>
+    </div>
 </div>
+
+{{-- ... resto del contenido de index.blade.php ... --}}
+
 
 {{-- Mensajes de éxito --}}
 @if(session('success'))

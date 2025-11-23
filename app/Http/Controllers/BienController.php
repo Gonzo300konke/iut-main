@@ -142,6 +142,7 @@ public function index(Request $request)
     /**
      * Guardar un nuevo bien.
      */
+
     public function store(Request $request)
 {
     $validated = $request->validate([
@@ -367,4 +368,25 @@ private function procesarFotografia(Request $request, ?Bien $bien = null): ?stri
             ->route('bienes.index')
             ->with('success', 'Bien eliminado correctamente.');
     }
+        public function galeriaCompleta()
+    {
+        // Recuperamos todos los bienes que tienen una fotografía adjunta
+        $bienesConFoto = Bien::whereNotNull('fotografia')
+                             ->where('fotografia', '!=', '')
+                             ->select('id', 'codigo', 'descripcion', 'fotografia') // Seleccionamos solo los campos necesarios
+                             ->get();
+
+        // Creamos una colección simple de objetos para la vista, incluyendo la URL completa.
+        $imagenes = $bienesConFoto->map(function ($bien) {
+            return (object) [
+                'id'          => $bien->id,
+                'codigo'      => $bien->codigo,
+                'descripcion' => $bien->descripcion,
+                'url'         => Storage::url($bien->fotografia), // Asegúrate de que Storage::url funciona con tu configuración
+            ];
+        });
+
+        return view('bienes.galeria-completa', compact('imagenes'));
+    }
+
 }

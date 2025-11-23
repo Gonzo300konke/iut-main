@@ -58,8 +58,14 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'redirigir.rol'])->group(function () {
-    Route::resource('bienes', BienController::class)->parameters(['bienes' => 'bien']);
+    Route::middleware(['auth', 'redirigir.rol'])->group(function () {
+    Route::get('/bienes/galeria-completa', [BienController::class, 'galeriaCompleta'])
+        ->name('bienes.galeria');
+
+    // Resource con parámetros personalizados
+    Route::resource('bienes', BienController::class)
+        ->parameters(['bienes' => 'bien']);
+
     Route::get('bienes/{bien}/pdf', [BienController::class, 'exportPdf'])->name('bienes.pdf');
     Route::resource('dependencias', DependenciaController::class)->parameters(['dependencias' => 'dependencia']);
     Route::get('dependencias/{dependencia}/pdf', [DependenciaController::class, 'exportPdf'])->name('dependencias.pdf');
