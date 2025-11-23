@@ -206,15 +206,15 @@
                             {{ number_format((float) $bien->precio, 2, ',', '.') }} Bs.
                         </td>
                         <td class="px-6 py-4 text-sm text-gray-600">
-                            @if($bien->fotografia)
-                                <img
-                                    src="{{ str_starts_with($bien->fotografia, 'http') ? $bien->fotografia : asset('storage/'.$bien->fotografia) }}"
-                                    alt="Foto {{ $bien->codigo }}"
-                                    class="w-14 h-14 object-cover rounded-md border border-gray-200"
-                                >
+                     @if($bien->fotografia && file_exists(public_path('storage/' . $bien->fotografia)))
+                                <img src="{{ asset('storage/' . $bien->fotografia) }}"
+                                    alt="Foto del bien"
+                                    class="w-48 h-48 object-cover rounded-lg shadow">
                             @else
-                                <span class="text-xs text-gray-400">Sin foto</span>
+                                <span class="text-gray-500">Sin fotografía disponible</span>
                             @endif
+
+
                         </td>
                         <td class="px-6 py-4 text-sm">
                             @php
@@ -264,26 +264,21 @@
         {{ $bienes->links() }}
     </div>
 @endif
+@push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('filtrosForm');
-        const filtros = form.querySelectorAll('input, select');
+document.getElementById('search').addEventListener('input', function() {
+    let query = this.value;
 
-        filtros.forEach(filtro => {
-            filtro.addEventListener('change', () => {
-                form.submit();
-            });
-
-            if (filtro.type === 'text') {
-                let timeout;
-                filtro.addEventListener('input', () => {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => form.submit(), 400);
-                });
-            }
-        });
+    fetch(`{{ route('bienes.index') }}?search=${encodeURIComponent(query)}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(res => res.text())
+    .then(html => {
+        document.getElementById('tabla-bienes').innerHTML = html;
     });
+});
 </script>
+@endpush
 @endsection
 
 
