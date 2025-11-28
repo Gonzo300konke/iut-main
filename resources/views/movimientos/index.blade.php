@@ -14,8 +14,95 @@
                 {{ session('success') }}
             </div>
         @endif
+         {{-- Filtros --}}
+<div class="mb-6 bg-white shadow rounded-lg p-4 space-y-4">
+    <form action="{{ route('movimientos.index') }}" method="GET" class="space-y-4" id="filtrosForm">
 
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="flex flex-col">
+                <label for="tipo" class="text-sm font-medium text-gray-700 mb-1">Tipo de movimiento</label>
+                <select name="tipo" id="tipo"
+                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Todos</option>
+                    <option value="Registro" @selected(($filters['tipo'] ?? '') === 'Registro')>Registro</option>
+                    <option value="Actualización" @selected(($filters['tipo'] ?? '') === 'Actualización')>Actualización</option>
+                    <option value="Eliminación" @selected(($filters['tipo'] ?? '') === 'Eliminación')>Eliminación</option>
+                </select>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="usuario" class="text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                <input type="text" name="usuario" id="usuario" value="{{ $filters['usuario'] ?? '' }}"
+                       placeholder="Nombre del usuario"
+                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <div class="flex flex-col">
+                <label for="entidad" class="text-sm font-medium text-gray-700 mb-1">Entidad</label>
+                <input type="text" name="entidad" id="entidad" value="{{ $filters['entidad'] ?? '' }}"
+                       placeholder="Ej: Bien, Compra, Usuario..."
+                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex flex-col">
+                <label for="fecha_desde" class="text-sm font-medium text-gray-700 mb-1">Fecha desde</label>
+                <input type="date" name="fecha_desde" id="fecha_desde" value="{{ $filters['fecha_desde'] ?? '' }}"
+                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex flex-col">
+                <label for="fecha_hasta" class="text-sm font-medium text-gray-700 mb-1">Fecha hasta</label>
+                <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ $filters['fecha_hasta'] ?? '' }}"
+                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 justify-end">
+            <a href="{{ route('movimientos.index') }}"
+               class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition">
+                Limpiar
+            </a>
+            <button type="submit"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+                Aplicar filtros
+            </button>
+        </div>
+    </form>
+</div>
+                @php
+    $activeFilters = collect($filters ?? [])->filter(fn($value) => filled($value));
+@endphp
+
+@if($activeFilters->isNotEmpty())
+    <div class="mb-4 flex flex-wrap items-center gap-2 text-sm">
+        <span class="font-medium text-gray-700">Filtros activos:</span>
+        @foreach($activeFilters as $key => $value)
+            @php
+                $label = match($key) {
+                    'tipo' => 'Tipo',
+                    'usuario' => 'Usuario',
+                    'entidad' => 'Entidad',
+                    'fecha_desde' => 'Desde',
+                    'fecha_hasta' => 'Hasta',
+                    default => ucfirst(str_replace('_', ' ', $key)),
+                };
+                $querySinFiltro = collect($filters)->forget($key)->toArray();
+            @endphp
+
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-700">
+                {{ $label }}: <span class="ml-1 font-medium">{{ $value }}</span>
+                <a href="{{ route('movimientos.index', $querySinFiltro) }}"
+                   class="ml-2 text-indigo-500 hover:text-red-600 font-bold" title="Quitar filtro">
+                    ×
+                </a>
+            </span>
+        @endforeach
+    </div>
+@endif
         <div class="grid grid-cols-1 md:grid-cols-{{ isset($eliminados) ? '2' : '1' }} gap-6">
+
+
             <!-- Tabla de movimientos -->
             <div class="bg-white shadow rounded-lg p-4">
                 <h2 class="text-lg font-semibold mb-3">Movimientos registrados</h2>

@@ -13,34 +13,81 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class MovimientoController extends Controller
 {
-    public function index()
-    {
-        $movimientos = Movimiento::with(['bien', 'usuario', 'subject'])->orderByDesc('fecha')->paginate(10);
 
-        $eliminados = null;
-        if (Auth::check() && Auth::user() instanceof Usuario && Auth::user()->isAdmin()) {
-            $eliminados = Eliminado::orderByDesc('deleted_at')->paginate(10, ['*'], 'eliminados_page');
 
-            $userIds = $eliminados->pluck('deleted_by')->unique()->filter()->values()->all();
-            $users = !empty($userIds)
-                ? Usuario::whereIn('id', $userIds)->get()->keyBy('id')
-                : [];
+public function index(Request $request)
+{
+    // 1) Tomar filtros
+    $filters = $request->only(['tipo', 'usuario', 'entidad', 'fecha_desde', 'fecha_hasta']);
 
-            $eliminados->getCollection()->transform(function ($item) use ($users) {
-                $item->deleted_by_user = $users[$item->deleted_by]->nombre_completo
-                    ?? $users[$item->deleted_by]->correo
-                    ?? $item->data['_archived_by']
-                    ?? null;
-                return $item;
-            });
-        }
+    // 2) Query base
+    $query = Movimiento::query()->with(['bien', 'usuario', 'subject'])->orderByDesc('fecha');
 
-        if (request()->wantsJson()) {
-            return response()->json(['movimientos' => $movimientos, 'eliminados' => $eliminados]);
-        }
-
-        return view('movimientos.index', compact('movimientos', 'eliminados'));
+    // 3) Aplicar filtros
+    if (!empty($filters['tipo'])) {
+        $query->where('tipo', $filters['tipo']);
     }
+
+    if (!empty($filters['usuario'])) {
+        $qUsuario = trim($filters['usuario']);
+        $query->whereHas('usuario', function ($q) use ($qUsuario) {
+            $q->where('nombre', 'like', "%{$qUsuario}%")
+  ->orWhere('correo', 'like', "%{$qUsuario}%");
+
+        });
+    }
+
+    if (!empty($filters['entidad'])) {
+        $ent = trim($filters['entidad']);
+        $query->where(function ($q) use ($ent) {
+            // match por class_basename (último segmento del FQCN)
+            $q->orWhereRaw("LOWER(SUBSTRING_INDEX(subject_type, '\\\', -1)) LIKE ?", ['%' . strtolower($ent) . '%']);
+            // match por FQCN completo opcional
+            $q->orWhere('subject_type', 'like', "%{$ent}%");
+        });
+    }
+
+    $desde = $filters['fecha_desde'] ?? null;
+    $hasta = $filters['fecha_hasta'] ?? null;
+
+    if ($desde && $hasta) {
+        $query->whereBetween('fecha', [$desde, $hasta]);
+    } elseif ($desde) {
+        $query->whereDate('fecha', '>=', $desde);
+    } elseif ($hasta) {
+        $query->whereDate('fecha', '<=', $hasta);
+    }
+
+    // 4) Paginar preservando filtros
+    $movimientos = $query->paginate(10)->appends($filters);
+
+    // 5) Eliminados (admin)
+    $eliminados = null;
+    if (Auth::check() && Auth::user() instanceof Usuario && Auth::user()->isAdmin()) {
+        $eliminados = Eliminado::orderByDesc('deleted_at')->paginate(10, ['*'], 'eliminados_page');
+
+        $userIds = $eliminados->pluck('deleted_by')->unique()->filter()->values()->all();
+        $users = !empty($userIds)
+            ? Usuario::whereIn('id', $userIds)->get()->keyBy('id')
+            : [];
+
+        $eliminados->getCollection()->transform(function ($item) use ($users) {
+            $item->deleted_by_user = $users[$item->deleted_by]->nombre_completo
+                ?? $users[$item->deleted_by]->correo
+                ?? $item->data['_archived_by']
+                ?? null;
+            return $item;
+        });
+    }
+
+    // 6) JSON opcional y vista
+    if ($request->wantsJson()) {
+        return response()->json(['movimientos' => $movimientos, 'eliminados' => $eliminados, 'filters' => $filters]);
+    }
+
+    return view('movimientos.index', compact('movimientos', 'eliminados', 'filters'));
+}
+
 
     public function create()
     {
@@ -185,6 +232,8 @@ class MovimientoController extends Controller
             ->download("movimiento_{$movimiento->id}.pdf");
     }
 
+
 }
+
 
 
