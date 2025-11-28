@@ -42,4 +42,9 @@ class Responsable extends Model
     {
         return $this->hasMany(Dependencia::class, 'responsable_id');
     }
+    public function getNombreCompletoAttribute()
+    {
+        return "{$this->nombre} ({$this->cedula}) - {$this->tipo->nombre}";
+    }
+
 }

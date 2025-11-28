@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dependencia;
 use App\Models\UnidadAdministradora;
+use App\Models\Responsable;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -40,17 +41,18 @@ class DependenciaController extends Controller
 
         $dependencia = Dependencia::create($validated);
 
-        return redirect()->route('dependencias.index')->with('success', 'Dependencia creada correctamente');
+        return redirect()->route('dependencias.index')
+            ->with('success', 'Dependencia creada correctamente');
     }
 
+    /**
+     * Mostrar formulario de creación.
+     */
     public function create()
     {
         $unidadesAdministradoras = UnidadAdministradora::all();
+        $responsables = Responsable::all();
 
-        // Cargamos responsables para poder asignarlos desde el formulario
-        $responsables = \App\Models\Responsable::all();
-
-        // La vista espera $unidades
         return view('dependencias.create', [
             'unidades' => $unidadesAdministradoras,
             'responsables' => $responsables,
@@ -65,7 +67,6 @@ class DependenciaController extends Controller
         $dependencia->load(['unidadAdministradora', 'bienes', 'responsable']);
 
         return view('dependencias.show', compact('dependencia'));
-        // Note: keep returning a web view so the "Ver" button renders the details page like usuarios.show
     }
 
     /**
@@ -107,17 +108,17 @@ class DependenciaController extends Controller
 
         $dependencia->update($validated);
 
-        // Redirigimos a la lista con un mensaje para la interfaz web
-        return redirect()->route('dependencias.index')->with('success', 'Dependencia actualizada correctamente');
+        return redirect()->route('dependencias.index')
+            ->with('success', 'Dependencia actualizada correctamente');
     }
 
     /**
-     * Mostrar formulario de edición para una dependencia.
+     * Mostrar formulario de edición.
      */
     public function edit(Dependencia $dependencia)
     {
         $unidadesAdministradoras = UnidadAdministradora::all();
-        $responsables = \App\Models\Responsable::all();
+        $responsables = Responsable::all();
 
         return view('dependencias.edit', [
             'dependencia' => $dependencia,
@@ -131,7 +132,6 @@ class DependenciaController extends Controller
      */
     public function destroy(Dependencia $dependencia)
     {
-        // Verificar permisos: solo administradores pueden eliminar datos
         if (! auth()->user()->canDeleteData()) {
             if (request()->expectsJson()) {
                 return response()->json(['message' => 'No tienes permisos para eliminar datos del sistema.'], 403);
@@ -140,7 +140,6 @@ class DependenciaController extends Controller
             abort(403, 'No tienes permisos para eliminar datos del sistema.');
         }
 
-        // Archivar dependencia antes de eliminar
         \App\Services\EliminadosService::archiveModel($dependencia, auth()->id());
         $dependencia->delete();
 

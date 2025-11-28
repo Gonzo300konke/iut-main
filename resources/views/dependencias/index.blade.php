@@ -7,10 +7,16 @@
     <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
         🔗 Dependencias
     </h1>
-    <a href="{{ route('dependencias.create') }}"
-       class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
-        + Nueva
-    </a>
+    <div class="flex gap-2">
+        <a href="{{ route('dependencias.create') }}"
+           class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
+            + Nueva
+        </a>
+        <a href="{{ route('responsables.create') }}"
+           class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition">
+            + Nuevo Responsable
+        </a>
+    </div>
 </div>
 
 {{-- Mensajes de éxito --}}
@@ -34,54 +40,71 @@
 </div>
 
 {{-- Tabla --}}
-<div class="bg-white shadow-md rounded-lg overflow-hidden">
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unidad Administradora</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bienes</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($dependencias as $dep)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 text-sm text-gray-900 font-mono">{{ $dep->codigo }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-900">{{ $dep->nombre }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            {{ $dep->unidadAdministradora->nombre ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            @if($dep->bienes->count())
-                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                                    {{ $dep->bienes->count() }} bienes
-                                </span>
-                            @else
-                                <span class="text-gray-400">—</span>
+<div class="bg-white shadow-md rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 table-fixed">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="w-24 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Código</th>
+                <th class="w-64 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
+                <th class="w-64 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Unidad Administradora</th>
+                <th class="w-72 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Responsable</th>
+                <th class="w-32 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bienes</th>
+                <th class="w-40 px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            @forelse($dependencias as $dep)
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-4 py-4 text-sm text-gray-900 font-mono">{{ $dep->codigo }}</td>
+
+                    <td class="px-4 py-4 text-sm text-gray-900 truncate" title="{{ $dep->nombre }}">
+                        {{ $dep->nombre }}
+                    </td>
+
+                    <td class="px-4 py-4 text-sm text-gray-600 truncate" title="{{ $dep->unidadAdministradora->nombre ?? '-' }}">
+                        {{ $dep->unidadAdministradora->nombre ?? '-' }}
+                    </td>
+
+                    <td class="px-4 py-4 text-sm text-gray-600 truncate" title="{{ $dep->responsable?->nombre }}">
+                        @if($dep->responsable)
+                            {{ $dep->responsable->nombre }}
+                            @if($dep->responsable->cedula)
+                                ({{ $dep->responsable->cedula }})
                             @endif
-                        </td>
-                        <td class="px-6 py-4 text-sm text-right space-x-2">
-                            @include('components.action-buttons', [
-                                'resource' => 'dependencias',
-                                'model' => $dep,
-                                'confirm' => "¿Seguro que deseas eliminar esta dependencia?",
-                                'label' => $dep->nombre
-                            ])
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-                            No hay dependencias registradas.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                            - {{ $dep->responsable->tipo->nombre ?? '' }}
+                        @else
+                            <span class="text-gray-400">—</span>
+                        @endif
+                    </td>
+
+                    <td class="px-4 py-4 text-sm text-gray-600">
+                        @if($dep->bienes->count())
+                            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                                {{ $dep->bienes->count() }} bienes
+                            </span>
+                        @else
+                            <span class="text-gray-400">—</span>
+                        @endif
+                    </td>
+
+                    <td class="px-4 py-4 text-sm text-right space-x-2">
+                        @include('components.action-buttons', [
+                            'resource' => 'dependencias',
+                            'model' => $dep,
+                            'confirm' => "¿Seguro que deseas eliminar esta dependencia?",
+                            'label' => $dep->nombre
+                        ])
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="6" class="px-4 py-4 text-center text-sm text-gray-500">
+                        No hay dependencias registradas.
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 </div>
 
 {{-- Paginación --}}
@@ -91,5 +114,9 @@
     </div>
 @endif
 @endsection
+
+
+
+
 
 

@@ -18,7 +18,7 @@
                 </label>
                 <select name="unidad_administradora_id" id="unidad_administradora_id"
                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
-                               focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                               focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
                     <option value="">Seleccione...</option>
                     @foreach($unidades as $unidad)
                         <option value="{{ $unidad->id }}" {{ old('unidad_administradora_id', $dependencia->unidad_administradora_id) == $unidad->id ? 'selected' : '' }}>
@@ -37,7 +37,7 @@
                 <input type="text" name="nombre" id="nombre" value="{{ old('nombre', $dependencia->nombre) }}"
                        placeholder="Ej: Dirección de Finanzas"
                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
-                              focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                              focus:border-blue-500 focus:ring-blue-500 sm:text-sm" required>
                 @error('nombre')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
@@ -49,7 +49,7 @@
                 <input type="text" name="codigo" id="codigo" value="{{ old('codigo', $dependencia->codigo) }}"
                        placeholder="Ej: DEP-001"
                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm
-                              focus:border-blue-500 focus:ring-blue-500 sm:text-sm font-mono">
+                              focus:border-blue-500 focus:ring-blue-500 sm:text-sm font-mono" required>
                 @error('codigo')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror
@@ -66,7 +66,9 @@
                     <option value="">-- Ninguno --</option>
                     @foreach($responsables as $resp)
                         <option value="{{ $resp->id }}" {{ old('responsable_id', $dependencia->responsable_id) == $resp->id ? 'selected' : '' }}>
-                            {{ $resp->nombre }} {{ $resp->apellido ?? '' }} @if($resp->cedula) ({{ $resp->cedula }})@endif
+                            {{ $resp->nombre }}
+                            @if($resp->cedula) ({{ $resp->cedula }}) @endif
+                            - {{ $resp->tipo->nombre }}
                         </option>
                     @endforeach
                 </select>
@@ -88,3 +90,4 @@
     </div>
 </div>
 @endsection
+

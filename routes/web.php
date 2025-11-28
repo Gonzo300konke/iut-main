@@ -13,7 +13,7 @@ use App\Http\Controllers\UsuarioController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Usuario;
-
+use App\Http\Controllers\Api\ResponsableController as ApiResponsableController;
 /*
 |--------------------------------------------------------------------------
 | Rutas públicas y redirección de inicio
@@ -73,13 +73,23 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
     Route::resource('movimientos', MovimientoController::class);
     // routes/web.php
     Route::get('movimientos/{movimiento}/pdf', [MovimientoController::class, 'pdf'])->name('movimientos.pdf');
+    Route::resource('responsables', ResponsableController::class);
+
+
+    // CRUD básico
+    Route::get('responsables', [ResponsableController::class, 'index'])->name('responsables.index');
+    Route::get('responsables/create', [ResponsableController::class, 'create'])->name('responsables.create');
+    Route::post('responsables', [ResponsableController::class, 'store'])->name('responsables.store');
+
+
+    Route::post('responsables/buscar', [ApiResponsableController::class, 'buscar'])->name('responsables.buscar');
 
     // Restauración/visualización de eliminados se maneja desde MovimientoController (vista combinada)
     Route::post('movimientos/eliminados/{eliminado}/restore', [MovimientoController::class, 'restoreEliminado'])->name('movimientos.eliminados.restore');
     Route::resource('organismos', OrganismoController::class);
     Route::get('organismos/{organismo}/pdf', [OrganismoController::class, 'exportPdf'])->name('organismos.pdf');
     Route::resource('reportes', ReporteController::class);
-    Route::resource('responsables', ResponsableController::class);
+
     Route::resource('unidades', UnidadAdministradoraController::class)->parameters(['unidades' => 'unidadAdministradora']);
     Route::get('unidades/{unidadAdministradora}/pdf', [UnidadAdministradoraController::class, 'exportPdf'])->name('unidades.pdf');
     Route::resource('usuarios', UsuarioController::class)->parameters(['usuarios' => 'usuario']);

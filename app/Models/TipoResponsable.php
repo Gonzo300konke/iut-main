@@ -9,7 +9,7 @@ class TipoResponsable extends Model
 {
     use GeneratesMovimiento;
 
-    protected $table = 'tipos_responsable';
+    protected $table = 'tipos_responsables'; // ✅ coincide con la migración
 
     public $timestamps = false;
 

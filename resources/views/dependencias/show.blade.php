@@ -70,10 +70,21 @@ use Illuminate\Support\Str;
                         <p class="text-base font-medium text-gray-800">{{ $dependencia->unidadAdministradora->nombre ?? '—' }}</p>
                     </div>
 
-                    <div>
+                   <div>
                         <p class="text-sm text-gray-600">Responsable</p>
-                        <p class="text-base font-medium text-gray-800">{{ $dependencia->responsable->nombre_completo ?? 'Sin asignar' }}</p>
+                        @if($dependencia->responsable)
+                            <p class="text-base font-medium text-gray-800">
+                                {{ $dependencia->responsable->nombre }}
+                                @if($dependencia->responsable->cedula)
+                                    ({{ $dependencia->responsable->cedula }})
+                                @endif
+                                - {{ $dependencia->responsable->tipo->nombre ?? '' }}
+                            </p>
+                        @else
+                            <p class="text-base font-medium text-gray-400">Sin asignar</p>
+                        @endif
                     </div>
+
                     <div>
                         <p class="text-sm text-gray-600">Fecha de Creación</p>
                         <p class="text-base font-medium text-gray-800">{{ $dependencia->created_at?->format('d/m/Y H:i') }}</p>

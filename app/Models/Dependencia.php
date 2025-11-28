@@ -24,12 +24,18 @@ class Dependencia extends Model
     /**
      * Atributos que se pueden asignar de forma masiva.
      */
-    protected $fillable = [
+        protected $fillable = [
         'unidad_administradora_id',
         'codigo',
         'nombre',
         'responsable_id',
     ];
+
+    public function responsable()
+    {
+        return $this->belongsTo(\App\Models\Responsable::class);
+    }
+
 
     public function scopeSearch($query, $term)
     {
@@ -60,8 +66,5 @@ class Dependencia extends Model
     /**
      * Relación: La dependencia puede tener un responsable asignado.
      */
-    public function responsable()
-    {
-        return $this->belongsTo(Responsable::class, 'responsable_id');
-    }
+
 }
