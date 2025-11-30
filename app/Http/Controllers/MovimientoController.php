@@ -32,7 +32,7 @@ public function index(Request $request)
         $qUsuario = trim($filters['usuario']);
         $query->whereHas('usuario', function ($q) use ($qUsuario) {
             $q->where('nombre', 'like', "%{$qUsuario}%")
-  ->orWhere('correo', 'like', "%{$qUsuario}%");
+              ->orWhere('correo', 'like', "%{$qUsuario}%");
 
         });
     }
@@ -80,11 +80,22 @@ public function index(Request $request)
         });
     }
 
-    // 6) JSON opcional y vista
+    // 6) JSON opcional, AJAX, y vista
+
+    // 🥇 Comprobación de Petición AJAX (la que estabas enviando desde JS)
+    if ($request->ajax()) {
+        // Devolvemos el HTML de la vista renderizado como una cadena de texto.
+        // Esto evita que el navegador intente navegar a la nueva "página" y permite
+        // a tu JavaScript analizar y reemplazar las secciones del DOM.
+        return view('movimientos.index', compact('movimientos', 'eliminados', 'filters'))->render();
+    }
+
+    // 🥈 Comprobación de Petición JSON (útil para APIs)
     if ($request->wantsJson()) {
         return response()->json(['movimientos' => $movimientos, 'eliminados' => $eliminados, 'filters' => $filters]);
     }
 
+    // 🥉 Vista completa para navegación normal
     return view('movimientos.index', compact('movimientos', 'eliminados', 'filters'));
 }
 
@@ -234,6 +245,3 @@ public function index(Request $request)
 
 
 }
-
-
-

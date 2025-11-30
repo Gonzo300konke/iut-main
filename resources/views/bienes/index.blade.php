@@ -24,9 +24,6 @@
     </div>
 </div>
 
-{{-- ... resto del contenido de index.blade.php ... --}}
-
-
 {{-- Mensajes de éxito --}}
 @if(session('success'))
     <div class="mb-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg shadow-sm">
@@ -41,9 +38,10 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="flex flex-col">
                 <label for="search" class="text-sm font-medium text-gray-700 mb-1">Búsqueda rápida</label>
+                {{-- Agregado filtro-auto y filtro-input --}}
                 <input type="text" name="search" id="search" value="{{ $filters['search'] ?? '' }}"
                        placeholder="Código, descripción o ubicación"
-                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto filtro-input">
             </div>
 
         </div>
@@ -51,8 +49,9 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="flex flex-col">
                 <label for="organismo_id" class="text-sm font-medium text-gray-700 mb-1">Organismo</label>
+                {{-- Agregado filtro-auto --}}
                 <select name="organismo_id" id="organismo_id"
-                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
                     <option value="">Todos</option>
                     @foreach($organismos as $organismo)
                         <option value="{{ $organismo->id }}"
@@ -64,8 +63,9 @@
             </div>
             <div class="flex flex-col">
                 <label for="unidad_id" class="text-sm font-medium text-gray-700 mb-1">Unidad Administradora</label>
+                {{-- Agregado filtro-auto --}}
                 <select name="unidad_id" id="unidad_id"
-                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
                     <option value="">Todas</option>
                     @foreach($unidades as $unidad)
                         <option value="{{ $unidad->id }}"
@@ -77,8 +77,9 @@
             </div>
             <div class="flex flex-col">
                 <label for="dependencias" class="text-sm font-medium text-gray-700 mb-1">Dependencias</label>
+                {{-- Agregado filtro-auto --}}
                 <select name="dependencias[]" id="dependencias" multiple size="5"
-                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
                     @foreach($dependencias as $dependencia)
                         <option value="{{ $dependencia->id }}"
                             @selected(collect($filters['dependencias'] ?? [])->contains($dependencia->id))>
@@ -96,8 +97,9 @@
                 <div class="grid grid-cols-2 gap-2">
                     @foreach($estados as $valor => $label)
                         <label class="inline-flex items-center text-sm text-gray-700">
+                            {{-- Agregado filtro-auto --}}
                             <input type="checkbox" name="estado[]" value="{{ $valor }}"
-                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                   class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 filtro-auto"
                                    @checked(collect($filters['estado'] ?? [])->contains($valor))>
                             <span class="ml-2">{{ $label }}</span>
                         </label>
@@ -106,13 +108,15 @@
             </div>
             <div class="flex flex-col">
                 <label for="fecha_desde" class="text-sm font-medium text-gray-700 mb-1">Fecha desde</label>
+                {{-- Agregado filtro-auto --}}
                 <input type="date" name="fecha_desde" id="fecha_desde" value="{{ $filters['fecha_desde'] ?? '' }}"
-                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
             </div>
             <div class="flex flex-col">
                 <label for="fecha_hasta" class="text-sm font-medium text-gray-700 mb-1">Fecha hasta</label>
+                {{-- Agregado filtro-auto --}}
                 <input type="date" name="fecha_hasta" id="fecha_hasta" value="{{ $filters['fecha_hasta'] ?? '' }}"
-                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
             </div>
         </div>
 
@@ -121,10 +125,10 @@
                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition">
                 Limpiar
             </a>
-        <button type="submit"
-                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
+            <button type="submit"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
                 Aplicar filtros
-        </button>
+            </button>
         </div>
     </form>
 </div>
@@ -139,6 +143,8 @@
     });
 @endphp
 
+{{-- ID para contenedor de filtros activos --}}
+<div id="activeFiltersContainer">
 @if($activeFilters->isNotEmpty())
     <div class="mb-4 flex flex-wrap items-center gap-2 text-sm">
         <span class="font-medium text-gray-700">Filtros activos:</span>
@@ -185,10 +191,12 @@
         @endforeach
     </div>
 @endif
+</div>
 
 
 {{-- Tabla --}}
-<div class="bg-white shadow-md rounded-lg overflow-hidden">
+{{-- ID para contenedor de la tabla --}}
+<div class="bg-white shadow-md rounded-lg overflow-hidden" id="tablaBienes">
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
             @php
@@ -268,8 +276,8 @@
                         <td class="px-6 py-4 text-sm text-gray-600">
                      @if($bien->fotografia && file_exists(public_path('storage/' . $bien->fotografia)))
                                 <img src="{{ asset('storage/' . $bien->fotografia) }}"
-                                    alt="Foto del bien"
-                                    class="w-48 h-48 object-cover rounded-lg shadow">
+                                     alt="Foto del bien"
+                                     class="w-48 h-48 object-cover rounded-lg shadow">
                             @else
                                 <span class="text-gray-500">Sin fotografía disponible</span>
                             @endif
@@ -319,28 +327,121 @@
 </div>
 
 {{-- Paginación --}}
+{{-- ID para contenedor de paginación --}}
+<div class="mt-6" id="bienesPagination">
 @if($bienes->hasPages())
-    <div class="mt-6">
         {{ $bienes->links() }}
-    </div>
 @endif
+</div>
+
 @push('scripts')
 <script>
-document.getElementById('search').addEventListener('input', function() {
-    let query = this.value;
+    let fetchTimeout;
 
-    fetch(`{{ route('bienes.index') }}?search=${encodeURIComponent(query)}`, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(res => res.text())
-    .then(html => {
-        document.getElementById('tabla-bienes').innerHTML = html;
+    /**
+     * Realiza la petición AJAX para filtrar y actualiza solo los resultados.
+     */
+    function aplicarFiltros(url = null) {
+        if (fetchTimeout) {
+            clearTimeout(fetchTimeout);
+        }
+
+        // Definir un pequeño retraso (300ms) para inputs de texto
+        fetchTimeout = setTimeout(() => {
+            const form = document.getElementById('filtrosForm');
+            const baseUrl = url || form.action;
+            const formParams = new URLSearchParams(new FormData(form));
+            const fetchUrl = baseUrl.split('?')[0] + '?' + formParams.toString();
+
+            // Reemplazar la URL en el historial sin recargar
+            window.history.pushState(null, '', fetchUrl);
+
+            fetch(fetchUrl, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error('Error en respuesta de red');
+                return res.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // 1. Actualizar Tabla
+                const nuevaTabla = doc.querySelector('#tablaBienes');
+                const contenedorTabla = document.getElementById('tablaBienes');
+                if (nuevaTabla && contenedorTabla) {
+                    contenedorTabla.innerHTML = nuevaTabla.innerHTML;
+                }
+
+                // 2. Actualizar Paginación
+                const nuevaPaginacion = doc.querySelector('#bienesPagination');
+                const contenedorPaginacion = document.getElementById('bienesPagination');
+                if (nuevaPaginacion && contenedorPaginacion) {
+                    contenedorPaginacion.innerHTML = nuevaPaginacion.innerHTML;
+                    attachPaginationListeners(); // Reasignar eventos a los nuevos links
+                }
+
+                // 3. Actualizar Filtros Activos (chips)
+                const nuevosFiltros = doc.querySelector('#activeFiltersContainer');
+                const contenedorFiltros = document.getElementById('activeFiltersContainer');
+                if (contenedorFiltros) {
+                    contenedorFiltros.innerHTML = nuevosFiltros ? nuevosFiltros.innerHTML : '';
+                }
+            })
+            .catch(error => console.error('Error al filtrar:', error));
+
+        }, 300);
+    }
+
+    /**
+     * Intercepta los clicks en la paginación para usar AJAX
+     */
+    function attachPaginationListeners() {
+        document.querySelectorAll('#bienesPagination a').forEach(link => {
+            link.removeEventListener('click', handlePaginationClick);
+            link.addEventListener('click', handlePaginationClick);
+        });
+
+        // También interceptar clicks en el ordenamiento de la tabla si es necesario
+        document.querySelectorAll('#tablaBienes thead a').forEach(link => {
+             link.addEventListener('click', function(e) {
+                 e.preventDefault();
+                 aplicarFiltros(this.href);
+             });
+        });
+    }
+
+    function handlePaginationClick(e) {
+        e.preventDefault();
+        aplicarFiltros(this.href);
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', () => {
+        // Inputs/Selects que disparan filtro automático
+        document.querySelectorAll('.filtro-auto').forEach(el => {
+            el.addEventListener('change', () => aplicarFiltros());
+        });
+
+        // Inputs de texto que disparan al escribir (con delay)
+        document.querySelectorAll('.filtro-input').forEach(el => {
+            el.addEventListener('keyup', () => aplicarFiltros());
+        });
+
+        // Prevenir submit normal
+        document.getElementById('filtrosForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            aplicarFiltros();
+        });
+
+        attachPaginationListeners();
     });
-});
 </script>
 @endpush
 @endsection
-
 
 
 
