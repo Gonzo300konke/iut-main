@@ -107,19 +107,6 @@ class OrganismoController extends Controller
      */
     public function destroy(Organismo $organismo)
     {
-        // Verificar permisos: solo administradores pueden eliminar datos
-        if (! auth()->user()->canDeleteData()) {
-            if (request()->expectsJson()) {
-                return response()->json(['message' => 'No tienes permisos para eliminar datos del sistema.'], 403);
-            }
-
-            abort(403, 'No tienes permisos para eliminar datos del sistema.');
-        }
-
-        // Archivar organismo y luego eliminar
-        \App\Services\EliminadosService::archiveModel($organismo, auth()->id());
-        $organismo->delete();
-
-        return response()->json(null, 204);
+        return response()->json(['message' => 'No se pueden eliminar organismos.'], 403);
     }
 }

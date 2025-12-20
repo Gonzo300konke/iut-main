@@ -86,6 +86,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 
     // Restauración/visualización de eliminados se maneja desde MovimientoController (vista combinada)
     Route::post('movimientos/eliminados/{eliminado}/restore', [MovimientoController::class, 'restoreEliminado'])->name('movimientos.eliminados.restore');
+    Route::get('movimientos/eliminados', [MovimientoController::class, 'eliminados'])->name('movimientos.eliminados');
+    Route::patch('movimientos/reintegrar/{bien}', [MovimientoController::class, 'reintegrar'])->name('movimientos.reintegrar');
     Route::resource('organismos', OrganismoController::class);
     Route::get('organismos/{organismo}/pdf', [OrganismoController::class, 'exportPdf'])->name('organismos.pdf');
     Route::resource('reportes', ReporteController::class);

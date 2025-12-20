@@ -132,17 +132,6 @@ class DependenciaController extends Controller
      */
     public function destroy(Dependencia $dependencia)
     {
-        if (! auth()->user()->canDeleteData()) {
-            if (request()->expectsJson()) {
-                return response()->json(['message' => 'No tienes permisos para eliminar datos del sistema.'], 403);
-            }
-
-            abort(403, 'No tienes permisos para eliminar datos del sistema.');
-        }
-
-        \App\Services\EliminadosService::archiveModel($dependencia, auth()->id());
-        $dependencia->delete();
-
-        return response()->json(null, 204);
+        return response()->json(['message' => 'No se pueden eliminar dependencias.'], 403);
     }
 }

@@ -29,6 +29,20 @@
     </a>
 </div>
 
+{{-- Filtro por Tipo de Bien --}}
+<div class="mb-4">
+    <form method="GET" action="{{ route('bienes.galeria') }}" class="flex items-center gap-4">
+        <select name="tipo" id="tipo" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+            <option value="">Todos los Tipos</option>
+            <option value="inmueble" {{ request('tipo') == 'inmueble' ? 'selected' : '' }}>Inmueble</option>
+            <option value="electrónico" {{ request('tipo') == 'electrónico' ? 'selected' : '' }}>Electrónico</option>
+            <option value="mueble" {{ request('tipo') == 'mueble' ? 'selected' : '' }}>Mueble</option>
+            <option value="otro" {{ request('tipo') == 'otro' ? 'selected' : '' }}>Otro</option>
+        </select>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Filtrar</button>
+    </form>
+</div>
+
 {{-- Contenedor de la galería --}}
 <div class="gallery-container grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
     @foreach($imagenes as $imagen)

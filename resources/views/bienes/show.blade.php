@@ -48,8 +48,9 @@ use Illuminate\Support\Str;
                     'resource' => 'bienes',
                     'model' => $bien,
                     'canDelete' => auth()->user()->canDeleteData(),
-                    'confirm' => "¿Seguro que deseas eliminar este bien?",
-                    'label' => $bien->codigo
+                    'confirm' => "¿Seguro que deseas desincorporar este bien?",
+                    'label' => $bien->codigo,
+                    'buttonText' => 'Desincorporar'
                 ])
             </div>
         </div>
@@ -90,6 +91,13 @@ use Illuminate\Support\Str;
                     <div>
                         <p class="text-sm text-gray-600">Fecha de Registro</p>
                         <p class="text-base font-medium text-gray-800">{{ $bien->fecha_registro?->format('d/m/Y') }}</p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-gray-600">Tipo de Bien</p>
+                        <p class="text-base font-medium text-gray-800">
+                            {{ $bien->tipo ?? 'No especificado' }}
+                        </p>
                     </div>
                 </div>
             </div>

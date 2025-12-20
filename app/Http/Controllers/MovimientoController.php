@@ -244,4 +244,25 @@ public function index(Request $request)
     }
 
 
+    public function eliminados()
+    {
+        $bienes = \App\Models\Bien::where('estado', 'desincorporado')->with('movimiento')->get();
+
+        return view('movimientos.eliminados', compact('bienes'));
+    }
+
+    public function reintegrar(\App\Models\Bien $bien)
+    {
+        $bien->update(['estado' => 'activo']);
+
+        // Registrar movimiento de reintegración
+        \App\Models\Movimiento::create([
+            'bien_id' => $bien->id,
+            'tipo' => 'reintegración',
+            'descripcion' => 'Bien reintegrado',
+            'usuario_id' => auth()->id(),
+        ]);
+
+        return redirect()->route('movimientos.eliminados')->with('success', 'Bien reintegrado correctamente.');
+    }
 }

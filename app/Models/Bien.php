@@ -28,6 +28,14 @@ class Bien extends Model
         'ubicacion',
         'estado',
         'fecha_registro',
+        'serial',
+        'procesador',
+        'caracteristicas',
+        'direccion',
+        'area',
+        'uso',
+        'material',
+        'dimensiones',
     ];
 
     // App\Models\Bien.php

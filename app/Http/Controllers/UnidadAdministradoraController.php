@@ -114,19 +114,6 @@ class UnidadAdministradoraController extends Controller
      */
     public function destroy(UnidadAdministradora $unidadAdministradora)
     {
-        // Verificar permisos: solo administradores pueden eliminar datos
-        if (! auth()->user()->canDeleteData()) {
-            if (request()->expectsJson()) {
-                return response()->json(['message' => 'No tienes permisos para eliminar datos del sistema.'], 403);
-            }
-
-            abort(403, 'No tienes permisos para eliminar datos del sistema.');
-        }
-
-        // Archivar unidad antes de eliminar
-        \App\Services\EliminadosService::archiveModel($unidadAdministradora, auth()->id());
-        $unidadAdministradora->delete();
-
-        return response()->json(null, 204);
+        return response()->json(['message' => 'No se pueden eliminar unidades administrativas.'], 403);
     }
 }

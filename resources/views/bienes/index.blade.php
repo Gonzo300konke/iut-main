@@ -120,6 +120,22 @@
             </div>
         </div>
 
+        {{-- Filtro por Tipo de Bien --}}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="flex flex-col">
+                <label for="tipo" class="text-sm font-medium text-gray-700 mb-1">Tipo de Bien</label>
+                <select name="tipo" id="tipo"
+                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Todos los Tipos</option>
+                    <option value="inmueble" {{ request('tipo') == 'inmueble' ? 'selected' : '' }}>Inmueble</option>
+                    <option value="electrónico" {{ request('tipo') == 'electrónico' ? 'selected' : '' }}>Electrónico
+                    </option>
+                    <option value="mueble" {{ request('tipo') == 'mueble' ? 'selected' : '' }}>Mueble</option>
+                    <option value="otro" {{ request('tipo') == 'otro' ? 'selected' : '' }}>Otro</option>
+                </select>
+            </div>
+        </div>
+
         <div class="flex items-center gap-2 justify-end">
             <a href="{{ route('bienes.index') }}"
                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition">
@@ -160,6 +176,7 @@
                     'estado' => 'Estado',
                     'fecha_desde' => 'Desde',
                     'fecha_hasta' => 'Hasta',
+                    'tipo' => 'Tipo de Bien',
                     default => ucfirst(str_replace('_', ' ', $key)),
                 };
 
@@ -175,6 +192,14 @@
                     })->implode(', ');
                 } elseif ($key === 'estado') {
                     $display = collect($value)->map(fn ($estado) => $estados[$estado] ?? $estado)->implode(', ');
+                } elseif ($key === 'tipo') {
+                    $tiposBien = [
+                        'inmueble' => 'Inmueble',
+                        'electrónico' => 'Electrónico',
+                        'mueble' => 'Mueble',
+                        'otro' => 'Otro',
+                    ];
+                    $display = $tiposBien[$value] ?? $value;
                 }
 
                 // Generar nuevo query sin este filtro
@@ -309,8 +334,9 @@
                             @include('components.action-buttons', [
                                 'resource' => 'bienes',
                                 'model' => $bien,
-                                'confirm' => "¿Seguro que deseas eliminar este bien?",
-                                'label' => $bien->codigo
+                                'confirm' => "¿Seguro que deseas desincorporar este bien?",
+                                'label' => $bien->codigo,
+                                'buttonText' => 'Desincorporar'
                             ])
                         </td>
                     </tr>

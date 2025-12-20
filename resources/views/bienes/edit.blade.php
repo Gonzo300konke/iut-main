@@ -144,6 +144,23 @@
                 <p class="text-gray-500 text-xs mt-2">Selecciona la fecha en la que se registró el bien</p>
             </div>
 
+            <!-- Tipo de Bien -->
+            <div>
+                <label for="tipo" class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Bien</label>
+                <select name="tipo" id="tipo" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    <option value="">Seleccione...</option>
+                    <option value="inmueble" {{ old('tipo', $bien->tipo) == 'inmueble' ? 'selected' : '' }}>Inmueble</option>
+                    <option value="electrónico" {{ old('tipo', $bien->tipo) == 'electrónico' ? 'selected' : '' }}>Electrónico</option>
+                    <option value="mueble" {{ old('tipo', $bien->tipo) == 'mueble' ? 'selected' : '' }}>Mueble</option>
+                    <option value="otro" {{ old('tipo', $bien->tipo) == 'otro' ? 'selected' : '' }}>Otro</option>
+                </select>
+            </div>
+
+            <!-- Campos dinámicos según el tipo de bien -->
+            <div id="campos-tipo-bien" class="space-y-6">
+                <!-- Estos campos se mostrarán dinámicamente según el tipo seleccionado -->
+            </div>
+
             <!-- Botones -->
             <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
                 <a href="{{ route('bienes.index') }}"
@@ -204,5 +221,67 @@
     document.getElementById('codigo').addEventListener('input', soloAlfanumerico);
     document.getElementById('descripcion').addEventListener('input', descripcionValida);
     document.getElementById('ubicacion').addEventListener('input', soloLetrasNumerosEspacios);
+
+    // Campos dinámicos para tipo de bien
+    document.getElementById('tipo').addEventListener('change', function () {
+        console.log('Tipo seleccionado:', this.value); // Depuración
+        const tipo = this.value;
+        const container = document.getElementById('campos-tipo-bien');
+        container.innerHTML = '';
+
+        if (tipo === 'electrónico') {
+            container.innerHTML = `
+                <div>
+                    <label for="serial" class="block text-sm font-semibold text-gray-700 mb-2">Serial</label>
+                    <input type="text" name="serial" id="serial" value="{{ old('serial', $bien->serial) }}" placeholder="Ingrese el serial del bien"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label for="procesador" class="block text-sm font-semibold text-gray-700 mb-2">Procesador</label>
+                    <input type="text" name="procesador" id="procesador" value="{{ old('procesador', $bien->procesador) }}" placeholder="Ej: Intel i7"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label for="caracteristicas" class="block text-sm font-semibold text-gray-700 mb-2">Características</label>
+                    <textarea name="caracteristicas" id="caracteristicas" rows="3" placeholder="Detalles técnicos del bien"
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">{{ old('caracteristicas', $bien->caracteristicas) }}</textarea>
+                </div>
+            `;
+        } else if (tipo === 'inmueble') {
+            container.innerHTML = `
+                <div>
+                    <label for="direccion" class="block text-sm font-semibold text-gray-700 mb-2">Dirección</label>
+                    <input type="text" name="direccion" id="direccion" value="{{ old('direccion', $bien->direccion) }}" placeholder="Ubicación del inmueble"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label for="area" class="block text-sm font-semibold text-gray-700 mb-2">Área (m²)</label>
+                    <input type="number" name="area" id="area" value="{{ old('area', $bien->area) }}" placeholder="Ej: 120"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label for="uso" class="block text-sm font-semibold text-gray-700 mb-2">Uso</label>
+                    <input type="text" name="uso" id="uso" value="{{ old('uso', $bien->uso) }}" placeholder="Ej: Oficina, Almacén"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+            `;
+        } else if (tipo === 'mueble') {
+            container.innerHTML = `
+                <div>
+                    <label for="material" class="block text-sm font-semibold text-gray-700 mb-2">Material</label>
+                    <input type="text" name="material" id="material" value="{{ old('material', $bien->material) }}" placeholder="Ej: Madera, Metal"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label for="dimensiones" class="block text-sm font-semibold text-gray-700 mb-2">Dimensiones</label>
+                    <input type="text" name="dimensiones" id="dimensiones" value="{{ old('dimensiones', $bien->dimensiones) }}" placeholder="Ej: 2x1x1.5 m"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+            `;
+        }
+    });
+
+    // Trigger change event to load fields on page load
+    document.getElementById('tipo').dispatchEvent(new Event('change'));
 </script>
 @endpush

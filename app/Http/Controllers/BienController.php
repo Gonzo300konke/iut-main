@@ -357,26 +357,25 @@ private function procesarFotografia(Request $request, ?Bien $bien = null): ?stri
      */
     public function destroy(Bien $bien)
     {
-        // Verificar permisos: solo administradores pueden eliminar datos
+        // Verificar permisos: solo administradores pueden desincorporar bienes
         if (! auth()->user()->canDeleteData()) {
-            if (request()->expectsJson()) {
-                return response()->json(['message' => 'No tienes permisos para eliminar datos del sistema.'], 403);
-            }
-
-            abort(403, 'No tienes permisos para eliminar datos del sistema.');
+            return response()->json(['message' => 'No tienes permisos para desincorporar bienes.'], 403);
         }
 
-        if ($bien->fotografia && ! str_starts_with($bien->fotografia, 'http')) {
-            Storage::disk('public')->delete($bien->fotografia);
-        }
+        // Registrar movimiento de desincorporación
+        \App\Models\Movimiento::create([
+            'bien_id' => $bien->id,
+            'tipo' => 'desincorporación',
+            'descripcion' => 'Bien desincorporado',
+            'usuario_id' => auth()->id(),
+        ]);
 
-        // Archivar en eliminados antes de borrar; el observer registra la baja en deleting()
-        \App\Services\EliminadosService::archiveModel($bien, auth()->id());
-        $bien->delete();
+        // Marcar el bien como desincorporado
+        $bien->update(['estado' => 'desincorporado']);
 
         return redirect()
             ->route('bienes.index')
-            ->with('success', 'Bien eliminado correctamente.');
+            ->with('success', 'Bien desincorporado correctamente.');
     }
         public function galeriaCompleta()
     {
