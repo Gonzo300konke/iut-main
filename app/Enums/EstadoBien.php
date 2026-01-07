@@ -6,7 +6,8 @@ enum EstadoBien: string
 {
     case DANADO = 'DAÑADO';
     case ACTIVO = 'ACTIVO';
-    case EN_REPARACION = 'EN_REPARACION';
+    // Usamos EN_MANTENIMIENTO como valor almacenado en BD
+    case EN_MANTENIMIENTO = 'EN_MANTENIMIENTO';
     case EN_CAMINO = 'EN_CAMINO';
     case EXTRAVIADO = 'EXTRAVIADO';
 
@@ -16,7 +17,7 @@ enum EstadoBien: string
         return match ($this) {
             self::DANADO => 'Dañado',
             self::ACTIVO => 'Activo',
-            self::EN_REPARACION => 'En reparación',
+            self::EN_MANTENIMIENTO => 'En mantenimiento',
             self::EN_CAMINO => 'En camino',
             self::EXTRAVIADO => 'Extraviado',
         };

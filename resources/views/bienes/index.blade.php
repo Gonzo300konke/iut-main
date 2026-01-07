@@ -326,7 +326,7 @@
                                 $estadoColor = match($estadoValor) {
                                     \App\Enums\EstadoBien::ACTIVO->value => 'bg-green-100 text-green-800',
                                     \App\Enums\EstadoBien::DANADO->value => 'bg-red-100 text-red-800',
-                                    \App\Enums\EstadoBien::EN_REPARACION->value => 'bg-yellow-100 text-yellow-800',
+                                    \App\Enums\EstadoBien::EN_MANTENIMIENTO->value => 'bg-yellow-100 text-yellow-800',
                                     \App\Enums\EstadoBien::EN_CAMINO->value => 'bg-blue-100 text-blue-800',
                                     \App\Enums\EstadoBien::EXTRAVIADO->value => 'bg-gray-200 text-gray-900',
                                     default => 'bg-gray-100 text-gray-700',

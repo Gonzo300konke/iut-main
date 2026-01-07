@@ -4,16 +4,22 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\TipoResponsable;
+use Illuminate\Support\Facades\DB;
 
 class TipoResponsableSeeder extends Seeder
 {
     public function run(): void
     {
-        $tipos = ['Obrero', 'Docente', 'Administrativo'];
+        $tipos = [
+            'Responsable Patrimonial Primario',
+            'Responsable Patrimonial por Uso',
+            'Obrero',
+            'Docente',
+            'Administrativo'
+        ];
 
         foreach ($tipos as $nombre) {
-            TipoResponsable::firstOrCreate(['nombre' => $nombre]);
+            DB::table('tipos_responsables')->updateOrInsert(['nombre' => $nombre]);
         }
     }
 }
