@@ -141,9 +141,13 @@ class ReporteController extends Controller
             ->groupBy('tipo_bien')
             ->get()
             ->mapWithKeys(function ($item) {
-                $tipo = TipoBien::tryFrom($item->tipo_bien);
-                $label = $tipo ? $tipo->label() : $item->tipo_bien;
-                return [$label => $item->count];
+                $tipo = $item->tipo_bien instanceof \App\Enums\TipoBien
+                    ? $item->tipo_bien
+                    : \App\Enums\TipoBien::tryFrom($item->tipo_bien);
+
+                $label = $tipo ? $tipo->label() : ($item->tipo_bien->value ?? (string) $item->tipo_bien);
+
+                return [(string) $label => (int) $item->count];
             })
             ->toArray();
 
@@ -152,9 +156,13 @@ class ReporteController extends Controller
             ->groupBy('estado')
             ->get()
             ->mapWithKeys(function ($item) {
-                $estado = EstadoBien::tryFrom($item->estado);
-                $label = $estado ? $estado->label() : $item->estado;
-                return [$label => $item->count];
+                $estado = $item->estado instanceof \App\Enums\EstadoBien
+                    ? $item->estado
+                    : \App\Enums\EstadoBien::tryFrom($item->estado);
+
+                $label = $estado ? $estado->label() : ($item->estado->value ?? (string) $item->estado);
+
+                return [(string) $label => (int) $item->count];
             })
             ->toArray();
 
@@ -163,7 +171,9 @@ class ReporteController extends Controller
             ->groupBy('mes')
             ->orderBy('mes')
             ->get()
-            ->pluck('count', 'mes')
+            ->mapWithKeys(function ($item) {
+                return [(string) $item->mes => (int) $item->count];
+            })
             ->toArray();
 
         return view('reportes.graficas', compact('bienesPorTipo', 'bienesPorEstado', 'bienesPorRegistro'));
