@@ -160,7 +160,7 @@ class ReporteController extends Controller
                     ? $item->estado
                     : \App\Enums\EstadoBien::tryFrom($item->estado);
 
-                $label = $estado ? $estado->label() : ($item->estado->value ?? (string) $item->estado);
+                $label = $estado ? $estado->label() : ((is_object($item->estado) && method_exists($item->estado, 'value')) ? $item->estado->value : (string) $item->estado);
 
                 return [(string) $label => (int) $item->count];
             })

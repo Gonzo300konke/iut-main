@@ -65,7 +65,7 @@ class FpdfReportService
             $row = [
                 (string) ($bien->codigo ?? ''),
                 $this->truncate((string) ($bien->descripcion ?? ''), 70),
-                (string) ($bien->estado ?? ''),
+                (string) ($bien->estado instanceof \App\Enums\EstadoBien ? $bien->estado->label() : ($bien->estado ?? '')),
                 (string) optional($bien->dependencia)->nombre,
                 (string) optional(optional($bien->dependencia)->unidadAdministradora)->nombre,
                 (string) optional(optional(optional($bien->dependencia)->unidadAdministradora)->organismo)->nombre,
