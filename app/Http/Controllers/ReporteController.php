@@ -134,50 +134,66 @@ class ReporteController extends Controller
         return view('reportes.index', compact('reportTypes'));
     }
 
-    public function graficas()
-    {
-        // Datos para gráfico de bienes por tipo
-        $bienesPorTipo = Bien::selectRaw('tipo_bien, COUNT(*) as count')
-            ->groupBy('tipo_bien')
-            ->get()
-            ->mapWithKeys(function ($item) {
-                $tipo = $item->tipo_bien instanceof \App\Enums\TipoBien
-                    ? $item->tipo_bien
-                    : \App\Enums\TipoBien::tryFrom($item->tipo_bien);
 
-                $label = $tipo ? $tipo->label() : ($item->tipo_bien->value ?? (string) $item->tipo_bien);
 
-                return [(string) $label => (int) $item->count];
-            })
-            ->toArray();
+public function graficas()
+{
+    // Bienes por Tipo
+    $bienesPorTipo = Bien::selectRaw('tipo_bien, COUNT(*) as count')
+        ->groupBy('tipo_bien')
+        ->get()
+        ->mapWithKeys(function ($item) {
+            $tipo = $item->tipo_bien instanceof \App\Enums\TipoBien
+                ? $item->tipo_bien
+                : \App\Enums\TipoBien::tryFrom($item->tipo_bien);
 
-        // Datos para gráfico de bienes por estado
-        $bienesPorEstado = Bien::selectRaw('estado, COUNT(*) as count')
-            ->groupBy('estado')
-            ->get()
-            ->mapWithKeys(function ($item) {
-                $estado = $item->estado instanceof \App\Enums\EstadoBien
-                    ? $item->estado
-                    : \App\Enums\EstadoBien::tryFrom($item->estado);
+            $label = $tipo ? $tipo->label() : ($item->tipo_bien->value ?? (string) $item->tipo_bien);
+            return [(string) $label => (int) $item->count];
+        })
+        ->toArray();
 
-                $label = $estado ? $estado->label() : ((is_object($item->estado) && method_exists($item->estado, 'value')) ? $item->estado->value : (string) $item->estado);
+    // Bienes por Estado
+    $bienesPorEstado = Bien::selectRaw('estado, COUNT(*) as count')
+        ->groupBy('estado')
+        ->get()
+        ->mapWithKeys(function ($item) {
+            $estado = $item->estado instanceof \App\Enums\EstadoBien
+                ? $item->estado
+                : \App\Enums\EstadoBien::tryFrom($item->estado);
 
-                return [(string) $label => (int) $item->count];
-            })
-            ->toArray();
+            $label = $estado ? $estado->label() : ((is_object($item->estado) && method_exists($item->estado, 'value')) ? $item->estado->value : (string) $item->estado);
+            return [(string) $label => (int) $item->count];
+        })
+        ->toArray();
 
-        // Datos para gráfico de bienes por registro (por mes)
-        $bienesPorRegistro = Bien::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as mes, COUNT(*) as count')
-            ->groupBy('mes')
-            ->orderBy('mes')
-            ->get()
-            ->mapWithKeys(function ($item) {
-                return [(string) $item->mes => (int) $item->count];
-            })
-            ->toArray();
+    // Bienes por Registro (Progresivo)
+    $bienesPorRegistro = Bien::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as mes, COUNT(*) as count')
+        ->groupBy('mes')
+        ->orderBy('mes')
+        ->get()
+        ->mapWithKeys(fn($item) => [(string) $item->mes => (int) $item->count])
+        ->toArray();
 
-        return view('reportes.graficas', compact('bienesPorTipo', 'bienesPorEstado', 'bienesPorRegistro'));
+    $acumulado = [];
+    $total = 0;
+    foreach ($bienesPorRegistro as $mes => $count) {
+        $total += $count;
+        $acumulado[$mes] = $total;
     }
+    $bienesPorRegistro = $acumulado;
+
+    // Bienes Desincorporados (desde tabla eliminados)
+    $bienesDesincorporados = Eliminado::selectRaw('DATE_FORMAT(deleted_at, "%Y-%m") as mes, COUNT(*) as count')
+        ->groupBy('mes')
+        ->orderBy('mes')
+        ->get()
+        ->mapWithKeys(fn($item) => [(string) $item->mes => (int) $item->count])
+        ->toArray();
+
+    return view('reportes.graficas', compact('bienesPorTipo', 'bienesPorEstado', 'bienesPorRegistro', 'bienesDesincorporados'));
+}
+
+
 
     /**
      * Punto único para generar los distintos PDFs de reportes según el tipo solicitado.

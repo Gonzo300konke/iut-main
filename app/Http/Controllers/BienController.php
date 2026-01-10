@@ -474,7 +474,8 @@ private function procesarFotografia(Request $request, ?Bien $bien = null): ?stri
             ->route('bienes.index')
             ->with('success', 'Bien desincorporado correctamente.');
     }
-        public function galeriaCompleta()
+
+    public function galeriaCompleta()
     {
         // Recuperamos todos los bienes que tienen una fotografía adjunta
         $bienesConFoto = Bien::whereNotNull('fotografia')

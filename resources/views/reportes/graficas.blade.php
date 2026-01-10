@@ -8,42 +8,46 @@
         <div>
             <h1 class="text-3xl font-bold text-gray-800">Gráficas</h1>
             <p class="text-gray-600 mt-2 max-w-2xl">
-                Visualización gráfica de los bienes por tipo, estado y registro.
+                Visualización gráfica de los bienes por tipo, estado, registro y desincorporación.
             </p>
         </div>
     </div>
 
-    <div class="grid gap-8 md:grid-cols-1 xl:grid-cols-1">
+    <div class="grid gap-8 md:grid-cols-2 xl:grid-cols-2">
         <!-- Gráfico de Bienes por Tipo -->
         <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
             <h2 class="text-xl font-semibold text-gray-800 mb-4">Bienes por Tipo</h2>
-            <canvas id="chartTipo" width="400" height="200"></canvas>
+            <canvas id="chartTipo" class="w-96 h-56"></canvas>
         </div>
 
         <!-- Gráfico de Bienes por Estado -->
         <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
             <h2 class="text-xl font-semibold text-gray-800 mb-4">Bienes por Estado</h2>
-            <canvas id="chartEstado" width="400" height="200"></canvas>
+            <canvas id="chartEstado" class="w-full h-64"></canvas>
         </div>
 
-        <!-- Gráfico de Bienes por Registro -->
-        <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Bienes por Registro (Mensual)</h2>
-            <canvas id="chartRegistro" width="400" height="200"></canvas>
+        <!-- Gráfico de Bienes por Registro (Progresivo) -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6 md:col-span-2">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Bienes por Registro (Progresivo)</h2>
+            <canvas id="chartRegistro" class="w-full h-64"></canvas>
+        </div>
+
+        <!-- Gráfico de Bienes Desincorporados -->
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-6 md:col-span-2">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Bienes Desincorporados</h2>
+            <canvas id="chartDesincorporados" class="w-full h-64"></canvas>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Datos para el gráfico de tipos
+    // Bienes por Tipo
     const dataTipo = @json($bienesPorTipo);
     const labelsTipo = Object.keys(dataTipo);
     const valuesTipo = Object.values(dataTipo);
 
-    // Gráfico de Bienes por Tipo
-    const ctxTipo = document.getElementById('chartTipo').getContext('2d');
-    new Chart(ctxTipo, {
+    new Chart(document.getElementById('chartTipo').getContext('2d'), {
         type: 'pie',
         data: {
             labels: labelsTipo,
@@ -70,27 +74,21 @@
             }]
         },
         options: {
-            responsive: true,
+            responsive: false,
+            maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'top',
-                },
-                title: {
-                    display: true,
-                    text: 'Distribución de Bienes por Tipo'
-                }
+                legend: { position: 'top' },
+                title: { display: true, text: 'Distribución de Bienes por Tipo' }
             }
         }
     });
 
-    // Datos para el gráfico de estados
+    // Bienes por Estado
     const dataEstado = @json($bienesPorEstado);
     const labelsEstado = Object.keys(dataEstado);
     const valuesEstado = Object.values(dataEstado);
 
-    // Gráfico de Bienes por Estado
-    const ctxEstado = document.getElementById('chartEstado').getContext('2d');
-    new Chart(ctxEstado, {
+    new Chart(document.getElementById('chartEstado').getContext('2d'), {
         type: 'bar',
         data: {
             labels: labelsEstado,
@@ -103,61 +101,77 @@
             }]
         },
         options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            },
+            responsive: false,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } },
             plugins: {
-                legend: {
-                    position: 'top',
-                },
-                title: {
-                    display: true,
-                    text: 'Bienes por Estado'
-                }
+                legend: { position: 'top' },
+                title: { display: true, text: 'Bienes por Estado' }
             }
         }
     });
 
-    // Datos para el gráfico de registro
+    // Bienes por Registro (Progresivo)
     const dataRegistro = @json($bienesPorRegistro);
     const labelsRegistro = Object.keys(dataRegistro);
     const valuesRegistro = Object.values(dataRegistro);
 
-    // Gráfico de Bienes por Registro
-    const ctxRegistro = document.getElementById('chartRegistro').getContext('2d');
-    new Chart(ctxRegistro, {
+    new Chart(document.getElementById('chartRegistro').getContext('2d'), {
         type: 'line',
         data: {
             labels: labelsRegistro,
             datasets: [{
-                label: 'Cantidad Registrada',
+                label: 'Cantidad Acumulada',
                 data: valuesRegistro,
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderColor: 'rgba(75, 192, 192, 1)',
                 borderWidth: 2,
-                fill: true
+                fill: true,
+                tension: 0.3
             }]
         },
         options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            },
+            responsive: false,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } },
             plugins: {
-                legend: {
-                    position: 'top',
-                },
-                title: {
-                    display: true,
-                    text: 'Registro de Bienes por Mes'
-                }
+                legend: { position: 'top' },
+                title: { display: true, text: 'Registro progresivo de Bienes por Mes' }
+            }
+        }
+    });
+
+    // Bienes Desincorporados
+    const dataDesincorporados = @json($bienesDesincorporados);
+    const labelsDesincorporados = Object.keys(dataDesincorporados);
+    const valuesDesincorporados = Object.values(dataDesincorporados);
+
+    new Chart(document.getElementById('chartDesincorporados').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labelsDesincorporados,
+            datasets: [{
+                label: 'Cantidad Desincorporada',
+                data: valuesDesincorporados,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } },
+            plugins: {
+                legend: { position: 'top' },
+                title: { display: true, text: 'Bienes Desincorporados por Mes' }
             }
         }
     });
 </script>
 @endsection
+
+
+
