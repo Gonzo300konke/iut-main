@@ -136,62 +136,118 @@ class ReporteController extends Controller
 
 
 
-public function graficas()
-{
-    // Bienes por Tipo
-    $bienesPorTipo = Bien::selectRaw('tipo_bien, COUNT(*) as count')
-        ->groupBy('tipo_bien')
-        ->get()
-        ->mapWithKeys(function ($item) {
-            $tipo = $item->tipo_bien instanceof \App\Enums\TipoBien
-                ? $item->tipo_bien
-                : \App\Enums\TipoBien::tryFrom($item->tipo_bien);
 
-            $label = $tipo ? $tipo->label() : ($item->tipo_bien->value ?? (string) $item->tipo_bien);
-            return [(string) $label => (int) $item->count];
-        })
-        ->toArray();
 
-    // Bienes por Estado
-    $bienesPorEstado = Bien::selectRaw('estado, COUNT(*) as count')
-        ->groupBy('estado')
-        ->get()
-        ->mapWithKeys(function ($item) {
-            $estado = $item->estado instanceof \App\Enums\EstadoBien
-                ? $item->estado
-                : \App\Enums\EstadoBien::tryFrom($item->estado);
+    public function graficas()
+    {
+        // =====================================================
+        // 1. Bienes por Tipo
+        // =====================================================
+        $bienesPorTipo = Bien::selectRaw('tipo_bien, COUNT(*) as count')
+            ->groupBy('tipo_bien')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $tipo = $item->tipo_bien instanceof \App\Enums\TipoBien
+                    ? $item->tipo_bien
+                    : \App\Enums\TipoBien::tryFrom($item->tipo_bien);
 
-            $label = $estado ? $estado->label() : ((is_object($item->estado) && method_exists($item->estado, 'value')) ? $item->estado->value : (string) $item->estado);
-            return [(string) $label => (int) $item->count];
-        })
-        ->toArray();
+                $label = $tipo
+                    ? $tipo->label()
+                    : ($item->tipo_bien->value ?? (string) $item->tipo_bien);
 
-    // Bienes por Registro (Progresivo)
-    $bienesPorRegistro = Bien::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as mes, COUNT(*) as count')
-        ->groupBy('mes')
-        ->orderBy('mes')
-        ->get()
-        ->mapWithKeys(fn($item) => [(string) $item->mes => (int) $item->count])
-        ->toArray();
+                return [(string) $label => (int) $item->count];
+            })
+            ->toArray();
 
-    $acumulado = [];
-    $total = 0;
-    foreach ($bienesPorRegistro as $mes => $count) {
-        $total += $count;
-        $acumulado[$mes] = $total;
+        // =====================================================
+        // 2. Bienes por Estado
+        // =====================================================
+        $bienesPorEstado = Bien::selectRaw('estado, COUNT(*) as count')
+            ->groupBy('estado')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                $estado = $item->estado instanceof \App\Enums\EstadoBien
+                    ? $item->estado
+                    : \App\Enums\EstadoBien::tryFrom($item->estado);
+
+                $label = $estado
+                    ? $estado->label()
+                    : (string) $item->estado;
+
+                return [(string) $label => (int) $item->count];
+            })
+            ->toArray();
+
+        // =====================================================
+        // 3. Bienes por Registro (Progresivo)
+        // =====================================================
+        $bienesPorRegistro = Bien::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as mes, COUNT(*) as count')
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get()
+            ->mapWithKeys(fn($item) => [(string) $item->mes => (int) $item->count])
+            ->toArray();
+
+        $acumulado = [];
+        $total = 0;
+        foreach ($bienesPorRegistro as $mes => $count) {
+            $total += $count;
+            $acumulado[$mes] = $total;
+        }
+        $bienesPorRegistro = $acumulado;
+
+        // =====================================================
+        // 4. Bienes Desincorporados
+        // =====================================================
+        $bienesDesincorporados = Eliminado::selectRaw('DATE_FORMAT(deleted_at, "%Y-%m") as mes, COUNT(*) as count')
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get()
+            ->mapWithKeys(fn($item) => [(string) $item->mes => (int) $item->count])
+            ->toArray();
+
+        // =====================================================
+        // 5. Bienes por Dependencia (DIRECTO)
+        // =====================================================
+
+
+        // --- Registro de Organismos ---
+        $registroOrganismos = Organismo::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as mes, COUNT(*) as count')
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get()
+            ->mapWithKeys(fn($item) => [(string) $item->mes => (int) $item->count])
+            ->toArray();
+
+        // --- Registro de Unidades Administradoras ---
+        $registroUnidades = UnidadAdministradora::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as mes, COUNT(*) as count')
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get()
+            ->mapWithKeys(fn($item) => [(string) $item->mes => (int) $item->count])
+            ->toArray();
+
+        // --- Registro de Dependencias ---
+        $registroDependencias = Dependencia::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as mes, COUNT(*) as count')
+            ->groupBy('mes')
+            ->orderBy('mes')
+            ->get()
+            ->mapWithKeys(fn($item) => [(string) $item->mes => (int) $item->count])
+            ->toArray();
+
+
+        return view('reportes.graficas', compact(
+            'bienesPorTipo',
+            'bienesPorEstado',
+            'bienesPorRegistro',
+            'bienesDesincorporados',
+            'registroOrganismos',
+            'registroUnidades',
+            'registroDependencias'
+        ));
+
     }
-    $bienesPorRegistro = $acumulado;
 
-    // Bienes Desincorporados (desde tabla eliminados)
-    $bienesDesincorporados = Eliminado::selectRaw('DATE_FORMAT(deleted_at, "%Y-%m") as mes, COUNT(*) as count')
-        ->groupBy('mes')
-        ->orderBy('mes')
-        ->get()
-        ->mapWithKeys(fn($item) => [(string) $item->mes => (int) $item->count])
-        ->toArray();
-
-    return view('reportes.graficas', compact('bienesPorTipo', 'bienesPorEstado', 'bienesPorRegistro', 'bienesDesincorporados'));
-}
 
 
 

@@ -5,43 +5,53 @@
 @section('content')
 <div class="max-w-2xl mx-auto">
     <div class="bg-white shadow rounded-lg p-6">
-            <h1 class="text-2xl font-bold text-gray-800 mb-6">Crear Nuevo Organismo</h1>
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Crear Nuevo Organismo</h1>
 
-            @if ($errors->any())
-                <div class="mb-4 rounded-md bg-red-100 border border-red-300 p-4">
-                    <ul class="text-sm text-red-800">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+        <form action="{{ route('organismos.store') }}" method="POST" class="space-y-6" novalidate>
+            @csrf
 
-            <form action="{{ route('organismos.store') }}" method="POST" class="space-y-6">
-                @csrf
+            <div>
+                <label for="codigo" class="block text-sm font-semibold text-gray-700 mb-2">Código</label>
+                <input type="text" name="codigo" id="codigo"
+                       value="{{ old('codigo') }}"
+                       placeholder="Ej: ORG-001"
+                       class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
 
-                <div>
-                    <x-form-input id="codigo" name="codigo" label="Código" :value="old('codigo')" required placeholder="Ej: ORG-001" help="Código único del organismo" />
-                </div>
+                @error('codigo')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+                <p class="text-gray-500 text-xs mt-2">Código único del organismo (solo números y guiones).</p>
+            </div>
 
-                <div>
-                    <x-form-input name="nombre" label="Nombre" :value="old('nombre')" required placeholder="Nombre del organismo" help="Nombre completo del organismo" />
-                </div>
+            <div>
+                <label for="nombre" class="block text-sm font-semibold text-gray-700 mb-2">Nombre</label>
+                <input type="text" name="nombre" id="nombre"
+                       value="{{ old('nombre') }}"
+                       placeholder="Nombre del organismo"
+                       class="w-full px-4 py-3 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
 
-                <div class="flex gap-4">
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                        Guardar
-                    </button>
-                    <a href="{{ route('organismos.index') }}" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400">
-                        Cancelar
-                    </a>
-                </div>
-            </form>
-        </div>
+                @error('nombre')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+                <p class="text-gray-500 text-xs mt-2">Nombre completo del organismo.</p>
+            </div>
+
+            <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+                <a href="{{ route('organismos.index') }}"
+                   class="px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition duration-200">
+                    ✗ Cancelar
+                </a>
+                <button type="submit"
+                        class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:shadow-lg transition duration-200">
+                    ✓ Guardar Organismo
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 <script>
+    // Restricción para que solo acepte números y guiones
     document.getElementById('codigo').addEventListener('input', function (e) {
         const regex = /^[0-9\-]*$/;
         if (!regex.test(e.target.value)) {

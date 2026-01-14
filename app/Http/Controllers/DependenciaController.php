@@ -31,19 +31,35 @@ class DependenciaController extends Controller
      * Guardar una nueva dependencia.
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'unidad_administradora_id' => ['required', 'exists:unidades_administradoras,id'],
-            'codigo' => ['required', 'string', 'max:50', 'unique:dependencias,codigo'],
-            'nombre' => ['required', 'string', 'max:255'],
-            'responsable_id' => ['nullable', 'exists:responsables,id'],
-        ]);
+{
+    $validated = $request->validate([
+        'unidad_administradora_id' => ['required', 'exists:unidades_administradoras,id'],
+        'codigo' => ['required', 'string', 'max:50', 'unique:dependencias,codigo'],
+        'nombre' => ['required', 'string', 'max:255'],
+        'responsable_id' => ['nullable', 'exists:responsables,id'],
+    ], [
+        // Mensajes para la Unidad Administradora superior
+        'unidad_administradora_id.required' => 'Debe seleccionar una unidad administradora.',
+        'unidad_administradora_id.exists'   => 'La unidad administradora seleccionada no es válida.',
 
-        $dependencia = Dependencia::create($validated);
+        // Mensajes para el Código de la dependencia
+        'codigo.required' => 'El código de la dependencia es obligatorio.',
+        'codigo.unique'   => 'Este código ya ha sido asignado a otra dependencia.',
+        'codigo.max'      => 'El código no debe exceder los 50 caracteres.',
 
-        return redirect()->route('dependencias.index')
-            ->with('success', 'Dependencia creada correctamente');
-    }
+        // Mensajes para el Nombre
+        'nombre.required' => 'El nombre de la dependencia es obligatorio.',
+        'nombre.max'      => 'El nombre es demasiado largo (máximo 255 caracteres).',
+
+        // Mensaje para el Responsable (es opcional/nullable según tu código)
+        'responsable_id.exists' => 'El responsable seleccionado no existe en el sistema.',
+    ]);
+
+    $dependencia = Dependencia::create($validated);
+
+    return redirect()->route('dependencias.index')
+        ->with('success', 'Dependencia creada correctamente');
+}
 
     /**
      * Mostrar formulario de creación.

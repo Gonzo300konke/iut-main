@@ -130,239 +130,62 @@
     const cedulaInput = document.getElementById('cedula');
     const cedulaError = document.getElementById('cedula-error');
 
+    // --- LÓGICA DE CÉDULA ---
     cedulaInput.addEventListener('input', function(e) {
         let value = e.target.value.toUpperCase();
-
-        // Remover caracteres que no sean V, - y números
         value = value.replace(/[^V0-9\-]/g, '');
 
-        // Si comienza con V, procesarlo con el formato correcto
         if (value.startsWith('V')) {
-            // Extraer solo los números después de V
             const numbers = value.substring(1).replace(/[^0-9]/g, '');
-
-            if (numbers.length === 0) {
-                value = 'V-';
-            } else if (numbers.length <= 2) {
-                value = 'V-' + numbers;
-            } else if (numbers.length <= 5) {
-                value = 'V-' + numbers.substring(0, 2) + '.' + numbers.substring(2);
-            } else if (numbers.length <= 8) {
-                value = 'V-' + numbers.substring(0, 2) + '.' + numbers.substring(2, 5) + '.' + numbers.substring(5);
-            } else {
-                // Máximo 8 dígitos
-                value = 'V-' + numbers.substring(0, 2) + '.' + numbers.substring(2, 5) + '.' + numbers.substring(5, 8);
-            }
+            if (numbers.length === 0) value = 'V-';
+            else if (numbers.length <= 2) value = 'V-' + numbers;
+            else if (numbers.length <= 5) value = 'V-' + numbers.substring(0, 2) + '.' + numbers.substring(2);
+            else if (numbers.length <= 8) value = 'V-' + numbers.substring(0, 2) + '.' + numbers.substring(2, 5) + '.' + numbers.substring(5);
+            else value = 'V-' + numbers.substring(0, 2) + '.' + numbers.substring(2, 5) + '.' + numbers.substring(5, 8);
         } else {
             value = 'V-';
         }
-
         e.target.value = value;
         validarCedula(value);
     });
 
-    cedulaInput.addEventListener('blur', function(e) {
-        validarCedula(e.target.value);
-    });
-
     function validarCedula(cedula) {
         const regex = /^V-\d{2}\.\d{3}\.\d{3}$/;
-
         if (cedula.trim() === '' || cedula === 'V-') {
-            cedulaError.textContent = '';
             cedulaError.style.display = 'none';
             return true;
         }
-
         if (!regex.test(cedula)) {
             cedulaError.textContent = 'Formato inválido. Debe ser: V-XX.XXX.XXX';
             cedulaError.style.display = 'block';
             return false;
         }
-
-        cedulaError.textContent = '';
         cedulaError.style.display = 'none';
         return true;
     }
 
-    // Validar al enviar el formulario
-    document.querySelector('form').addEventListener('submit', function(e) {
-        const cedula = cedulaInput.value;
-        if (!validarCedula(cedula)) {
-            e.preventDefault();
-            cedulaInput.focus();
-        }
-    });
-
-    // Si el creador es admin, el formulario incluye un <select name="rol_id"> y no es necesario
-    // mantener la lógica previa de radios/ID hardcodeados en JS.
-
-    // Elementos de entrada
+    // --- ELEMENTOS Y VALIDACIONES ---
     const nombreInput = document.getElementById('nombre');
     const apellidoInput = document.getElementById('apellido');
     const correoInput = document.getElementById('correo');
     const passwordInput = document.getElementById('password');
     const guardarBtn = document.getElementById('guardar-btn');
 
-    // Elementos de error
-    const cedulaErrorEl = document.getElementById('cedula-error');
     const nombreErrorEl = document.getElementById('nombre-error');
     const apellidoErrorEl = document.getElementById('apellido-error');
     const correoErrorEl = document.getElementById('correo-error');
     const passwordErrorEl = document.getElementById('password-error');
 
-    // Funciones de validación individual
-    function validarNombre() {
-        const nombre = nombreInput.value.trim();
-        const valido = nombre.length > 0;
-        if (!valido && nombreInput.value !== '') {
-            nombreErrorEl.textContent = 'El nombre es requerido';
-            nombreErrorEl.style.display = 'block';
-        } else {
-            nombreErrorEl.style.display = 'none';
-        }
-        return valido;
-    }
-
-    function validarApellido() {
-        const apellido = apellidoInput.value.trim();
-        const valido = apellido.length > 0;
-        if (!valido && apellidoInput.value !== '') {
-            apellidoErrorEl.textContent = 'El apellido es requerido';
-            apellidoErrorEl.style.display = 'block';
-        } else {
-            apellidoErrorEl.style.display = 'none';
-        }
-        return valido;
-    }
-
-    function validarCorreo() {
-        const correo = correoInput.value.trim();
-        const esValido = correoInput.checkValidity() && correo.length > 0;
-
-        if (correo.length > 0 && !esValido) {
-            correoErrorEl.textContent = 'Correo inválido. Usa formato: usuario@ejemplo.com';
-            correoErrorEl.style.display = 'block';
-        } else {
-            correoErrorEl.style.display = 'none';
-        }
-        return esValido;
-    }
-
-    function validarPassword() {
-        const password = passwordInput.value;
-        const esValido = password.length >= 8;
-
-        if (password.length > 0 && !esValido) {
-            passwordErrorEl.textContent = `La contraseña debe tener al menos 8 caracteres (${password.length}/8)`;
-            passwordErrorEl.style.display = 'block';
-        } else {
-            passwordErrorEl.style.display = 'none';
-        }
-        return esValido;
-    }
-
-    // Eventos para validación en tiempo real
-    nombreInput.addEventListener('input', validarNombre);
-    nombreInput.addEventListener('blur', validarNombre);
-
-    apellidoInput.addEventListener('input', validarApellido);
-    apellidoInput.addEventListener('blur', validarApellido);
-
-    correoInput.addEventListener('input', validarCorreo);
-    correoInput.addEventListener('blur', validarCorreo);
-
-    passwordInput.addEventListener('input', validarPassword);
-    passwordInput.addEventListener('blur', validarPassword);
-
-    cedulaInput.addEventListener('input', function() {
-        if (cedulaInput.value.trim() !== '' && !cedulaErrorEl) {
-            validarCedula(cedulaInput.value);
-        }
-    });
-    cedulaInput.addEventListener('blur', function() {
-        validarCedula(cedulaInput.value);
-    });
-
-    // Envío del formulario
+    // --- ENVÍO ASÍNCRONO ---
     document.querySelector('form').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        // Validar todos los campos
-        const cedula = cedulaInput.value.trim();
-        const nombre = nombreInput.value.trim();
-        const apellido = apellidoInput.value.trim();
-        const correo = correoInput.value.trim();
-        const password = passwordInput.value;
-
-        // Mostrar errores si existen
-        let erroresEncontrados = [];
-
-        if (!cedula || cedula === 'V-') {
-            cedulaErrorEl.textContent = 'La cédula es requerida';
-            cedulaErrorEl.style.display = 'block';
-            erroresEncontrados.push('cedula');
-        } else if (!/^V-\d{2}\.\d{3}\.\d{3}$/.test(cedula)) {
-            cedulaErrorEl.textContent = 'Formato de cédula inválido. Debe ser: V-XX.XXX.XXX';
-            cedulaErrorEl.style.display = 'block';
-            erroresEncontrados.push('cedula');
-        } else {
-            cedulaErrorEl.style.display = 'none';
-        }
-
-        if (!nombre) {
-            nombreErrorEl.textContent = 'El nombre es requerido';
-            nombreErrorEl.style.display = 'block';
-            erroresEncontrados.push('nombre');
-        } else {
-            nombreErrorEl.style.display = 'none';
-        }
-
-        if (!apellido) {
-            apellidoErrorEl.textContent = 'El apellido es requerido';
-            apellidoErrorEl.style.display = 'block';
-            erroresEncontrados.push('apellido');
-        } else {
-            apellidoErrorEl.style.display = 'none';
-        }
-
-        if (!correo) {
-            correoErrorEl.textContent = 'El correo es requerido';
-            correoErrorEl.style.display = 'block';
-            erroresEncontrados.push('correo');
-        } else if (!correoInput.checkValidity()) {
-            correoErrorEl.textContent = 'Correo inválido. Usa formato: usuario@ejemplo.com';
-            correoErrorEl.style.display = 'block';
-            erroresEncontrados.push('correo');
-        } else {
-            correoErrorEl.style.display = 'none';
-        }
-
-        if (!password) {
-            passwordErrorEl.textContent = 'La contraseña es requerida';
-            passwordErrorEl.style.display = 'block';
-            erroresEncontrados.push('password');
-        } else if (password.length < 8) {
-            passwordErrorEl.textContent = `La contraseña debe tener al menos 8 caracteres (${password.length}/8)`;
-            passwordErrorEl.style.display = 'block';
-            erroresEncontrados.push('password');
-        } else {
-            passwordErrorEl.style.display = 'none';
-        }
-
-        // Si hay errores, mostrar modal y no enviar
-        if (erroresEncontrados.length > 0) {
-            mostrarModal('error', '⚠ Errores en el Formulario', 'Por favor corrige los errores en rojo e intenta de nuevo.');
-            // Enfocar el primer campo con error
-            if (erroresEncontrados[0] === 'cedula') cedulaInput.focus();
-            else if (erroresEncontrados[0] === 'nombre') nombreInput.focus();
-            else if (erroresEncontrados[0] === 'apellido') apellidoInput.focus();
-            else if (erroresEncontrados[0] === 'correo') correoInput.focus();
-            else if (erroresEncontrados[0] === 'password') passwordInput.focus();
+        // Validación rápida antes de enviar
+        if (!validarCedula(cedulaInput.value)) {
+            cedulaInput.focus();
             return;
         }
 
-        // Si todo está bien, mostrar modal de carga y enviar
         mostrarModal('loading', 'Procesando...', 'Por favor espera mientras registramos al usuario.');
 
         try {
@@ -370,43 +193,23 @@
             const response = await fetch('{{ route("usuarios.store") }}', {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
 
             if (response.ok) {
                 mostrarModal('success', '✓ Éxito', 'El usuario ha sido registrado correctamente.');
                 guardarBtn.disabled = true;
-                setTimeout(() => {
-                    redirigirAListar();
-                }, 2000);
-            } else if (response.status === 422) {
-                // Error de validación
-                const errors = await response.json();
-                let errorMsg = 'Error en los datos ingresados:\n';
-
-                if (errors.errors.cedula) {
-                    errorMsg = errors.errors.cedula[0];
-                } else if (errors.errors.correo) {
-                    errorMsg = errors.errors.correo[0];
-                } else {
-                    errorMsg = Object.values(errors.errors).flat()[0];
-                }
-
-                mostrarModal('error', '⚠ Error de Validación', errorMsg);
-            } else if (response.status === 403) {
-                const data = await response.json();
-                mostrarModal('error', '🔒 Permiso Denegado', data.message || 'No tienes permisos para realizar esta acción.');
+                setTimeout(() => redirigirAListar(), 2000);
             } else {
-                mostrarModal('error', '❌ Error', 'Ocurrió un error al registrar el usuario. Intenta de nuevo.');
+                const data = await response.json();
+                mostrarModal('error', '⚠ Error', data.message || 'Error en los datos.');
             }
         } catch (error) {
-            console.error('Error:', error);
-            mostrarModal('error', '❌ Error de Red', 'Hubo un problema al conectarse con el servidor.');
+            mostrarModal('error', '❌ Error', 'Hubo un problema de conexión.');
         }
     });
 
+    // --- FUNCIÓN CORREGIDA (SIN COMPONENTES BLADE) ---
     function mostrarModal(tipo, titulo, mensaje) {
         const modal = document.getElementById('resultado-modal');
         const modalTitle = document.getElementById('modal-title');
@@ -419,50 +222,28 @@
         modalTitle.textContent = titulo;
         modalMessage.textContent = mensaje;
 
-        // Estilos según tipo
         if (tipo === 'success') {
-            modalIcon.innerHTML = '<x-heroicon-o-check class="w-6 h-6 text-green-500" />';
-            modalIcon.className = 'text-4xl flex-shrink-0 text-green-500 font-bold';
+            modalIcon.innerHTML = '<svg class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
             modalHeader.className = 'px-6 py-4 border-b bg-green-50';
             modalTitle.className = 'text-xl font-bold text-green-700';
             closeBtn.style.display = 'none';
             redirectBtn.style.display = 'inline-block';
         } else if (tipo === 'error') {
-            modalIcon.innerHTML = '<x-heroicon-o-x class="w-6 h-6 text-red-500" />';
-            modalIcon.className = 'text-4xl flex-shrink-0 text-red-500 font-bold';
+            modalIcon.innerHTML = '<svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
             modalHeader.className = 'px-6 py-4 border-b bg-red-50';
             modalTitle.className = 'text-xl font-bold text-red-700';
             closeBtn.style.display = 'inline-block';
             redirectBtn.style.display = 'none';
         } else if (tipo === 'loading') {
-            modalIcon.innerHTML = '<x-heroicon-o-refresh class="w-6 h-6 text-blue-500 animate-spin" />';
-            modalIcon.className = 'text-4xl flex-shrink-0 text-blue-500';
+            modalIcon.innerHTML = '<svg class="w-12 h-12 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>';
             modalHeader.className = 'px-6 py-4 border-b bg-blue-50';
             modalTitle.className = 'text-xl font-bold text-blue-700';
             closeBtn.style.display = 'none';
             redirectBtn.style.display = 'none';
         }
-
         modal.style.display = 'flex';
     }
 
-    function cerrarModal() {
-        document.getElementById('resultado-modal').style.display = 'none';
-    }
-
-    function redirigirAListar() {
-        window.location.href = '{{ route("usuarios.index") }}';
-    }
-
-    // Validar formulario al cargar
-    validarFormulario();
-</script>
-
-<script>
-    document.getElementById('codigo').addEventListener('input', function (e) {
-        const regex = /^[0-9\-]*$/;
-        if (!regex.test(e.target.value)) {
-            e.target.value = e.target.value.replace(/[^0-9\-]/g, '');
-        }
-    });
+    function cerrarModal() { document.getElementById('resultado-modal').style.display = 'none'; }
+    function redirigirAListar() { window.location.href = '{{ route("usuarios.index") }}'; }
 </script>

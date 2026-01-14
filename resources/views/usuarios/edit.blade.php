@@ -17,15 +17,15 @@
             </div>
         @endif
 
-        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-6">
+        <form action="{{ route('usuarios.update', $usuario->id) }}" method="POST" class="space-y-6" id="edit-user-form">
             @csrf
             @method('PUT')
 
             <div>
-          <label for="cedula" class="block text-sm font-medium text-gray-700">Cédula</label>
-          <input type="text" name="cedula" id="cedula" value="{{ old('cedula', $usuario->cedula) }}"
-              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              maxlength="20" @if(!auth()->user()->isAdmin()) readonly @endif>
+                <label for="cedula" class="block text-sm font-medium text-gray-700">Cédula</label>
+                <input type="text" name="cedula" id="cedula" value="{{ old('cedula', $usuario->cedula) }}"
+                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    maxlength="20" @if(!auth()->user()->isAdmin()) readonly @endif>
                 @error('cedula')
                     <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                 @enderror
@@ -40,18 +40,12 @@
                     <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
                     <input type="text" name="nombre" id="nombre" value="{{ old('nombre', $usuario->nombre) }}"
                            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('nombre')
-                        <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
 
                 <div>
                     <label for="apellido" class="block text-sm font-medium text-gray-700">Apellido</label>
                     <input type="text" name="apellido" id="apellido" value="{{ old('apellido', $usuario->apellido) }}"
                            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    @error('apellido')
-                        <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
             </div>
 
@@ -59,9 +53,6 @@
                 <label for="correo" class="block text-sm font-medium text-gray-700">Correo</label>
                 <input type="email" name="correo" id="correo" value="{{ old('correo', $usuario->correo) }}"
                        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                @error('correo')
-                    <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                @enderror
             </div>
 
             @if(auth()->user()->isAdmin())
@@ -74,9 +65,6 @@
                             </option>
                         @endforeach
                     </select>
-                    @error('rol_id')
-                        <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
             @endif
 
@@ -85,21 +73,15 @@
                 <input type="password" name="hash_password" id="hash_password"
                        class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                        placeholder="••••••••">
-                <p class="text-xs text-gray-500 mt-1">Mínimo 8 caracteres si deseas cambiar la contraseña</p>
-                @error('hash_password')
-                    <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-                @enderror
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Activo</label>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
                 <div class="flex items-center">
                     <input type="checkbox" name="activo" id="activo" value="1"
                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                            {{ $usuario->activo ? 'checked' : '' }}>
-                    <label for="activo" class="ml-2 block text-sm text-gray-700">
-                        Usuario activo
-                    </label>
+                    <label for="activo" class="ml-2 block text-sm text-gray-700">Usuario activo</label>
                 </div>
             </div>
 
@@ -115,62 +97,51 @@
     </div>
 </div>
 
-<!-- Modal de Resultado -->
 <div id="resultado-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display: none;">
-    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <!-- Encabezado -->
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden">
         <div id="modal-header" class="px-6 py-4 border-b">
             <h2 id="modal-title" class="text-xl font-bold"></h2>
         </div>
-
-        <!-- Contenido -->
-        <div class="px-6 py-4">
-            <div class="flex items-start gap-4">
-                <div id="modal-icon" class="text-4xl flex-shrink-0"></div>
-                <div>
-                    <p id="modal-message" class="text-gray-700 text-sm"></p>
-                </div>
+        <div class="px-6 py-6">
+            <div class="flex items-center gap-4">
+                <div id="modal-icon" class="flex-shrink-0"></div>
+                <p id="modal-message" class="text-gray-700"></p>
             </div>
         </div>
-
-        <!-- Botones -->
-        <div class="px-6 py-4 border-t flex gap-3 justify-end">
-            <button id="modal-redirect-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onclick="redirigirADetalle()">
-                Ver Detalles
-            </button>
+        <div class="px-6 py-4 border-t flex justify-end">
+            <button id="modal-btn" class="px-4 py-2 rounded-lg text-white font-medium"></button>
         </div>
     </div>
 </div>
 
-@endsection
-
 <script>
-    document.querySelector('form').addEventListener('submit', async function(e) {
+    document.getElementById('edit-user-form').addEventListener('submit', async function(e) {
         e.preventDefault();
+        const guardarBtn = document.getElementById('guardar-btn');
+        guardarBtn.disabled = true;
 
         try {
             const formData = new FormData(this);
-            const response = await fetch('{{ route("usuarios.update", $usuario->id) }}', {
-                method: 'POST',
+            const response = await fetch(this.action, {
+                method: 'POST', // Laravel maneja el _method PUT vía FormData
                 body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
 
             if (response.ok) {
                 mostrarModal('success', '¡Éxito!', 'El usuario ha sido actualizado correctamente.');
-                document.getElementById('guardar-btn').disabled = true;
             } else if (response.status === 422) {
                 const errors = await response.json();
                 const errorMsg = Object.values(errors.errors || {})[0]?.[0] || 'Error en los datos ingresados';
                 mostrarModal('error', 'Error de Validación', errorMsg);
+                guardarBtn.disabled = false;
             } else {
                 mostrarModal('error', 'Error', 'Ocurrió un error al actualizar el usuario.');
+                guardarBtn.disabled = false;
             }
         } catch (error) {
-            console.error('Error:', error);
-            mostrarModal('error', 'Error', 'Hubo un problema al conectarse con el servidor.');
+            mostrarModal('error', 'Error de Red', 'Hubo un problema al conectarse con el servidor.');
+            guardarBtn.disabled = false;
         }
     });
 
@@ -180,37 +151,28 @@
         const modalIcon = document.getElementById('modal-icon');
         const modalMessage = document.getElementById('modal-message');
         const modalHeader = document.getElementById('modal-header');
-        const redirectBtn = document.getElementById('modal-redirect-btn');
+        const modalBtn = document.getElementById('modal-btn');
 
         modalTitle.textContent = titulo;
         modalMessage.textContent = mensaje;
 
         if (tipo === 'success') {
-            modalIcon.innerHTML = '<x-heroicon-o-check class="w-6 h-6 text-green-500" />';
+            modalIcon.innerHTML = '<svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
             modalHeader.className = 'px-6 py-4 border-b bg-green-50';
             modalTitle.className = 'text-xl font-bold text-green-700';
-            redirectBtn.style.display = 'inline-block';
-        } else if (tipo === 'error') {
-            modalIcon.innerHTML = '<x-heroicon-o-x class="w-6 h-6 text-red-500" />';
+            modalBtn.textContent = 'Ver Detalles';
+            modalBtn.className = 'px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700';
+            modalBtn.onclick = () => window.location.href = '{{ route("usuarios.show", $usuario->id) }}';
+        } else {
+            modalIcon.innerHTML = '<svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
             modalHeader.className = 'px-6 py-4 border-b bg-red-50';
             modalTitle.className = 'text-xl font-bold text-red-700';
-            redirectBtn.textContent = 'Cerrar';
-            redirectBtn.onclick = function() {
-                document.getElementById('resultado-modal').style.display = 'none';
-            };
+            modalBtn.textContent = 'Cerrar';
+            modalBtn.className = 'px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700';
+            modalBtn.onclick = () => modal.style.display = 'none';
         }
 
         modal.style.display = 'flex';
     }
-
-    function redirigirADetalle() {
-        window.location.href = '{{ route("usuarios.show", $usuario->id) }}';
-    }
-
-    document.getElementById('codigo').addEventListener('input', function (e) {
-        const regex = /^[0-9\-]*$/;
-        if (!regex.test(e.target.value)) {
-            e.target.value = e.target.value.replace(/[^0-9\-]/g, '');
-        }
-    });
 </script>
+@endsection

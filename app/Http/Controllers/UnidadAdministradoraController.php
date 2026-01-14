@@ -46,17 +46,32 @@ class UnidadAdministradoraController extends Controller
      * Guardar una nueva Unidad Administradora.
      */
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'organismo_id' => ['required', 'exists:organismos,id'],
-            'codigo' => ['required', 'string', 'max:50', 'unique:unidades_administradoras,codigo'],
-            'nombre' => ['required', 'string', 'max:255'],
-        ]);
+{
+    $validated = $request->validate([
+        // Validamos que el ID exista en la tabla 'organismos'
+        'organismo_id' => ['required', 'exists:organismos,id'],
+        'codigo' => ['required', 'string', 'max:50', 'unique:unidades_administradoras,codigo'],
+        'nombre' => ['required', 'string', 'max:255'],
+    ], [
+        // Mensajes personalizados para el Organismo
+        'organismo_id.required' => 'Debe seleccionar un organismo.',
+        'organismo_id.exists'   => 'El organismo seleccionado no existe en nuestra base de datos.',
 
-        $unidad = UnidadAdministradora::create($validated);
+        // Mensajes para el Código de la unidad
+        'codigo.required' => 'El código de la unidad es obligatorio.',
+        'codigo.unique'   => 'Este código ya pertenece a otra unidad administradora.',
+        'codigo.max'      => 'El código es demasiado largo (máximo 50 caracteres).',
 
-        return redirect()->route('unidades.index')->with('success', 'Unidad creada correctamente');
-    }
+        // Mensajes para el Nombre de la unidad
+        'nombre.required' => 'El nombre de la unidad es obligatorio.',
+        'nombre.max'      => 'El nombre no puede superar los 255 caracteres.',
+    ]);
+
+    $unidad = UnidadAdministradora::create($validated);
+
+    return redirect()->route('unidades.index')
+        ->with('success', 'Unidad creada correctamente');
+}
 
     /**
      * Mostrar una Unidad Administradora específica.
