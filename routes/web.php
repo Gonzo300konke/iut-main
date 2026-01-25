@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Usuario;
 use App\Http\Controllers\Api\ResponsableController as ApiResponsableController;
+use App\Http\Controllers\Api\UsuarioImportController as ApiUsuarioImportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,10 +55,13 @@ Route::middleware(['auth', 'redirigir.rol', 'prevent-back'])->group(function () 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     // --- BIENES ---
+    // 1. Rutas específicas (DEBEN ir primero para evitar conflictos)
+    Route::get('/bienes/reporte', [BienController::class, 'generarReporte'])->name('bienes.reporte');
     Route::get('/bienes/galeria-completa', [BienController::class, 'galeriaCompleta'])->name('bienes.galeria');
-    Route::resource('bienes', BienController::class)->parameters(['bienes' => 'bien']);
     Route::get('bienes/{bien}/pdf', [BienController::class, 'exportPdf'])->name('bienes.pdf');
 
+    // 2. Ruta de recurso (Genera las rutas automáticas como bienes.index, bienes.show, etc.)
+    Route::resource('bienes', BienController::class)->parameters(['bienes' => 'bien']);
     // --- DEPENDENCIAS ---
     Route::resource('dependencias', DependenciaController::class)->parameters(['dependencias' => 'dependencia']);
     Route::get('dependencias/{dependencia}/pdf', [DependenciaController::class, 'exportPdf'])->name('dependencias.pdf');
@@ -90,4 +94,6 @@ Route::middleware(['auth', 'redirigir.rol', 'prevent-back'])->group(function () 
     // --- USUARIOS ---
     Route::resource('usuarios', UsuarioController::class)->parameters(['usuarios' => 'usuario']);
     Route::get('usuarios/{usuario}/pdf', [UsuarioController::class, 'exportPdf'])->name('usuarios.pdf');
+    // Importar usuario desde API (por cédula)
+    Route::post('usuarios/importar', [ApiUsuarioImportController::class, 'importarPorCedula'])->name('usuarios.importar');
 });

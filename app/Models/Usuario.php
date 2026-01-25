@@ -6,25 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Traits\GeneratesMovimiento;
 
-/**
- * Eloquent model Usuario.
- *
- * @property int $id
- * @property int $rol_id
- * @property bool $is_admin
- */
 class Usuario extends Authenticatable
 {
     use HasFactory, GeneratesMovimiento;
 
-    /**
-     * Tabla personalizada para el modelo de autenticación.
-     */
     protected $table = 'usuarios';
 
-    /**
-     * Atributos que pueden ser asignados masivamente.
-     */
     protected $fillable = [
         'rol_id',
         'cedula',
@@ -38,115 +25,53 @@ class Usuario extends Authenticatable
 
     protected $appends = ['nombre_completo'];
 
-    public function getNombreCompletoAttribute()
-    {
-        return trim($this->nombre.' '.$this->apellido);
-    }
+    protected $casts = [
+        'activo' => 'boolean',
+        'is_admin' => 'boolean',
+    ];
 
-    /**
-     * Atributos ocultos en serializaciones.
-     */
     protected $hidden = [
         'hash_password',
         'remember_token',
     ];
 
     /**
-     * Casts automáticos para atributos.
+     * Lógica de normalización centralizada
      */
-    protected $casts = [
-        'activo' => 'boolean',
-        'is_admin' => 'boolean',
-    ];
+    public static function normalizeCedula(?string $raw): string
+{
+    if (empty($raw)) return '';
+    $digits = preg_replace('/\D/', '', $raw); // Solo números
+    if (empty($digits)) return '';
 
-    /**
-     * Laravel usará este campo como contraseña.
-     */
-    public function getAuthPassword()
+    // Esto generará V-12.345.678 o V-7.123.456 correctamente
+    return 'V-' . number_format((int)$digits, 0, '', '.');
+}
+
+    public function getNombreCompletoAttribute()
     {
-        return $this->hash_password;
+        return trim($this->nombre.' '.$this->apellido);
     }
 
-    /**
-     * Laravel usará este campo como identificador de login.
-     */
-    public function getAuthIdentifierName()
-    {
-        return 'id'; // Cambiar a ID
-    }
+    public function getAuthPassword() { return $this->hash_password; }
+    public function getAuthIdentifierName() { return 'id'; }
 
-    /**
-     * Relación: Usuario pertenece a un Rol.
-     */
-    public function rol()
-    {
-        return $this->belongsTo(Rol::class);
-    }
+    public function rol() { return $this->belongsTo(Rol::class); }
+    public function reportes() { return $this->hasMany(Reporte::class); }
+    public function movimientos() { return $this->hasMany(Movimiento::class); }
 
-    /**
-     * Relación: Usuario tiene muchos Reportes.
-     */
-    public function reportes()
-    {
-        return $this->hasMany(Reporte::class);
-    }
-
-    /**
-     * Relación: Usuario tiene muchos Movimientos.
-     */
-    public function movimientos()
-    {
-        return $this->hasMany(Movimiento::class);
-    }
-
-    /**
-     * Verifica si el usuario es administrador.
-     */
-    // En Usuario.php
     public function isAdmin(): bool
     {
         return $this->is_admin === true && $this->activo === true;
     }
 
-    /**
-     * Verifica si el usuario puede eliminar datos del sistema.
-     * Solo administradores pueden eliminar datos (excepto otros administradores).
-     */
-    public function canDeleteData(): bool
-    {
-        return $this->isAdmin();
-    }
+    public function canDeleteData(): bool { return $this->isAdmin(); }
 
-    /**
-     * Verifica si el usuario puede eliminar a otro usuario.
-     * Solo administradores pueden eliminar usuarios, pero no pueden eliminarse a sí mismos
-     * ni a otros administradores.
-     */
     public function canDeleteUser(Usuario $userToDelete): bool
     {
-        // El usuario debe ser administrador
-        if (! $this->canDeleteData()) {
-            return false;
-        }
-
-        // No puede eliminarse a sí mismo
-        if ($this->id === $userToDelete->id) {
-            return false;
-        }
-
-        // No puede eliminar a otro administrador
-        if ($userToDelete->isAdmin()) {
-            return false;
-        }
-
+        if (!$this->canDeleteData()) return false;
+        if ($this->id === $userToDelete->id) return false;
+        if ($userToDelete->isAdmin()) return false;
         return true;
-    }
-
-    /**
-     * Verifica si el usuario puede crear nuevos administradores.
-     */
-    public function canCreateAdmin(): bool
-    {
-        return $this->isAdmin();
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers; // Único namespace permitido aquí
 
 use App\Enums\EstadoBien;
 use App\Enums\TipoBien;
@@ -8,14 +8,17 @@ use App\Models\Bien;
 use App\Models\Dependencia;
 use App\Models\Organismo;
 use App\Models\UnidadAdministradora;
+use App\Services\FpdfReportService; // IMPORTANTE: Importa tu servicio personalizado
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Codedge\Fpdf\Fpdf\Fpdf;
 
 class BienController extends Controller
 {
+    // ... rest of your code
     /**
      * Listar todos los bienes.
      */
@@ -171,28 +174,7 @@ public function index(Request $request)
             'tipo_bien' => ['required', Rule::enum(TipoBien::class)],
             'fecha_registro' => ['required', 'date'],
             // Campos dinámicos según tipo
-            'procesador' => ['nullable', 'string', 'max:255'],
-            'memoria' => ['nullable', 'string', 'max:255'],
-            'almacenamiento' => ['nullable', 'string', 'max:255'],
-            'pantalla' => ['nullable', 'string', 'max:255'],
-            'garantia' => ['nullable', 'string', 'max:255'],
-            'marca' => ['nullable', 'string', 'max:255'],
-            'modelo' => ['nullable', 'string', 'max:255'],
-            'anio' => ['nullable', 'string', 'max:255'],
-            'placa' => ['nullable', 'string', 'max:255'],
-            'motor' => ['nullable', 'string', 'max:255'],
-            'chasis' => ['nullable', 'string', 'max:255'],
-            'combustible' => ['nullable', 'string', 'max:255'],
-            'kilometraje' => ['nullable', 'string', 'max:255'],
-            'color' => ['nullable', 'string', 'max:255'],
-            'capacidad' => ['nullable', 'string', 'max:255'],
-            'cantidad_piezas' => ['nullable', 'string', 'max:255'],
-            'acabado' => ['nullable', 'string', 'max:255'],
-            'pisos' => ['nullable', 'string', 'max:255'],
-            'construccion' => ['nullable', 'string', 'max:255'],
-            'cantidad' => ['nullable', 'string', 'max:255'],
-            'presentacion' => ['nullable', 'string', 'max:255'],
-            'especificaciones' => ['nullable', 'string', 'max:1000'],
+
         ],
         [
             'dependencia_id.required' => 'La dependencia es requerida',
@@ -496,4 +478,53 @@ private function procesarFotografia(Request $request, ?Bien $bien = null): ?stri
         return view('bienes.galeria-completa', compact('imagenes'));
     }
 
+    /**
+     * Generar un reporte en PDF basado en los filtros aplicados.
+     */
+    public function generarReporte(Request $request)
+{
+    $validated = $request->validate([
+        'search' => ['nullable', 'string', 'max:255'],
+        'dependencias' => ['nullable', 'array'],
+        'dependencias.*' => ['integer'],
+        'estado' => ['nullable', 'array'],
+        'fecha_desde' => ['nullable', 'date'],
+        'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
+        'descripcion' => ['nullable', 'string', 'max:255'],
+        'codigo' => ['nullable', 'string', 'max:255'],
+    ]);
+
+    $query = Bien::with([
+        'dependencia.responsable',
+        'dependencia.unidadAdministradora.organismo',
+    ]);
+
+    // ... (Mantén aquí toda tu lógica de filtros if(!empty...))
+    if (!empty($validated['search'])) { $query->search($validated['search']); }
+    if (!empty($validated['descripcion'])) { $query->where('descripcion', 'like', '%' . $validated['descripcion'] . '%'); }
+    if (!empty($validated['codigo'])) { $query->where('codigo', 'like', '%' . $validated['codigo'] . '%'); }
+    if (!empty($validated['estado'])) { $query->whereIn('estado', $validated['estado']); }
+    if (!empty($validated['dependencias'])) { $query->whereIn('dependencia_id', $validated['dependencias']); }
+
+    if (!empty($validated['fecha_desde'])) {
+        $query->whereDate('fecha_registro', '>=', $validated['fecha_desde']);
+    }
+    if (!empty($validated['fecha_hasta'])) {
+        $query->whereDate('fecha_registro', '<=', $validated['fecha_hasta']);
+    }
+
+    $bienes = $query->get();
+
+    // --- USANDO TU SERVICIO CORRECTAMENTE ---
+    $reporteService = new \App\Services\FpdfReportService();
+
+    // Llamamos al método que definiste en tu clase FpdfReportService
+    return $reporteService->downloadBienesListado(
+        'reporte_bienes_' . now()->format('dmY_His') . '.pdf', // Nombre del archivo
+        'REPORTE DE BIENES E INVENTARIO',                     // Título
+        'Listado filtrado de bienes institucionales',         // Subtítulo
+        now()->format('d/m/Y H:i'),                          // Fecha de generación
+        $bienes                                               // La colección de datos
+    );
+}
 }

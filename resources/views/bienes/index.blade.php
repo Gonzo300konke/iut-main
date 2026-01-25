@@ -21,6 +21,12 @@
            class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
             + Nuevo
         </a>
+
+        {{-- Botón para generar reporte --}}
+        <a href="{{ route('bienes.reporte', request()->query()) }}"
+           class="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition">
+            📄 Generar Reporte
+        </a>
     </div>
 </div>
 

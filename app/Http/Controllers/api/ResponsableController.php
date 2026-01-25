@@ -14,46 +14,54 @@ class ResponsableController extends Controller
      * Buscar responsable por cédula en el API externo o en respuesta.json
      * y guardarlo en la tabla responsables.
      */
-    public function buscar(Request $request)
-    {
-       $cedula = $request->input('cedula');
+   public function buscar(Request $request)
+{
+    $cedula = $request->input('cedula');
 
-        $json = file_get_contents(storage_path('app/respuesta.json'));
-        $data = json_decode($json, true);
+    // Cargar datos (usando tu lógica actual del JSON)
+    $json = file_get_contents(storage_path('app/respuesta.json'));
+    $data = json_decode($json, true);
+    $persona = collect($data[0]['data'])->firstWhere('pin', $cedula);
 
-        if (empty($data[0]['data'])) {
-            return response()->json(['error' => 'No se encontró persona'], 404);
+    if (!$persona) {
+        if ($request->expectsJson()) {
+            return response()->json(['status' => 'error', 'message' => 'Cédula no encontrada'], 404);
         }
+        return redirect()->back()->with('error', 'No se encontró persona con esa cédula');
+    }
 
-        // 🔹 Buscar la persona que tenga el pin igual a la cédula ingresada
-        $persona = collect($data[0]['data'])->firstWhere('pin', $cedula);
+    // Lógica de Guardado
+    $tipo = TipoResponsable::firstOrCreate([
+        'nombre' => implode(', ', $persona['type_str'])
+    ]);
 
-        if (!$persona) {
-            return redirect()->back()->with('error', 'No se encontró persona con esa cédula');
-        }
+    $responsable = Responsable::updateOrCreate(
+        ['cedula' => $persona['pin']],
+        [
+            'tipo_id'  => $tipo->id,
+            'nombre'   => $persona['fullname'],
+            'correo'   => null,
+            'telefono' => null,
+        ]
+    );
 
-
-        // Crear o buscar tipo_responsable
-        $tipo = TipoResponsable::firstOrCreate([
-            'nombre' => implode(', ', $persona['type_str'])
-        ]);
-
-        // Crear o actualizar responsable
-        $responsable = Responsable::updateOrCreate(
-            ['cedula' => $persona['pin']],
-            [
-                'tipo_id'  => $tipo->id,
-                'nombre'   => $persona['fullname'],
-                'correo'   => null,
-                'telefono' => null,
+    // RESPUESTA
+    if ($request->expectsJson()) {
+        return response()->json([
+            'status' => 'ok',
+            'message' => '¡Responsable registrado/actualizado con éxito!',
+            'data' => [
+                'nombre' => $responsable->nombre,
+                'cedula' => $responsable->cedula,
+                'tipo'   => $tipo->nombre
             ]
-        );
+        ]);
+    }
 
-        return redirect()->route('responsables.create')
-        ->with('success', 'Responsable registrado correctamente');
-
-
-        }
+    // SI SE USA EL BOTÓN "SUBMIT" NORMAL:
+    // Redirige de vuelta a la misma página (create) con un mensaje de éxito
+    return redirect()->back()->with('success', 'Responsable guardado correctamente.');
+}
 }
 
 
