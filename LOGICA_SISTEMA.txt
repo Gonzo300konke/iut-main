@@ -37,8 +37,9 @@
    • Código: Identificador único (0)
    • Denominación: Nombre del departamento
    • Unidad Administradora: Relación con la unidad padre
+   • Responsable: Persona responsable de la dependencia (opcional)
 
-   Relación: Una dependencia tiene muchos Bienes y muchos Usuarios asignados
+   Relación: Una dependencia tiene muchos Bienes y pertenece a un Responsable
 
 
 4. BIENES
@@ -50,38 +51,55 @@
    • Código: Identificador único del bien
    • Descripción: Detalles del artículo (ej: computadora, escritorio, etc.)
    • Precio: Valor monetario del bien
-   • Dependencia: Unidad a la que pertenece
-   • Responsable: Usuario responsable del cuidado
+   • Fotografía: Evidencia visual del bien
    • Ubicación: Dónde se encuentra el bien
    • Fecha de Registro: Cuándo se incorporó al inventario
-   • Estado: Activo, Inactivo, En Mantenimiento, etc.
-   • Fotos: Evidencia visual del bien
+   • Estado: ACTIVO, DAÑADO, EN_MANTENIMIENTO, EN_CAMINO, EXTRAVIADO
+   • Tipo de Bien: ELECTRONICO, INMUEBLE, MOBILIARIO, VEHICULO, OTROS
+   • Campos específicos según tipo (procesador, memoria, etc.)
 
    Relación:
    - Un bien pertenece a una Dependencia
-   - Un bien es responsabilidad de un Usuario (Responsable)
    - Un bien puede tener muchos Movimientos
 
 
-5. USUARIOS
+5. RESPONSABLES
    ────────────────────────────────────────────────────────────────────────
-   - Personal responsable de administrar los bienes y el sistema
+   - Personas responsables del cuidado de los bienes en una dependencia
 
    Atributos:
    • Cédula: Identificación nacional
    • Nombre: Nombre completo
    • Correo: Email de contacto
+   • Teléfono: Número de contacto
+   • Tipo: Tipo de responsable (primario, por uso, etc.)
+
+   Relación:
+   - Un responsable puede estar asignado a varias Dependencias
+   - Un responsable es responsable de muchos Bienes (a través de dependencias)
+
+
+6. USUARIOS
+   ────────────────────────────────────────────────────────────────────────
+   - Personal del sistema que administra los bienes y genera movimientos
+
+   Atributos:
+   • Cédula: Identificación nacional
+   • Nombre: Nombre completo
+   • Apellido: Apellido
+   • Correo: Email de contacto
    • Contraseña: Acceso al sistema
-   • Rol: Tipo de usuario (Administrador, Gerente, Responsable)
+   • Rol: Tipo de usuario (Administrador, etc.)
    • Activo: Estado del usuario en el sistema
+   • Admin: Indicador de administrador
 
    Tipos de Usuarios:
    - Administrador: Gestión completa del sistema
-   - Usuario Responsable: Cuida bienes asignados
+   - Usuario Normal: Acceso limitado
 
    Relación:
-   - Un usuario puede ser responsable de muchos Bienes
-   - Un usuario genera movimientos de bienes
+   - Un usuario puede generar muchos Movimientos
+   - Un usuario puede crear muchos Reportes
 
 
 ===============================================================================
@@ -92,12 +110,98 @@
    • Se crea un Organismo (institución)
    • Se crean Unidades Administradoras dentro del organismo
    • Se crean Dependencias dentro de cada unidad
+   • Se asigna un Responsable a cada Dependencia
    • Se registran Usuarios con sus respectivos roles
 
 2. INGRESO DE BIENES:
    • Se asigna cada bien a una Dependencia
-   • Se asigna un Usuario responsable de cada bien
-   • Se registran detalles: código, descripción, precio, ubicación, fecha
+   • Se registran detalles: código, descripción, precio, ubicación, fecha, tipo, estado
+   • Se suben fotografías como evidencia
+
+3. ADMINISTRACIÓN:
+   • Se rastrean cambios de ubicación o estado (Movimientos)
+   • Se registran movimientos por Usuarios del sistema
+   • Se mantiene historial de todas las transacciones
+
+4. CONSULTAS Y REPORTES:
+   • Se pueden generar reportes por Dependencia, Unidad, Organismo
+   • Se pueden filtrar bienes por estado, tipo, fechas
+   • Se puede ver historial de movimientos por bien
+
+
+===============================================================================
+                           RELACIONES PRINCIPALES
+===============================================================================
+
+Organismo
+    ↓ (1 a muchos)
+Unidad Administradora
+    ↓ (1 a muchos)
+Dependencia
+    ↓ (1 a muchos)
+Bienes
+    ↓ (relación con)
+Responsable (asignado a Dependencia)
+
+Usuario genera Movimientos en Bienes
+
+
+===============================================================================
+                           RESPONSABILIDADES
+================================================================================
+
+RESPONSABLE PATRIMONIAL PRIMARIO:
+- Supervisa el inventario completo
+- Valida registros de bienes
+- Genera reportes maestros
+- Audita el sistema
+
+RESPONSABLE PATRIMONIAL POR USO:
+- Cuida bienes específicos asignados a su dependencia
+- Reporta cambios de ubicación
+- Mantiene bienes en buen estado
+- Registra daños o movimientos
+
+
+===============================================================================
+                           DATOS CLAVE DEL EJEMPLO
+================================================================================
+
+Organismo: MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN UNIVERSITARIA
+
+Unidad: UPTOS "CLODOSBALDO RUSSIAN"
+Código Unidad: 1430
+
+Dependencia: DEPENDENCIA USUARIA
+Código: 0
+
+Responsable Primario: ENRY GÓMEZ MAIZ
+Cédula: 3873777
+
+Tabla de Bienes incluye campos:
+- Código
+- Descripción
+- Precio
+- Fotografía
+- Ubicación
+- Fecha de Registro
+- Estado
+- Tipo de Bien
+- Campos específicos
+
+
+===============================================================================
+                           NOTAS IMPORTANTES
+================================================================================
+
+• El sistema es jerárquico: Organismo > Unidad > Dependencia > Bien
+• Cada nivel inferior pertenece únicamente a uno de nivel superior
+• Los bienes son la entidad central que se rastrea
+• Los responsables están asignados a dependencias, no directamente a bienes
+• Los usuarios del sistema generan movimientos y reportes
+• Se mantiene un historial completo de movimientos y cambios
+• El sistema genera reportes por dependencia para auditoría
+• Los bienes tienen tipos con campos específicos según su naturaleza
 
 3. ADMINISTRACIÓN:
    • Se rastrean cambios de ubicación (Movimientos)
