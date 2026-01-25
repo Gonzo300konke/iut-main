@@ -42,7 +42,13 @@ class MovimientoService
             $userId = $usuarioId ?? self::resolveAuthenticatedUserId();
 
             if (!is_int($userId)) {
-                throw new \InvalidArgumentException('El ID de usuario no es válido.');
+                // Durante ciertos flujos (p. ej., creación de usuario antes del login) no habrá usuario autenticado.
+                // No registrar movimiento en ese caso; sólo dejar constancia para diagnóstico y salir sin error.
+                logger()->info('MovimientoService: sin usuario autenticado; se omite registro de movimiento.', [
+                    'subject' => is_object($subject) ? get_class($subject) : gettype($subject),
+                    'tipo' => $tipo,
+                ]);
+                return;
             }
 
             $subjectType = get_class($subject);

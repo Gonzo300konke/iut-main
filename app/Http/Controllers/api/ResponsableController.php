@@ -41,10 +41,10 @@ class ResponsableController extends Controller
             'tipo_id'  => $tipo->id,
             'nombre'   => $persona['fullname'],
             'correo'   => null,
-            'telefono' => null,
+            'telefono'=> null,
         ]
     );
-
+ 
     // RESPUESTA
     if ($request->expectsJson()) {
         return response()->json([

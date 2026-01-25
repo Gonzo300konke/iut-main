@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Model as EloquentModel;
 
 class AuthController extends Controller
 {
@@ -24,7 +25,8 @@ class AuthController extends Controller
             'remember' => ['sometimes', 'boolean'],
         ]);
 
-        $cedula = $validated['cedula'];
+        // Normalizar cédula a solo dígitos para evitar fallos con formatos (V-xx.xxx.xxx)
+        $cedula = $this->normalizeCedulaDigits($validated['cedula']);
 
         // 1) Buscar usuario local por cédula y activo
         $usuario = Usuario::where('cedula', $cedula)->where('activo', true)->first();
@@ -93,7 +95,7 @@ class AuthController extends Controller
         if (! $datos) {
             // Intentar recuperar desde el API si llega cedula (opcional)
             if ($request->filled('cedula')) {
-                $rec = $this->buscarPersonaEnApiPorCedula($request->string('cedula'));
+                $rec = $this->buscarPersonaEnApiPorCedula($this->normalizeCedulaDigits((string) $request->input('cedula')));
                 if ($rec) {
                     $datos = [
                         'pin'        => (string) ($rec['pin'] ?? ''),
@@ -141,18 +143,20 @@ class AuthController extends Controller
         }
 
         try {
-            $usuario = Usuario::updateOrCreate(
-                ['cedula' => $pin],
-                [
-                    'rol_id'        => $rolId,
-                    'nombre'        => $firstnames ?: $fullname,
-                    'apellido'      => $lastnames,
-                    'correo'        => $correo,
-                    'hash_password' => Hash::make($validated['password']),
-                    'activo'        => ($estatus === '1'),
-                    'is_admin'      => $esAdminCedula,
-                ]
-            );
+            $usuario = EloquentModel::withoutEvents(function () use ($pin, $rolId, $firstnames, $fullname, $lastnames, $correo, $validated, $estatus, $esAdminCedula) {
+                return Usuario::updateOrCreate(
+                    ['cedula' => $pin],
+                    [
+                        'rol_id'        => $rolId,
+                        'nombre'        => $firstnames ?: $fullname,
+                        'apellido'      => $lastnames,
+                        'correo'        => $correo,
+                        'hash_password' => Hash::make($validated['password']),
+                        'activo'        => ($estatus === '1'),
+                        'is_admin'      => $esAdminCedula,
+                    ]
+                );
+            });
         } catch (\Throwable $e) {
             \Log::error('Error creando usuario desde setPassword', [
                 'cedula' => $pin,
@@ -161,18 +165,20 @@ class AuthController extends Controller
             ]);
             // Posible colisión UNIQUE en correo: regenerar correo con sufijo y reintentar una vez
             $correoAlt = strtolower(Str::slug($pinStr, '.')).'.'.uniqid().'@externo.local';
-            $usuario = Usuario::updateOrCreate(
-                ['cedula' => $pin],
-                [
-                    'rol_id'        => $rolId,
-                    'nombre'        => $firstnames ?: $fullname,
-                    'apellido'      => $lastnames,
-                    'correo'        => $correoAlt,
-                    'hash_password' => Hash::make($validated['password']),
-                    'activo'        => ($estatus === '1'),
-                    'is_admin'      => $esAdminCedula,
-                ]
-            );
+            $usuario = EloquentModel::withoutEvents(function () use ($pin, $rolId, $firstnames, $fullname, $lastnames, $correoAlt, $validated, $estatus, $esAdminCedula) {
+                return Usuario::updateOrCreate(
+                    ['cedula' => $pin],
+                    [
+                        'rol_id'        => $rolId,
+                        'nombre'        => $firstnames ?: $fullname,
+                        'apellido'      => $lastnames,
+                        'correo'        => $correoAlt,
+                        'hash_password' => Hash::make($validated['password']),
+                        'activo'        => ($estatus === '1'),
+                        'is_admin'      => $esAdminCedula,
+                    ]
+                );
+            });
         }
 
         // Limpiar sesión temporal y autenticar
@@ -190,7 +196,15 @@ class AuthController extends Controller
             return null;
         }
         $data = json_decode(file_get_contents($jsonPath), true);
-        $persona = collect($data[0]['data'] ?? [])->firstWhere('pin', $cedula);
+        $digits = $this->normalizeCedulaDigits($cedula);
+        $persona = collect($data[0]['data'] ?? [])->first(function ($item) use ($digits) {
+            return $this->normalizeCedulaDigits((string) ($item['pin'] ?? '')) === $digits;
+        });
         return $persona ?: null;
+    }
+
+    private function normalizeCedulaDigits(string $raw): string
+    {
+        return preg_replace('/\D/', '', $raw) ?: '';
     }
 }

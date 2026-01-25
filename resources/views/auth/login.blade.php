@@ -57,7 +57,7 @@
                         </div>
                         <input type="password" name="password" id="password"
                                class="w-full px-4 py-3.5 border-2 @error('password') border-red-500 @else border-gray-200 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 focus:border-transparent transition-all duration-200 bg-gray-50"
-                               placeholder="••••••••" required>
+                               placeholder="••••••••">
                         @error('password')
                             <p class="mt-2 text-xs text-red-600 font-bold flex items-center">
                                 <span class="mr-1">●</span> {{ $message }}
