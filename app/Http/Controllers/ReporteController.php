@@ -17,6 +17,7 @@ use App\Services\FpdfReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
 
 class ReporteController extends Controller
 {
@@ -143,21 +144,25 @@ class ReporteController extends Controller
         // =====================================================
         // 1. Bienes por Tipo
         // =====================================================
-        $bienesPorTipo = Bien::selectRaw('tipo_bien, COUNT(*) as count')
-            ->groupBy('tipo_bien')
-            ->get()
-            ->mapWithKeys(function ($item) {
-                $tipo = $item->tipo_bien instanceof \App\Enums\TipoBien
-                    ? $item->tipo_bien
-                    : \App\Enums\TipoBien::tryFrom($item->tipo_bien);
+        if (Schema::hasColumn('bienes', 'tipo_bien')) {
+            $bienesPorTipo = Bien::selectRaw('tipo_bien, COUNT(*) as count')
+                ->groupBy('tipo_bien')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    $tipo = $item->tipo_bien instanceof \App\Enums\TipoBien
+                        ? $item->tipo_bien
+                        : \App\Enums\TipoBien::tryFrom($item->tipo_bien);
 
-                $label = $tipo
-                    ? $tipo->label()
-                    : ($item->tipo_bien->value ?? (string) $item->tipo_bien);
+                    $label = $tipo
+                        ? $tipo->label()
+                        : ($item->tipo_bien->value ?? (string) $item->tipo_bien);
 
-                return [(string) $label => (int) $item->count];
-            })
-            ->toArray();
+                    return [(string) $label => (int) $item->count];
+                })
+                ->toArray();
+        } else {
+            $bienesPorTipo = [];
+        }
 
         // =====================================================
         // 2. Bienes por Estado
