@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto mt-10">
-    <div class="bg-white shadow-sm rounded-xl p-8">
+    <div class="bg-white shadow-sm rounded-xl p-8 border border-gray-100">
         <h1 class="text-2xl font-bold text-slate-800 mb-8 px-2">Editar Organismo</h1>
 
         <form action="{{ route('organismos.update', $organismo) }}" method="POST" id="organismoForm" class="space-y-6" novalidate>
@@ -15,7 +15,7 @@
                 <label for="codigo" class="block text-sm font-bold text-slate-700 mb-2">Código</label>
                 <input type="text" name="codigo" id="codigo"
                        value="{{ old('codigo', $organismo->codigo) }}"
-                       maxlength="8"
+                       maxlength="8" inputmode="numeric"
                        class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-gray-600 font-mono">
 
                 @error('codigo')
@@ -35,11 +35,12 @@
                 @error('nombre')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-                <p class="text-gray-400 text-[11px] mt-2">Nombre completo (Máximo 30 caracteres).</p>
+                {{-- Alerta visual para el usuario --}}
+                <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">Solo se permiten letras.</p>
+                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Límite: 30 caracteres (solo letras).</p>
             </div>
 
-            <div class="pt-6 flex justify-center items-center gap-8">
-                
+            <div class="pt-6 flex justify-center items-center gap-8 border-t border-gray-50">
                 <a href="{{ route('organismos.index') }}"
                    class="flex items-center gap-2 text-black font-bold transition-opacity hover:opacity-70">
                     <span class="text-xl">✕</span>
@@ -65,7 +66,8 @@
 
 <script>
     const codigoInput = document.getElementById('codigo');
-    const nombreInput = document.getElementById('nombre'); // Nuevo
+    const nombreInput = document.getElementById('nombre');
+    const errorNombre = document.getElementById('error-nombre');
     const form = document.getElementById('organismoForm');
     const btn = document.getElementById('btnGuardar');
     const text = document.getElementById('textGuardar');
@@ -85,15 +87,25 @@
         }
     });
 
-    // 2. Restricción Nombre: Máximo 30 caracteres (seguridad extra)
+    // 2. Restricción Nombre: Solo letras y espacios (prohibe números y caracteres especiales)
     nombreInput.addEventListener('input', function (e) {
-        if (e.target.value.length > 30) {
-            e.target.value = e.target.value.slice(0, 30);
+        let originalValue = e.target.value;
+        // Filtra: solo permite letras, tildes, ñ y espacios
+        let filteredValue = originalValue.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+
+        if (originalValue !== filteredValue) {
+            errorNombre.classList.remove('hidden');
+            setTimeout(() => errorNombre.classList.add('hidden'), 2000);
         }
+
+        e.target.value = filteredValue.slice(0, 30);
     });
 
     // 3. Estado de carga
-    form.addEventListener('submit', () => {
+    form.addEventListener('submit', (e) => {
+        // Validación básica
+        if (nombreInput.value.trim() === "") return;
+
         btn.disabled = true;
         btn.classList.add('opacity-80', 'cursor-wait');
         icon.classList.add('hidden');

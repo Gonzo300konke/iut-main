@@ -47,7 +47,9 @@
                 @error('nombre')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Máximo 30 caracteres.</p>
+                {{-- Alerta visual para el usuario --}}
+                <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">Solo se permiten letras.</p>
+                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Máximo 30 caracteres (solo letras).</p>
             </div>
 
             <div class="pt-6 flex justify-center items-center gap-8 border-t border-gray-50">
@@ -71,6 +73,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const codigoInput = document.getElementById('codigo');
         const nombreInput = document.getElementById('nombre');
+        const errorNombre = document.getElementById('error-nombre');
         const form = document.getElementById('editUnidadForm');
 
         // 1. BLOQUEO TOTAL DE LETRAS Y GUIONES (SOLO NÚMEROS)
@@ -86,11 +89,19 @@
             }
         });
 
-        // 2. RESTRICCIÓN DE LONGITUD PARA EL NOMBRE (LÍMITE 30)
+        // 2. RESTRICCIÓN ESTRICTA DE NÚMEROS Y CARACTERES ESPECIALES
         nombreInput.addEventListener('input', function(e) {
-            if (e.target.value.length > 30) {
-                e.target.value = e.target.value.slice(0, 30);
+            let originalValue = e.target.value;
+            // Expresión: Solo permite letras de la A a la Z (incluye tildes y ñ) y espacios
+            let filteredValue = originalValue.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+
+            if (originalValue !== filteredValue) {
+                // Muestra el error si se intenta ingresar algo prohibido
+                errorNombre.classList.remove('hidden');
+                setTimeout(() => errorNombre.classList.add('hidden'), 2000);
             }
+
+            e.target.value = filteredValue.slice(0, 30);
         });
 
         // 3. ESTADO DE CARGA AL ENVIAR

@@ -10,6 +10,7 @@
         <form action="{{ route('unidades.store') }}" method="POST" id="unidadForm" class="space-y-6" novalidate>
             @csrf
 
+            {{-- Selección de Organismo --}}
             <div class="px-2">
                 <label for="organismo_id" class="block text-sm font-bold text-slate-700 mb-2">Organismo</label>
                 <select name="organismo_id" id="organismo_id"
@@ -26,18 +27,28 @@
                 @enderror
             </div>
 
+            {{-- Código de Unidad (Secuencial Automático) --}}
             <div class="px-2">
                 <label for="codigo" class="block text-sm font-bold text-slate-700 mb-2">Código de Unidad</label>
-                <input type="text" name="codigo" id="codigo" value="{{ old('codigo') }}"
-                       maxlength="8" inputmode="numeric" autocomplete="off"
-                       placeholder="00000000"
-                       class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition font-mono">
+                <div class="relative">
+                    <input type="text" name="codigo" id="codigo" 
+                           value="{{ old('codigo', $siguienteCodigo ?? '') }}"
+                           maxlength="8" inputmode="numeric" autocomplete="off"
+                           placeholder="00000000"
+                           class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition font-mono bg-blue-50/20">
+                    
+                    <button type="button" onclick="restaurarSugerencia()" 
+                            class="absolute right-3 top-3 text-[10px] bg-blue-100 text-blue-700 px-2 py-1.5 rounded hover:bg-blue-200 transition font-bold uppercase tracking-wider">
+                        Recomendar
+                    </button>
+                </div>
                 @error('codigo')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-                <p class="text-gray-400 text-[11px] mt-2 italic font-medium text-blue-500">Obligatorio: Solo 8 números.</p>
+                <p class="text-blue-500 text-[11px] mt-2 italic font-medium">Sugerencia secuencial activa.</p>
             </div>
 
+            {{-- Nombre de la Unidad (Solo letras) --}}
             <div class="px-2">
                 <label for="nombre" class="block text-sm font-bold text-slate-700 mb-2">Nombre de la Unidad</label>
                 <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" 
@@ -47,9 +58,11 @@
                 @error('nombre')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Límite: 30 caracteres.</p>
+                <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">Solo se permiten letras.</p>
+                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Límite: 30 caracteres (sin números).</p>
             </div>
 
+            {{-- Botones de Acción --}}
             <div class="pt-6 flex justify-center items-center gap-8 border-t border-gray-50">
                 <a href="{{ route('unidades.index') }}" 
                    class="flex items-center gap-2 text-slate-900 font-bold transition-opacity hover:opacity-70">
@@ -68,34 +81,50 @@
 </div>
 
 <script>
+    // Almacenamos la sugerencia enviada por el controlador
+    const sugerenciaInicial = "{{ $siguienteCodigo ?? '' }}";
+
+    function restaurarSugerencia() {
+        const codigoInput = document.getElementById('codigo');
+        codigoInput.value = sugerenciaInicial;
+        // Efecto visual de resaltado
+        codigoInput.classList.add('ring-2', 'ring-blue-400');
+        setTimeout(() => codigoInput.classList.remove('ring-2', 'ring-blue-400'), 800);
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const codigoInput = document.getElementById('codigo');
         const nombreInput = document.getElementById('nombre');
+        const errorNombre = document.getElementById('error-nombre');
         const form = document.getElementById('unidadForm');
 
-        // 1. RESTRICCIÓN ESTRICTA DE NÚMEROS (CÓDIGO)
+        // 1. RESTRICCIÓN DE CÓDIGO (Solo números)
         codigoInput.addEventListener('input', function(e) {
-            // Elimina cualquier cosa que no sea número
             let val = e.target.value.replace(/[^0-9]/g, '');
-            // Corta a 8 dígitos
             e.target.value = val.slice(0, 8);
         });
 
-        // Auto-relleno con ceros a la izquierda al salir del campo
+        // Autocompletar con ceros si el usuario escribe menos de 8 números
         codigoInput.addEventListener('blur', function(e) {
             if (e.target.value.length > 0 && e.target.value.length < 8) {
                 e.target.value = e.target.value.padStart(8, '0');
             }
         });
 
-        // 2. RESTRICCIÓN DE LONGITUD (NOMBRE)
+        // 2. RESTRICCIÓN DE NOMBRE (Solo letras, tildes y espacios)
         nombreInput.addEventListener('input', function(e) {
-            if (e.target.value.length > 30) {
-                e.target.value = e.target.value.slice(0, 30);
+            let originalValue = e.target.value;
+            let filteredValue = originalValue.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+
+            if (originalValue !== filteredValue) {
+                errorNombre.classList.remove('hidden');
+                setTimeout(() => errorNombre.classList.add('hidden'), 2000);
             }
+
+            e.target.value = filteredValue.slice(0, 30);
         });
 
-        // 3. EFECTO DE CARGA AL GUARDAR
+        // 3. EFECTO DE CARGA AL ENVIAR
         form.addEventListener('submit', function() {
             const btn = document.getElementById('btnGuardar');
             const icon = document.getElementById('btnIcon');

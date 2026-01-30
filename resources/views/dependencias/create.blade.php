@@ -3,19 +3,20 @@
 @section('title', 'Nueva Dependencia')
 
 @section('content')
-<div class="max-w-2xl mx-auto">
-    <div class="bg-white shadow rounded-lg p-6">
-        <h1 class="text-2xl font-bold text-gray-800 mb-6">Registrar Dependencia</h1>
+<div class="max-w-2xl mx-auto mt-10">
+    <div class="bg-white shadow-sm rounded-xl p-8 border border-gray-100">
+        <h1 class="text-2xl font-bold text-slate-800 mb-8">Registrar Dependencia</h1>
 
-        <form action="{{ route('dependencias.store') }}" method="POST" class="space-y-6" novalidate>
+        <form action="{{ route('dependencias.store') }}" method="POST" id="dependenciaForm" class="space-y-6" novalidate>
             @csrf
 
+            {{-- Unidad Administradora --}}
             <div>
-                <label for="unidad_administradora_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                <label for="unidad_administradora_id" class="block text-sm font-bold text-slate-700 mb-2">
                     Unidad Administradora
                 </label>
                 <select name="unidad_administradora_id" id="unidad_administradora_id"
-                        class="w-full px-4 py-3 border @error('unidad_administradora_id') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white">
+                        class="w-full px-4 py-3 border @error('unidad_administradora_id') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
                     <option value="">Seleccione...</option>
                     @foreach($unidades as $unidad)
                         <option value="{{ $unidad->id }}" {{ old('unidad_administradora_id') == $unidad->id ? 'selected' : '' }}>
@@ -24,57 +25,65 @@
                     @endforeach
                 </select>
                 @error('unidad_administradora_id')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
             </div>
 
+            {{-- Nombre (Solo letras y espacios) --}}
             <div>
-                <label for="nombre" class="block text-sm font-semibold text-gray-700 mb-2">Nombre</label>
+                <label for="nombre" class="block text-sm font-bold text-slate-700 mb-2">Nombre de la Dependencia</label>
                 <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}"
-                       placeholder="Ej: Dirección de Finanzas"
-                       class="w-full px-4 py-3 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                       placeholder="Ej: Direccion de Servicios"
+                       maxlength="50"
+                       class="w-full px-4 py-3 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
                 @error('nombre')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
+                <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">No se permiten números ni caracteres especiales.</p>
             </div>
 
+            {{-- Código (8 dígitos - Con auto-relleno) --}}
             <div>
-                <label for="codigo" class="block text-sm font-semibold text-gray-700 mb-2">Código</label>
-                <input type="text" name="codigo" id="codigo" value="{{ old('codigo') }}"
-                       placeholder="Ej: DEP-001"
-                       class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition font-mono">
+                <label for="codigo" class="block text-sm font-bold text-slate-700 mb-2">Código de Dependencia</label>
+                <input type="text" name="codigo" id="codigo" 
+                       value="{{ old('codigo', $proximoCodigo) }}" 
+                       maxlength="8"
+                       inputmode="numeric"
+                       class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition font-mono"
+                       placeholder="00000001">
                 @error('codigo')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
+                <p class="text-gray-400 text-[11px] mt-2 font-medium italic">
+                    El sistema completará automáticamente con ceros a la izquierda (ej: 100 → 00000100).
+                </p>
             </div>
 
+            {{-- Responsable --}}
             <div>
-                <label for="responsable_id" class="block text-sm font-semibold text-gray-700 mb-2">
-                    Responsable (opcional)
-                </label>
+                <label for="responsable_id" class="block text-sm font-bold text-slate-700 mb-2">Responsable (opcional)</label>
                 <select name="responsable_id" id="responsable_id"
-                        class="w-full px-4 py-3 border @error('responsable_id') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white">
+                        class="w-full px-4 py-3 border @error('responsable_id') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
                     <option value="">-- Ninguno --</option>
                     @foreach($responsables as $resp)
                         <option value="{{ $resp->id }}" {{ old('responsable_id') == $resp->id ? 'selected' : '' }}>
-                            {{ $resp->nombre }}
-                            @if($resp->cedula) ({{ $resp->cedula }}) @endif
-                            - {{ $resp->tipo->nombre }}
+                            {{ $resp->nombre }} {{ $resp->cedula ? "($resp->cedula)" : '' }}
                         </option>
                     @endforeach
                 </select>
                 @error('responsable_id')
-                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                    <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
             </div>
 
-            <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+            {{-- Botones --}}
+            <div class="flex justify-end gap-4 pt-6 border-t border-gray-100">
                 <a href="{{ route('dependencias.index') }}"
-                   class="px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition duration-200">
-                    ✗ Cancelar
+                   class="px-6 py-3 text-slate-600 font-bold hover:bg-slate-50 rounded-lg transition">
+                    Cancelar
                 </a>
-                <button type="submit"
-                        class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:shadow-lg transition duration-200">
+                <button type="submit" 
+                        class="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-sm hover:bg-blue-700 transition active:scale-95">
                     ✓ Guardar Dependencia
                 </button>
             </div>
@@ -83,12 +92,35 @@
 </div>
 
 <script>
-    // Restricción para que solo acepte números y guiones en el código
-    document.getElementById('codigo').addEventListener('input', function (e) {
-        const regex = /^[0-9\-]*$/;
-        if (!regex.test(e.target.value)) {
-            e.target.value = e.target.value.replace(/[^0-9\-]/g, '');
-        }
+    document.addEventListener('DOMContentLoaded', function() {
+        const nombreInput = document.getElementById('nombre');
+        const codigoInput = document.getElementById('codigo');
+        const errorNombre = document.getElementById('error-nombre');
+
+        // 1. Nombre: Bloquear números y caracteres especiales
+        nombreInput.addEventListener('input', function(e) {
+            let original = e.target.value;
+            let filtrado = original.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+
+            if (original !== filtrado) {
+                errorNombre.classList.remove('hidden');
+                setTimeout(() => errorNombre.classList.add('hidden'), 2500);
+            }
+            e.target.value = filtrado;
+        });
+
+        // 2. Código: Solo permitir números
+        codigoInput.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+
+        // 3. Código: Rellenar con ceros al salir del campo (Blur)
+        codigoInput.addEventListener('blur', function(e) {
+            let valor = e.target.value;
+            if (valor.length > 0 && valor.length < 8) {
+                e.target.value = valor.padStart(8, '0');
+            }
+        });
     });
 </script>
 @endsection

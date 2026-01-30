@@ -31,8 +31,13 @@ class UnidadAdministradoraController extends Controller
         // Cargar los organismos para el select
         $organismos = Organismo::all();
 
-        // Retornar la vista del formulario
-        return view('unidades.create', compact('organismos'));
+        // --- Lógica agregada para el código secuencial ---
+        // Obtenemos el código más alto, lo convertimos a número, sumamos 1 y rellenamos con ceros a la izquierda
+        $ultimoCodigo = UnidadAdministradora::max('codigo');
+        $siguienteCodigo = str_pad((int) $ultimoCodigo + 1, 8, '0', STR_PAD_LEFT);
+
+        // Retornar la vista del formulario enviando la sugerencia
+        return view('unidades.create', compact('organismos', 'siguienteCodigo'));
     }
 
     public function edit(UnidadAdministradora $unidadAdministradora)
@@ -46,32 +51,32 @@ class UnidadAdministradoraController extends Controller
      * Guardar una nueva Unidad Administradora.
      */
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        // Validamos que el ID exista en la tabla 'organismos'
-        'organismo_id' => ['required', 'exists:organismos,id'],
-        'codigo' => ['required', 'string', 'max:50', 'unique:unidades_administradoras,codigo'],
-        'nombre' => ['required', 'string', 'max:255'],
-    ], [
-        // Mensajes personalizados para el Organismo
-        'organismo_id.required' => 'Debe seleccionar un organismo.',
-        'organismo_id.exists'   => 'El organismo seleccionado no existe en nuestra base de datos.',
+    {
+        $validated = $request->validate([
+            // Validamos que el ID exista en la tabla 'organismos'
+            'organismo_id' => ['required', 'exists:organismos,id'],
+            'codigo' => ['required', 'string', 'max:50', 'unique:unidades_administradoras,codigo'],
+            'nombre' => ['required', 'string', 'max:255'],
+        ], [
+            // Mensajes personalizados para el Organismo
+            'organismo_id.required' => 'Debe seleccionar un organismo.',
+            'organismo_id.exists' => 'El organismo seleccionado no existe en nuestra base de datos.',
 
-        // Mensajes para el Código de la unidad
-        'codigo.required' => 'El código de la unidad es obligatorio.',
-        'codigo.unique'   => 'Este código ya pertenece a otra unidad administradora.',
-        'codigo.max'      => 'El código es demasiado largo (máximo 50 caracteres).',
+            // Mensajes para el Código de la unidad
+            'codigo.required' => 'El código de la unidad es obligatorio.',
+            'codigo.unique' => 'Este código ya pertenece a otra unidad administradora.',
+            'codigo.max' => 'El código es demasiado largo (máximo 50 caracteres).',
 
-        // Mensajes para el Nombre de la unidad
-        'nombre.required' => 'El nombre de la unidad es obligatorio.',
-        'nombre.max'      => 'El nombre no puede superar los 255 caracteres.',
-    ]);
+            // Mensajes para el Nombre de la unidad
+            'nombre.required' => 'El nombre de la unidad es obligatorio.',
+            'nombre.max' => 'El nombre no puede superar los 255 caracteres.',
+        ]);
 
-    $unidad = UnidadAdministradora::create($validated);
+        $unidad = UnidadAdministradora::create($validated);
 
-    return redirect()->route('unidades.index')
-        ->with('success', 'Unidad creada correctamente');
-}
+        return redirect()->route('unidades.index')
+            ->with('success', 'Unidad creada correctamente');
+    }
 
     /**
      * Mostrar una Unidad Administradora específica.

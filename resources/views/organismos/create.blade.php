@@ -34,11 +34,12 @@
                 @error('nombre')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-                <p class="text-gray-500 text-xs mt-2">Nombre completo (Máximo 30 caracteres).</p>
+                {{-- Mensaje de error dinámico --}}
+                <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">Solo se permiten letras.</p>
+                <p class="text-gray-500 text-xs mt-2">Nombre completo (Máximo 30 caracteres, solo letras).</p>
             </div>
 
             <div class="pt-6 flex justify-center items-center gap-8">
-                
                 <a href="{{ route('organismos.index') }}"
                    class="flex items-center gap-2 text-black font-bold transition-opacity hover:opacity-70">
                     <span class="text-xl">✕</span>
@@ -65,6 +66,7 @@
 <script>
     const codigoInput = document.getElementById('codigo');
     const nombreInput = document.getElementById('nombre');
+    const errorNombre = document.getElementById('error-nombre');
     const form = document.getElementById('organismoForm');
     const btn = document.getElementById('btnGuardar');
     const text = document.getElementById('textGuardar');
@@ -85,15 +87,27 @@
         }
     });
 
-    // 2. Restricción Nombre: Forzar máximo 30 caracteres en tiempo real
+    // 2. Restricción Nombre: Solo letras y espacios (bloquea números y especiales)
     nombreInput.addEventListener('input', function (e) {
-        if (e.target.value.length > 30) {
-            e.target.value = e.target.value.slice(0, 30);
+        let originalValue = e.target.value;
+        // Filtra: permite letras (A-Z), tildes, ñ y espacios. Elimina todo lo demás.
+        let filteredValue = originalValue.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+
+        if (originalValue !== filteredValue) {
+            errorNombre.classList.remove('hidden');
+            setTimeout(() => errorNombre.classList.add('hidden'), 2000);
         }
+
+        e.target.value = filteredValue.slice(0, 30);
     });
 
     // 3. Manejo de estado de carga
-    form.addEventListener('submit', () => {
+    form.addEventListener('submit', (e) => {
+        // Validación básica antes de enviar
+        if (nombreInput.value.trim() === "" || codigoInput.value.length < 1) {
+            return; 
+        }
+
         btn.disabled = true;
         btn.classList.add('opacity-80', 'cursor-wait');
         

@@ -12,9 +12,6 @@ use Illuminate\Validation\Rule;
 
 class DependenciaController extends Controller
 {
-    /**
-     * Listar todas las dependencias.
-     */
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -27,96 +24,77 @@ class DependenciaController extends Controller
         return view('dependencias.index', compact('dependencias', 'search'));
     }
 
-    /**
-     * Guardar una nueva dependencia.
-     */
     public function store(Request $request)
-{
-    $validated = $request->validate([
-        'unidad_administradora_id' => ['required', 'exists:unidades_administradoras,id'],
-        'codigo' => ['required', 'string', 'max:50', 'unique:dependencias,codigo'],
-        'nombre' => ['required', 'string', 'max:255'],
-        'responsable_id' => ['nullable', 'exists:responsables,id'],
-    ], [
-        // Mensajes para la Unidad Administradora superior
-        'unidad_administradora_id.required' => 'Debe seleccionar una unidad administradora.',
-        'unidad_administradora_id.exists'   => 'La unidad administradora seleccionada no es válida.',
-
-        // Mensajes para el Código de la dependencia
-        'codigo.required' => 'El código de la dependencia es obligatorio.',
-        'codigo.unique'   => 'Este código ya ha sido asignado a otra dependencia.',
-        'codigo.max'      => 'El código no debe exceder los 50 caracteres.',
-
-        // Mensajes para el Nombre
-        'nombre.required' => 'El nombre de la dependencia es obligatorio.',
-        'nombre.max'      => 'El nombre es demasiado largo (máximo 255 caracteres).',
-
-        // Mensaje para el Responsable (es opcional/nullable según tu código)
-        'responsable_id.exists' => 'El responsable seleccionado no existe en el sistema.',
-    ]);
-
-    $dependencia = Dependencia::create($validated);
-
-    return redirect()->route('dependencias.index')
-        ->with('success', 'Dependencia creada correctamente');
-}
-
-    /**
-     * Mostrar formulario de creación.
-     */
-    public function create()
     {
-        $unidadesAdministradoras = UnidadAdministradora::all();
-        $responsables = Responsable::all();
+        // Forzar el formato de 8 dígitos antes de la validación
+        if ($request->has('codigo') && !empty($request->codigo)) {
+            $request->merge([
+                'codigo' => str_pad($request->codigo, 8, '0', STR_PAD_LEFT)
+            ]);
+        }
 
-        return view('dependencias.create', [
-            'unidades' => $unidadesAdministradoras,
-            'responsables' => $responsables,
+        $validated = $request->validate([
+            'unidad_administradora_id' => ['required', 'exists:unidades_administradoras,id'],
+            'codigo' => ['required', 'string', 'size:8', 'unique:dependencias,codigo'],
+            'nombre' => ['required', 'string', 'max:255'],
+            'responsable_id' => ['nullable', 'exists:responsables,id'],
+        ], [
+            'unidad_administradora_id.required' => 'Debe seleccionar una unidad administradora.',
+            'codigo.required' => 'El código es obligatorio.',
+            'codigo.unique' => 'Este código ya ha sido asignado a otra dependencia.',
+            'codigo.size' => 'El código debe tener exactamente 8 dígitos.',
+            'nombre.required' => 'El nombre es obligatorio.',
         ]);
+
+        Dependencia::create($validated);
+
+        return redirect()->route('dependencias.index')
+            ->with('success', 'Dependencia creada correctamente');
     }
 
-    /**
-     * Mostrar una dependencia específica.
-     */
+    public function create()
+    {
+        $unidades = UnidadAdministradora::all();
+        $responsables = Responsable::all();
+
+        // Cálculo secuencial para sugerir el próximo código
+        $ultimo = Dependencia::max('codigo');
+        $siguienteNumero = $ultimo ? (int) $ultimo + 1 : 1;
+        $proximoCodigo = str_pad($siguienteNumero, 8, '0', STR_PAD_LEFT);
+
+        return view('dependencias.create', compact('unidades', 'responsables', 'proximoCodigo'));
+    }
+
     public function show(Dependencia $dependencia)
     {
         $dependencia->load(['unidadAdministradora', 'bienes', 'responsable']);
-
         return view('dependencias.show', compact('dependencia'));
     }
 
-    /**
-     * Descargar los detalles de la dependencia en PDF.
-     */
     public function exportPdf(Dependencia $dependencia)
     {
         $dependencia->load(['unidadAdministradora', 'bienes', 'responsable']);
+        $pdf = Pdf::loadView('dependencias.pdf', ['dependencia' => $dependencia])->setPaper('letter');
 
-        $pdf = Pdf::loadView('dependencias.pdf', [
-            'dependencia' => $dependencia,
-        ])->setPaper('letter');
-
-        $fileName = sprintf(
-            'dependencia_%s_%s.pdf',
-            Str::slug($dependencia->codigo, '_'),
-            Str::slug($dependencia->nombre, '_')
-        );
-
+        $fileName = sprintf('dependencia_%s_%s.pdf', Str::slug($dependencia->codigo, '_'), Str::slug($dependencia->nombre, '_'));
         return $pdf->download($fileName);
     }
 
-    /**
-     * Actualizar una dependencia.
-     */
     public function update(Request $request, Dependencia $dependencia)
     {
+        if ($request->has('codigo')) {
+            $request->merge([
+                'codigo' => str_pad($request->codigo, 8, '0', STR_PAD_LEFT)
+            ]);
+        }
+
         $validated = $request->validate([
             'unidad_administradora_id' => ['sometimes', 'exists:unidades_administradoras,id'],
             'codigo' => [
                 'sometimes',
                 'string',
-                'max:50',
-                Rule::unique('dependencias', 'codigo')->ignore($dependencia->getKey()),
+                'size:8',
+                Rule::unique('dependencias', 'codigo')->ignore($dependencia->id),
             ],
             'nombre' => ['sometimes', 'string', 'max:255'],
             'responsable_id' => ['nullable', 'exists:responsables,id'],
@@ -128,24 +106,13 @@ class DependenciaController extends Controller
             ->with('success', 'Dependencia actualizada correctamente');
     }
 
-    /**
-     * Mostrar formulario de edición.
-     */
     public function edit(Dependencia $dependencia)
     {
-        $unidadesAdministradoras = UnidadAdministradora::all();
+        $unidades = UnidadAdministradora::all();
         $responsables = Responsable::all();
-
-        return view('dependencias.edit', [
-            'dependencia' => $dependencia,
-            'unidades' => $unidadesAdministradoras,
-            'responsables' => $responsables,
-        ]);
+        return view('dependencias.edit', compact('dependencia', 'unidades', 'responsables'));
     }
 
-    /**
-     * Eliminar una dependencia.
-     */
     public function destroy(Dependencia $dependencia)
     {
         return response()->json(['message' => 'No se pueden eliminar dependencias.'], 403);
