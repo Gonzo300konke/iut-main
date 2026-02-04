@@ -38,14 +38,9 @@
                        maxlength="40"
                        placeholder="Nombre o código (máx. 40 caracteres)..."
                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto filtro-input">
-<<<<<<< HEAD
+
                 <p id="error-msg-buscar" class="text-red-500 text-xs mt-1 hidden font-semibold">
                     ⚠️ Solo se permiten letras, números y espacios.
-=======
-                {{-- Aviso de error para búsqueda general --}}
-                <p id="error-buscar-msg" class="text-red-500 text-xs mt-1 hidden font-semibold">
-                    ⚠️ No se permiten caracteres especiales.
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
                 </p>
             </div>
 
@@ -111,7 +106,6 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-<<<<<<< HEAD
                     @forelse($organismos as $organismo)
                         <tr class="hover:bg-blue-50/30 transition-colors">
                             <td class="px-6 py-4 text-sm font-semibold text-blue-600 font-mono">{{ $organismo->codigo }}</td>
