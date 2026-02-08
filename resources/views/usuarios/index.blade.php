@@ -21,14 +21,14 @@
         </div>
         <div>
             <label for="cedula" class="block text-sm font-semibold text-gray-700 mb-2">Cédula</label>
-            <input type="text" name="cedula" id="cedula" 
+            <input type="text" name="cedula" id="cedula"
                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                    placeholder="V-25.123.123" value="{{ $validated['cedula'] ?? '' }}">
             <p id="error-cedula" class="text-red-500 text-[10px] mt-1 hidden font-bold">Solo se permiten números.</p>
         </div>
         <div>
             <label for="correo" class="block text-sm font-semibold text-gray-700 mb-2">Correo</label>
-            <input type="email" name="correo" id="correo" 
+            <input type="email" name="correo" id="correo"
                    maxlength="40"
                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                    placeholder="correo@ejemplo.com" value="{{ $validated['correo'] ?? '' }}">
@@ -80,7 +80,6 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
             @forelse($usuarios as $usuario)
-<<<<<<< HEAD
                 <tr class="hover:bg-blue-50/30 transition-colors">
                     <td class="px-6 py-4 text-sm font-semibold text-blue-600 font-mono">{{ $usuario->cedula }}</td>
                     <td class="px-6 py-4 text-sm text-gray-900 font-medium">{{ $usuario->nombre_completo }}</td>
@@ -94,14 +93,7 @@
                         @endif
                     </td>
                     <td class="px-6 py-4 text-sm">
-=======
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="px-6 py-4 text-sm text-gray-900 font-mono">{{ $usuario->cedula }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">{{ $usuario->nombre_completo }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">{{ $usuario->correo }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-900">{{ $usuario->rol->nombre ?? 'N/A' }}</td>
-                    <td class="px-6 py-4 text-sm">
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
+
                         @if($usuario->activo)
                             <span class="px-2.5 py-1 text-xs font-bold text-green-800 bg-green-100 rounded-full">Activo</span>
                         @else
@@ -138,10 +130,10 @@
         // Lógica de Máscara de Cédula V-00.000.000
         cedulaInput.addEventListener('input', function (e) {
             let value = e.target.value;
-            
+
             // Extraer solo los dígitos
             let digits = value.replace(/\D/g, '');
-            
+
             // Mostrar error si el usuario intentó meter letras
             if (value.replace(/[Vv\-\.]/g, '').match(/\D/)) {
                 errorCedula.classList.remove('hidden');
@@ -163,7 +155,7 @@
                     formatted += digits.slice(0, 2) + "." + digits.slice(2, 5) + "." + digits.slice(5);
                 }
             }
-            
+
             e.target.value = formatted;
         });
 
@@ -171,7 +163,7 @@
         correoInput.addEventListener('blur', function (e) {
             const emailValue = e.target.value.trim();
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
+
             if (emailValue !== "" && !emailRegex.test(emailValue)) {
                 errorCorreo.classList.remove('hidden');
                 correoInput.classList.add('border-red-500');
@@ -185,7 +177,7 @@
         filterForm.addEventListener('submit', function (e) {
             const emailValue = correoInput.value.trim();
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            
+
             if (emailValue !== "" && !emailRegex.test(emailValue)) {
                 e.preventDefault();
                 errorCorreo.classList.remove('hidden');

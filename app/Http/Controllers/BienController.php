@@ -23,120 +23,103 @@ class BienController extends Controller
      * Listar todos los bienes.
      */
     public function index(Request $request)
-    {
-        $validated = $request->validate([
-            'search' => ['nullable', 'string', 'max:255'],
-            'organismo_id' => ['nullable', 'integer', 'exists:organismos,id'],
-            'unidad_id' => ['nullable', 'integer', 'exists:unidades_administradoras,id'],
-            'dependencias' => ['nullable', 'array'],
-            'dependencias.*' => ['integer', 'exists:dependencias,id'],
-            'estado' => ['nullable', 'array'],
-            'estado.*' => ['string', Rule::in(array_map(fn(EstadoBien $estado) => $estado->value, EstadoBien::cases()))],
-            'fecha_desde' => ['nullable', 'date'],
-            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
-            'descripcion' => ['nullable', 'string', 'max:255'],
-            'codigo' => ['nullable', 'string', 'max:255', 'regex:/^[0-9\-]+$/'],
-            'sort' => [
-                'nullable',
-                'string',
-                Rule::in([
-                    'codigo',
-                    'descripcion',
-                    'precio',
-                    'fecha_registro',
-                    'estado'
-                ])
-            ],
-            'direction' => ['nullable', 'string', Rule::in(['asc', 'desc'])],
-        ]);
+{
+    // 1. Validación de entrada
+    $validated = $request->validate([
+        'search'         => ['nullable', 'string', 'max:255'],
+        'organismo_id'   => ['nullable', 'integer', 'exists:organismos,id'],
+        'unidad_id'      => ['nullable', 'integer', 'exists:unidades_administradoras,id'],
+        'dependencias'   => ['nullable', 'array'],
+        'dependencias.*' => ['integer', 'exists:dependencias,id'],
+        'estado'         => ['nullable', 'array'],
+        'estado.*'       => ['string', Rule::in(array_map(fn($e) => $e->value, EstadoBien::cases()))],
+        'fecha_desde'    => ['nullable', 'date'],
+        'tipo_bien' => ['nullable', 'string'],
+        'fecha_hasta'    => ['nullable', 'date', 'after_or_equal:fecha_desde'],
+        'sort'           => ['nullable', 'string', Rule::in(['codigo', 'descripcion', 'precio', 'fecha_registro', 'estado'])],
+        'direction'      => ['nullable', 'string', Rule::in(['asc', 'desc'])],
+    ]);
 
-        $query = Bien::with([
-            'dependencia.responsable',
-            'dependencia.unidadAdministradora.organismo',
-        ]);
+    // 2. Construcción de la consulta con relaciones
+    $query = Bien::with([
+        'dependencia.responsable',
+        'dependencia.unidadAdministradora.organismo',
+    ]);
 
-        // 🔎 Filtros
-        if (!empty($validated['search'])) {
-            $query->search($validated['search']);
-        }
-
-        if (!empty($validated['descripcion'])) {
-            $query->where('descripcion', 'like', '%' . $validated['descripcion'] . '%');
-        }
-
-        if (!empty($validated['codigo'])) {
-            $query->where('codigo', 'like', '%' . $validated['codigo'] . '%');
-        }
-
-        if (!empty($validated['estado'])) {
-            $query->whereIn('estado', $validated['estado']);
-        }
-
-        if (!empty($validated['fecha_desde']) && !empty($validated['fecha_hasta'])) {
-            $query->whereBetween('fecha_registro', [$validated['fecha_desde'], $validated['fecha_hasta']]);
-        } elseif (!empty($validated['fecha_desde'])) {
-            $query->whereDate('fecha_registro', '>=', $validated['fecha_desde']);
-        } elseif (!empty($validated['fecha_hasta'])) {
-            $query->whereDate('fecha_registro', '<=', $validated['fecha_hasta']);
-        }
-
-        if (!empty($validated['dependencias'])) {
-            $query->whereIn('dependencia_id', $validated['dependencias']);
-        }
-
-        if (!empty($validated['unidad_id'])) {
-            $unidadId = $validated['unidad_id'];
-            $query->whereHas('dependencia.unidadAdministradora', fn($q) => $q->where('id', $unidadId));
-        }
-
-        if (!empty($validated['organismo_id'])) {
-            $organismoId = $validated['organismo_id'];
-            $query->whereHas('dependencia.unidadAdministradora.organismo', fn($q) => $q->where('id', $organismoId));
-        }
-
-        // ⚡️ Ordenamiento dinámico
-        $sort = $validated['sort'] ?? 'fecha_registro';
-        $direction = $validated['direction'] ?? 'desc';
-
-        $bienes = $query
-            ->orderBy($sort, $direction)
-            ->paginate(10)
-            ->appends($request->query());
-
-        $organismos = Organismo::orderBy('nombre')->get();
-
-        $unidades = UnidadAdministradora::query()
-            ->when($validated['organismo_id'] ?? null, fn($q, $organismoId) => $q->where('organismo_id', $organismoId))
-            ->orderBy('nombre')
-            ->get();
-
-        $dependencias = Dependencia::query()
-            ->with('unidadAdministradora')
-            ->when($validated['unidad_id'] ?? null, fn($q, $unidadId) => $q->where('unidad_administradora_id', $unidadId))
-            ->when(
-                ($validated['organismo_id'] ?? null) && !($validated['unidad_id'] ?? null),
-                fn($q) => $q->whereHas('unidadAdministradora', fn($sub) => $sub->where('organismo_id', $validated['organismo_id']))
-            )
-            ->orderBy('nombre')
-            ->get();
-
-        $estados = collect(EstadoBien::cases())->mapWithKeys(
-            fn(EstadoBien $estado) => [$estado->value => $estado->label()]
-        );
-
-        if ($request->ajax()) {
-            return view('bienes.partials.table', compact('bienes'))->render();
-        }
-
-        return view('bienes.index', [
-            'bienes' => $bienes,
-            'filters' => $validated,
-            'organismos' => $organismos,
-            'unidades' => $unidades,
-            'dependencias' => $dependencias,
-            'estados' => $estados,
-        ]);
+    // 🔎 Filtros dinámicos
+    if (!empty($validated['search'])) {
+        $query->search($validated['search']);
     }
+
+    if (!empty($validated['estado'])) {
+        $query->whereIn('estado', $validated['estado']);
+    }
+    if ($request->filled('tipo_bien')) {
+    $query->where('tipo_bien', $request->tipo_bien);
+}
+
+    // Filtrado por Fechas
+    $query->when($validated['fecha_desde'] ?? null, fn($q, $f) => $q->whereDate('fecha_registro', '>=', $f))
+          ->when($validated['fecha_hasta'] ?? null, fn($q, $f) => $q->whereDate('fecha_registro', '<=', $f));
+
+    // Filtrado por Relaciones (Jerarquía)
+    if (!empty($validated['dependencias'])) {
+        $query->whereIn('dependencia_id', $validated['dependencias']);
+    } elseif (!empty($validated['unidad_id'])) {
+        $query->whereHas('dependencia', fn($q) => $q->where('unidad_administradora_id', $validated['unidad_id']));
+    } elseif (!empty($validated['organismo_id'])) {
+        $query->whereHas('dependencia.unidadAdministradora', fn($q) => $q->where('organismo_id', $validated['organismo_id']));
+    }
+
+    // ⚡️ Ordenamiento y Paginación
+    $sort = $validated['sort'] ?? 'fecha_registro';
+    $direction = $validated['direction'] ?? 'desc';
+
+    $bienes = $query->orderBy($sort, $direction)
+                    ->paginate(10)
+                    ->appends($request->query());
+
+    // 3. Respuesta AJAX (Solo la tabla)
+    if ($request->ajax()) {
+        return view('bienes.partials.table', compact('bienes'))->render();
+    }
+
+    // 4. Carga de datos para selectores (Solo para carga inicial no-AJAX)
+    $organismos = Organismo::orderBy('nombre')->get();
+
+    $unidades = UnidadAdministradora::query()
+        ->when($validated['organismo_id'] ?? null, fn($q, $id) => $q->where('organismo_id', $id))
+        ->orderBy('nombre')
+        ->get();
+
+    $dependencias = Dependencia::query()
+        ->with('unidadAdministradora')
+        ->when($validated['unidad_id'] ?? null, fn($q, $id) => $q->where('unidad_administradora_id', $id))
+        ->when(($validated['organismo_id'] ?? null) && empty($validated['unidad_id']),
+            fn($q) => $q->whereHas('unidadAdministradora', fn($sub) => $sub->where('organismo_id', $validated['organismo_id']))
+        )
+        ->orderBy('nombre')
+        ->get();
+
+    $estados = collect(EstadoBien::cases())->mapWithKeys(
+        fn(EstadoBien $estado) => [$estado->value => $estado->label()]
+    );
+    $tiposBien = [
+    'mueble'      => 'Bien Mueble',
+    'vehiculo'    => 'Vehículo',
+    'electronico' => 'Bien Electrónico', // 🆕 Agregado
+];
+
+    return view('bienes.index', [
+        'bienes'       => $bienes,
+        'filters'      => $validated,
+        'organismos'   => $organismos,
+        'unidades'     => $unidades,
+        'dependencias' => $dependencias,
+        'estados'      => $estados,
+        'tiposBien' => $tiposBien,
+    ]);
+}
 
     /**
      * Mostrar formulario de creación con lógica de código secuencial.
