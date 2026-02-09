@@ -31,83 +31,58 @@
             <div class="px-2">
                 <label for="codigo" class="block text-sm font-bold text-slate-700 mb-2">Código de Unidad</label>
                 <div class="relative">
-<<<<<<< HEAD
                     <input type="text" name="codigo" id="codigo"
-                        value="{{ old('codigo', $siguienteCodigo) }}"
+                        value="{{ old('codigo', $siguienteCodigo ?? '') }}"
                         maxlength="8" inputmode="numeric" autocomplete="off"
                         placeholder="00000000"
                         class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition font-mono bg-blue-50/20">
 
                     <button type="button" onclick="restaurarSugerencia()"
-=======
-                    <input type="text" name="codigo" id="codigo" 
-                           value="{{ old('codigo', $siguienteCodigo ?? '') }}"
-                           maxlength="8" inputmode="numeric" autocomplete="off"
-                           placeholder="00000000"
-                           class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition font-mono bg-blue-50/20">
-                    
-                    {{-- Botón original "Recomendar" a la derecha --}}
-                    <button type="button" onclick="restaurarSugerencia()" 
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
                             class="absolute right-3 top-3 text-[10px] bg-blue-100 text-blue-700 px-2 py-1.5 rounded hover:bg-blue-200 transition font-bold uppercase tracking-wider">
                         Sugerir
                     </button>
                 </div>
 
-<<<<<<< HEAD
-                {{-- NUEVO: Componente visual del Servicio de Recomendación --}}
+                {{-- Componente visual del Servicio de Recomendación --}}
                 <div id="recomendacion-info" class="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-3">
                     <div class="bg-blue-600 p-1.5 rounded-full">
                         <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
                     <p class="text-[11px] text-blue-800 leading-tight">
                         <span class="font-bold uppercase">Sugerencia Inteligente:</span>
-                        Este código es el siguiente disponible en el ecosistema global de bienes nacionales.
+                        Este código es el siguiente disponible en el ecosistema.
                     </p>
-=======
-                {{-- NUEVO: Aviso de recuperación abajo si se modifica el código sugerido --}}
+                </div>
+
+                {{-- Aviso de recuperación si el usuario cambia el código sugerido --}}
                 <div id="recuperar-contenedor" class="hidden mt-2 flex items-center gap-2 bg-blue-50/50 p-2 rounded-md border border-blue-100">
                     <span class="text-blue-800 text-[11px] font-medium">⚠️ El código no coincide con la sugerencia:</span>
-                    <button type="button" id="btnRecuperar" 
+                    <button type="button" id="btnRecuperar"
                             class="text-blue-600 text-[11px] font-bold hover:text-blue-800 underline flex items-center gap-1">
                         Restaurar sugerencia ({{ $siguienteCodigo ?? '' }})
                     </button>
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
                 </div>
 
                 @error('codigo')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-<<<<<<< HEAD
-=======
-                <p id="error-codigo" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">Solo se permiten números.</p>
-                <p class="text-blue-500 text-[11px] mt-2 italic font-medium">Sugerencia secuencial activa.</p>
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
+
+                <p id="error-codigo" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">⚠️ Solo se permiten números.</p>
+                <p class="text-blue-500 text-[11px] mt-2 italic font-medium">Sugerencia secuencial activa (8 dígitos).</p>
             </div>
 
             {{-- Nombre de la Unidad (Límite 40) --}}
             <div class="px-2">
                 <label for="nombre" class="block text-sm font-bold text-slate-700 mb-2">Nombre de la Unidad</label>
-<<<<<<< HEAD
                 <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}"
-                       maxlength="30" autocomplete="off"
-=======
-                <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" 
-                       maxlength="40"
-                       autocomplete="off"
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
+                       maxlength="40" autocomplete="off"
                        placeholder="Ej: Recursos Humanos"
                        class="w-full px-4 py-3 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
                 @error('nombre')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-<<<<<<< HEAD
                 <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">⚠️ Solo se permiten letras y espacios.</p>
-                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Máximo 30 caracteres (solo letras y espacios).</p>
-=======
-                <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">Solo se permiten letras.</p>
-                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Límite: 40 caracteres (sin números).</p>
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
+                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Máximo 40 caracteres (solo letras y espacios).</p>
             </div>
 
             {{-- Botones de Acción --}}
@@ -136,10 +111,10 @@
     function restaurarSugerencia() {
         const codigoInput = document.getElementById('codigo');
         const recuperarContenedor = document.getElementById('recuperar-contenedor');
-        
+
         codigoInput.value = sugerenciaInicial;
         recuperarContenedor.classList.add('hidden');
-        
+
         // Efecto visual de éxito
         codigoInput.classList.add('ring-2', 'ring-green-400', 'bg-green-50');
         setTimeout(() => {
@@ -206,7 +181,7 @@
         // 3. EFECTO DE CARGA
         form.addEventListener('submit', function(e) {
             if (nombreInput.value.trim() === "" || codigoInput.value.trim() === "") {
-                return; 
+                return;
             }
 
             const btn = document.getElementById('btnGuardar');

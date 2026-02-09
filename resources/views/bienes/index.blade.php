@@ -35,6 +35,16 @@
             </svg>
             <span>PDF</span>
         </a>
+
+          {{-- Botón Gráficas --}}
+          <a href="{{ route('graficas', request()->query()) }}"
+              title="Ver gráficas basadas en los filtros actuales"
+              class="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2 rounded-lg shadow-sm transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3v18M6 10h10M6 6h.01M6 14h.01M6 18h.01" />
+            </svg>
+            <span>Gráficas</span>
+        </a>
     </div>
 </div>
 

@@ -11,10 +11,64 @@ class FpdfReportService
      */
     protected function make(string $orientation = 'P'): FPDF
     {
-        $pdf = new FPDF($orientation, 'mm', 'Letter');
+        $logoPath = public_path('images/logo.png');
+        $instName = config('app.name', 'Institución');
+        $instAddress = config('app.address', '');
+
+        $pdf = new class($orientation, 'mm', 'Letter', $logoPath, $instName, $instAddress) extends FPDF {
+            protected $logo;
+            protected $instName;
+            protected $instAddress;
+
+            public function __construct($orientation, $unit, $size, $logo, $instName, $instAddress)
+            {
+                parent::__construct($orientation, $unit, $size);
+                $this->logo = $logo;
+                $this->instName = $instName;
+                $this->instAddress = $instAddress;
+            }
+
+            // Header called automatically on each page
+            public function Header()
+            {
+                // Logo left
+                if ($this->logo && file_exists($this->logo)) {
+                    $this->Image($this->logo, 10, 8, 24);
+                }
+
+                // Institution name centered
+                $this->SetFont('Arial', 'B', 14);
+                $this->Cell(0, 8, utf8_decode($this->instName), 0, 1, 'C');
+
+                // Address / subtitle
+                if (!empty($this->instAddress)) {
+                    $this->SetFont('Arial', '', 9);
+                    $this->Cell(0, 5, utf8_decode($this->instAddress), 0, 1, 'C');
+                }
+
+                // Divider line
+                $this->Ln(2);
+                $this->SetDrawColor(200, 200, 200);
+                $this->SetLineWidth(0.3);
+                $this->Line(10, $this->GetY(), $this->w - 10, $this->GetY());
+                $this->Ln(4);
+            }
+
+            // Footer called automatically on each page
+            public function Footer()
+            {
+                $this->SetY(-15);
+                $this->SetFont('Arial', 'I', 8);
+                $this->SetTextColor(100, 100, 100);
+                $this->Cell(0, 10, utf8_decode('Página ' . $this->PageNo() . '/{nb}'), 0, 0, 'C');
+            }
+        };
+
+        $pdf->AliasNbPages();
         $pdf->SetMargins(10, 15, 10);
-        $pdf->SetAutoPageBreak(true, 15);
+        $pdf->SetAutoPageBreak(true, 20);
         $pdf->AddPage();
+
         return $pdf;
     }
 
@@ -71,8 +125,8 @@ class FpdfReportService
             $pdf->Cell($widths[1], 6, $this->t($this->truncate((string)($bien->descripcion ?? ''), 30)), 1);
             $pdf->Cell($widths[2], 6, $this->t($estadoStr), 1, 0, 'C');
             $pdf->Cell($widths[3], 6, $this->t($this->truncate(optional($bien->dependencia)->nombre ?? '', 18)), 1);
-            $pdf->Cell($widths[4], 6, $this->t($this->truncate(optional($bien->dependencia->unidadAdministradora)->nombre ?? '', 18)), 1);
-            $pdf->Cell($widths[5], 6, $this->t($this->truncate(optional($bien->dependencia->unidadAdministradora->organismo)->nombre ?? '', 18)), 1);
+            $pdf->Cell($widths[4], 6, $this->t($this->truncate(optional(optional($bien->dependencia)->unidadAdministradora)->nombre ?? '', 18)), 1);
+            $pdf->Cell($widths[5], 6, $this->t($this->truncate(optional(optional(optional($bien->dependencia)->unidadAdministradora)->organismo)->nombre ?? '', 18)), 1);
             $pdf->Cell($widths[6], 6, number_format((float)($bien->precio ?? 0), 2, ',', '.'), 1, 1, 'R');
         }
 

@@ -139,13 +139,53 @@ class ReporteController extends Controller
 
 
 
-    public function graficas()
+    public function graficas(Request $request)
     {
+        // Aplicar filtros recibidos desde la UI de bienes (si los hay)
+        $applyFilters = function ($q) use ($request) {
+            if ($request->filled('search')) {
+                $q->where(function($sub) use ($request) {
+                    $term = '%'.$request->get('search').'%';
+                    $sub->where('codigo', 'like', $term)
+                        ->orWhere('descripcion', 'like', $term);
+                });
+            }
+
+            if ($request->filled('tipo_bien')) {
+                $q->where('tipo_bien', $request->get('tipo_bien'));
+            }
+
+            if ($request->filled('fecha_desde')) {
+                $q->whereDate('fecha_registro', '>=', $request->get('fecha_desde'));
+            }
+            if ($request->filled('fecha_hasta')) {
+                $q->whereDate('fecha_registro', '<=', $request->get('fecha_hasta'));
+            }
+
+            if ($request->filled('dependencias')) {
+                $deps = $request->get('dependencias');
+                if (is_array($deps)) {
+                    $q->whereIn('dependencia_id', $deps);
+                }
+            } elseif ($request->filled('unidad_id')) {
+                $q->whereHas('dependencia', fn($sub) => $sub->where('unidad_administradora_id', $request->get('unidad_id')));
+            } elseif ($request->filled('organismo_id')) {
+                $q->whereHas('dependencia.unidadAdministradora', fn($sub) => $sub->where('organismo_id', $request->get('organismo_id')));
+            }
+
+            if ($request->filled('estado')) {
+                $est = $request->get('estado');
+                if (is_array($est)) $q->whereIn('estado', $est);
+            }
+        };
         // =====================================================
-        // 1. Bienes por Tipo
+        // 1. Bienes por Tipo (aplicando filtros si vienen)
         // =====================================================
         if (Schema::hasColumn('bienes', 'tipo_bien')) {
-            $bienesPorTipo = Bien::selectRaw('tipo_bien, COUNT(*) as count')
+            $q = Bien::query();
+            $applyFilters($q);
+
+            $bienesPorTipo = (clone $q)->selectRaw('tipo_bien, COUNT(*) as count')
                 ->groupBy('tipo_bien')
                 ->get()
                 ->mapWithKeys(function ($item) {
@@ -155,7 +195,7 @@ class ReporteController extends Controller
 
                     $label = $tipo
                         ? $tipo->label()
-                        : ($item->tipo_bien->value ?? (string) $item->tipo_bien);
+                        : ((string) $item->tipo_bien);
 
                     return [(string) $label => (int) $item->count];
                 })
@@ -167,7 +207,9 @@ class ReporteController extends Controller
         // =====================================================
         // 2. Bienes por Estado
         // =====================================================
-        $bienesPorEstado = Bien::selectRaw('estado, COUNT(*) as count')
+        $q2 = Bien::query();
+        $applyFilters($q2);
+        $bienesPorEstado = (clone $q2)->selectRaw('estado, COUNT(*) as count')
             ->groupBy('estado')
             ->get()
             ->mapWithKeys(function ($item) {
@@ -186,7 +228,9 @@ class ReporteController extends Controller
         // =====================================================
         // 3. Bienes por Registro (Progresivo)
         // =====================================================
-        $bienesPorRegistro = Bien::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as mes, COUNT(*) as count')
+        $q3 = Bien::query();
+        $applyFilters($q3);
+        $bienesPorRegistro = (clone $q3)->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as mes, COUNT(*) as count')
             ->groupBy('mes')
             ->orderBy('mes')
             ->get()

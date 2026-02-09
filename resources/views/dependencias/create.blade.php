@@ -57,30 +57,26 @@
                     </button>
                 </div>
 
-<<<<<<< HEAD
-                {{-- Info de Recomendación Global --}}
+                {{-- Info de recomendación (global) y aviso de recuperación --}}
                 <div id="recomendar-tag" class="mt-2 flex items-center gap-2 text-blue-600 bg-blue-50 py-1 px-3 rounded-md w-fit border border-blue-100">
                     <span class="animate-pulse">✨</span>
                     <span class="text-[10px] font-bold uppercase tracking-widest">Sugerencia Global Activa</span>
-=======
-                {{-- AVISO DE RECOMENDACIÓN ABAJO --}}
+                </div>
+
                 <div id="recuperar-contenedor" class="hidden mt-2 flex items-center gap-2 bg-blue-50/50 p-2 rounded-md border border-blue-100">
                     <span class="text-blue-800 text-[11px] font-medium">⚠️ El código no coincide con la sugerencia:</span>
-                    <button type="button" id="btnRecuperar" 
+                    <button type="button" id="btnRecuperar"
                             class="text-blue-600 text-[11px] font-bold hover:text-blue-800 underline flex items-center gap-1">
                         Restaurar sugerencia ({{ $proximoCodigo ?? '' }})
                     </button>
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
                 </div>
 
                 @error('codigo')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-<<<<<<< HEAD
-=======
+
                 <p id="error-codigo" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">⚠️ Solo se permiten números.</p>
                 <p class="text-blue-500 text-[11px] mt-2 italic font-medium">Sugerencia secuencial activa (8 dígitos).</p>
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
             </div>
 
             {{-- Nombre --}}
@@ -94,11 +90,7 @@
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
                 <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">⚠️ Solo se permiten letras y espacios.</p>
-<<<<<<< HEAD
                 <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Máximo 40 caracteres (solo letras y espacios).</p>
-=======
-                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Límite: 40 caracteres.</p>
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
             </div>
 
             {{-- Responsable --}}
@@ -141,10 +133,10 @@
     function restaurarSugerencia() {
         const codigoInput = document.getElementById('codigo');
         const recuperarContenedor = document.getElementById('recuperar-contenedor');
-        
+
         codigoInput.value = sugerenciaInicial;
         recuperarContenedor.classList.add('hidden');
-        
+
         // Efecto visual
         codigoInput.classList.add('ring-2', 'ring-green-400', 'bg-green-50');
         setTimeout(() => {
