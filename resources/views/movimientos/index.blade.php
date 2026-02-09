@@ -228,38 +228,43 @@
         let fetchTimeout;
 
         function aplicarFiltros(url = null) {
-            if (fetchTimeout) clearTimeout(fetchTimeout);
+    if (fetchTimeout) clearTimeout(fetchTimeout);
 
-            fetchTimeout = setTimeout(() => {
-                const form = document.getElementById('filtrosForm');
-                const baseUrl = url || form.action;
-                const currentParams = new URLSearchParams(window.location.search);
-                const formParams = new URLSearchParams(new FormData(form));
+    fetchTimeout = setTimeout(() => {
+        const form = document.getElementById('filtrosForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
 
-                const elimPage = currentParams.get('eliminados_page');
-                if (elimPage) formParams.set('eliminados_page', elimPage);
-
-                const fetchUrl = baseUrl.split('?')[0] + '?' + formParams.toString();
-                window.history.pushState(null, '', fetchUrl);
-
-                fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                    .then(res => res.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-
-                        const sections = ['tablaMovimientos', 'movimientosPagination', 'activeFiltersContainer', 'tablaEliminados', 'eliminadosPagination'];
-                        sections.forEach(id => {
-                            const newVal = doc.getElementById(id);
-                            const oldVal = document.getElementById(id);
-                            if (newVal && oldVal) oldVal.innerHTML = newVal.innerHTML;
-                            else if (oldVal && !newVal) oldVal.innerHTML = '';
-                        });
-                        attachPaginationListeners();
-                    })
-                    .catch(error => console.error('Error:', error));
-            }, 300);
+        // SI se hizo clic en paginación, extraemos los parámetros de esa URL
+        if (url) {
+            const urlObj = new URL(url);
+            urlObj.searchParams.forEach((value, key) => {
+                params.set(key, value); // Esto mantiene 'page' o 'eliminados_page'
+            });
         }
+
+        const fetchUrl = form.action.split('?')[0] + '?' + params.toString();
+
+        // Actualizar la barra de direcciones sin recargar
+        window.history.pushState(null, '', fetchUrl);
+
+        fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(res => res.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                const sections = ['tablaMovimientos', 'movimientosPagination', 'activeFiltersContainer', 'tablaEliminados', 'eliminadosPagination'];
+                sections.forEach(id => {
+                    const newVal = doc.getElementById(id);
+                    const oldVal = document.getElementById(id);
+                    if (newVal && oldVal) oldVal.innerHTML = newVal.innerHTML;
+                });
+                attachPaginationListeners(); // Re-vinculamos los clics a los nuevos links
+            })
+            .catch(error => console.error('Error:', error));
+    }, 300);
+}
 
         function attachPaginationListeners() {
             document.querySelectorAll('#movimientosPagination a, #eliminadosPagination a').forEach(link => {

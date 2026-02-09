@@ -219,20 +219,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const filtrosForm = document.getElementById('filtrosForm');
     const container = document.getElementById('tablaBienesContainer');
 
-    const aplicarFiltros = () => {
-        const formData = new FormData(filtrosForm);
-        const params = new URLSearchParams(formData).toString();
-
+    // 1. Función unificada para pedir datos
+    const cargarDatos = (url) => {
         container.style.opacity = '0.5';
 
-        fetch(`${window.location.pathname}?${params}`, {
+        fetch(url, {
             headers: { "X-Requested-With": "XMLHttpRequest" }
         })
         .then(res => res.text())
         .then(html => {
             container.innerHTML = html;
             container.style.opacity = '1';
-            window.history.pushState({}, '', `${window.location.pathname}?${params}`);
+            // Actualizar la URL del navegador para que el usuario pueda copiar/pegar el link
+            window.history.pushState({}, '', url);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -240,12 +239,43 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // Escuchar cambios en los selects y checkboxes con clase .filtro-auto
+    // 2. Función para construir la URL basada en los filtros
+    const aplicarFiltros = () => {
+        const formData = new FormData(filtrosForm);
+        const params = new URLSearchParams(formData);
+        // Al cambiar un filtro, normalmente queremos volver a la página 1
+        params.delete('page');
+
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        cargarDatos(newUrl);
+    };
+
+    // 3. EVENT DELEGATION para la paginación
+    // Esto es vital: escuchamos el click en el contenedor, no en el link directamente
+    container.addEventListener('click', function(e) {
+        // Buscamos si lo que se clickeó es un enlace de paginación
+        const link = e.target.closest('.pagination a, a[rel="next"], a[rel="prev"]');
+
+        if (link) {
+            e.preventDefault();
+            const url = new URL(link.href);
+            const page = url.searchParams.get('page');
+
+            // Mezclamos los filtros actuales con la nueva página
+            const formData = new FormData(filtrosForm);
+            const params = new URLSearchParams(formData);
+            params.set('page', page);
+
+            const finalUrl = `${window.location.pathname}?${params.toString()}`;
+            cargarDatos(finalUrl);
+        }
+    });
+
+    // 4. Listeners de filtros
     document.querySelectorAll('.filtro-auto').forEach(el => {
         el.addEventListener('change', aplicarFiltros);
     });
 
-    // Escuchar el submit del formulario (por si presionan el botón Aplicar)
     filtrosForm.addEventListener('submit', function(e) {
         e.preventDefault();
         aplicarFiltros();

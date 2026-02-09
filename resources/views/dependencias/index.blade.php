@@ -181,54 +181,90 @@
         const searchInput = document.getElementById('search');
         const errorMsg = document.getElementById('error-msg');
         const form = document.getElementById('filtrosForm');
+        let debounceTimer; // Para no saturar el servidor
 
-        // 1. Validación de Caracteres Especiales y Límite de 40
+        // 1. Validación con respeto al cursor
         searchInput.addEventListener('input', function(e) {
-            const originalValue = e.target.value;
+            const cursorPosition = this.selectionStart;
+            const originalValue = this.value;
             const cleanValue = originalValue.replace(/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/g, '');
 
             if (originalValue !== cleanValue) {
                 errorMsg.classList.remove('hidden');
                 setTimeout(() => errorMsg.classList.add('hidden'), 2500);
+                this.value = cleanValue.slice(0, 40);
+                // Evita que el cursor salte al final
+                this.setSelectionRange(cursorPosition - 1, cursorPosition - 1);
             }
-
-            e.target.value = cleanValue.slice(0, 40);
         });
 
-        // 2. Disparadores para filtros
-        searchInput.addEventListener('keyup', updateTable);
-        
-        document.querySelectorAll('.filtro-auto').forEach(el => {
-            if(el.tagName === 'SELECT') el.addEventListener('change', updateTable);
-        });
-
-        // 3. Función AJAX para actualización fluida
+        // 2. Función AJAX con lógica de "Merge" (Filtros + Página)
         function updateTable(url = null) {
-            const formData = new URLSearchParams(new FormData(form));
-            const fetchUrl = url || `${form.action}?${formData.toString()}`;
+            // Cancelamos la petición anterior si el usuario sigue escribiendo
+            clearTimeout(debounceTimer);
 
-            window.history.pushState(null, '', fetchUrl);
+            debounceTimer = setTimeout(() => {
+                const formData = new URLSearchParams(new FormData(form));
 
-            fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(res => res.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
+                // Si la URL viene de la paginación, extraemos la página
+                if (url) {
+                    const urlParams = new URL(url).searchParams;
+                    if (urlParams.has('page')) {
+                        formData.set('page', urlParams.get('page'));
+                    }
+                } else {
+                    // Si el usuario escribe o cambia un select, volvemos a la página 1
+                    formData.delete('page');
+                }
 
-                    document.getElementById('tablaDependencias').innerHTML = doc.getElementById('tablaDependencias').innerHTML;
-                    document.getElementById('paginationLinks').innerHTML = doc.getElementById('paginationLinks').innerHTML;
-                    document.getElementById('activeFiltersContainer').innerHTML = doc.getElementById('activeFiltersContainer').innerHTML;
+                const fetchUrl = `${form.action}?${formData.toString()}`;
 
-                    attachPagination();
-                });
+                // Feedback visual: opacidad para indicar que está cargando
+                const container = document.getElementById('tablaDependencias');
+                container.style.opacity = '0.5';
+
+                window.history.pushState(null, '', fetchUrl);
+
+                fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Error en el servidor');
+                        return res.text();
+                    })
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+
+                        // Actualización de fragmentos
+                        const ids = ['tablaDependencias', 'paginationLinks', 'activeFiltersContainer'];
+                        ids.forEach(id => {
+                            const oldEl = document.getElementById(id);
+                            const newEl = doc.getElementById(id);
+                            if (oldEl && newEl) oldEl.innerHTML = newEl.innerHTML;
+                        });
+
+                        container.style.opacity = '1';
+                        attachPagination();
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        container.style.opacity = '1';
+                    });
+            }, 300); // 300ms de espera antes de disparar el fetch
         }
+
+        // 3. Listeners
+        searchInput.addEventListener('keyup', () => updateTable());
+
+        document.querySelectorAll('.filtro-auto').forEach(el => {
+            el.addEventListener('change', () => updateTable());
+        });
 
         function attachPagination() {
             document.querySelectorAll('#paginationLinks a').forEach(link => {
-                link.addEventListener('click', e => {
+                link.onclick = function(e) {
                     e.preventDefault();
-                    updateTable(link.href);
-                });
+                    updateTable(this.href);
+                };
             });
         }
 

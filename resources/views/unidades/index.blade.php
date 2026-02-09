@@ -151,74 +151,53 @@
     let fetchTimeout;
 
     function aplicarFiltros(url = null) {
-        if (fetchTimeout) clearTimeout(fetchTimeout);
+    if (typeof fetchTimeout !== 'undefined') clearTimeout(fetchTimeout);
 
-        fetchTimeout = setTimeout(() => {
-            const form = document.getElementById('filtrosForm');
-            const baseUrl = url || form.action;
-            const formParams = new URLSearchParams(new FormData(form));
-            const fetchUrl = baseUrl.split('?')[0] + '?' + formParams.toString();
+    fetchTimeout = setTimeout(() => {
+        const form = document.getElementById('filtrosForm');
+        // 1. Obtener la base de la URL
+        const baseEndpoint = form.action.split('?')[0];
 
-            window.history.pushState(null, '', fetchUrl);
+        // 2. Obtener parámetros del formulario
+        const params = new URLSearchParams(new FormData(form));
 
-            fetch(fetchUrl, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(res => res.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-
-                document.getElementById('tablaUnidades').innerHTML = doc.querySelector('#tablaUnidades').innerHTML;
-                document.getElementById('unidadesPagination').innerHTML = doc.querySelector('#unidadesPagination').innerHTML;
-                document.getElementById('activeFiltersContainer').innerHTML = doc.querySelector('#activeFiltersContainer').innerHTML;
-
-                attachPaginationListeners();
-            })
-            .catch(error => console.error('Error al filtrar:', error));
-        }, 300);
-    }
-
-    function attachPaginationListeners() {
-        document.querySelectorAll('#unidadesPagination a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                aplicarFiltros(this.href);
-            });
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const searchInput = document.getElementById('search');
-        const errorMsg = document.getElementById('error-msg');
-
-        // Validación de caracteres y longitud
-        searchInput.addEventListener('input', function(e) {
-            const originalValue = e.target.value;
-            const cleanValue = originalValue.replace(/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/g, '');
-
-            if (originalValue !== cleanValue) {
-                errorMsg.classList.remove('hidden');
-                setTimeout(() => errorMsg.classList.add('hidden'), 2500);
+        // 3. ¡LA MAGIA! Si viene una URL de paginación, extraemos el 'page'
+        if (url) {
+            const urlObj = new URL(url);
+            if (urlObj.searchParams.has('page')) {
+                params.set('page', urlObj.searchParams.get('page'));
             }
+        }
 
-            e.target.value = cleanValue.slice(0, 40);
-        });
+        const fetchUrl = `${baseEndpoint}?${params.toString()}`;
 
-        // Disparadores automáticos
-        searchInput.addEventListener('keyup', () => aplicarFiltros());
-        
-        document.querySelectorAll('.filtro-auto').forEach(el => {
-            if(el.tagName === 'SELECT') el.addEventListener('change', () => aplicarFiltros());
-        });
+        // Actualizar la barra del navegador
+        window.history.pushState(null, '', fetchUrl);
 
-        document.getElementById('filtrosForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            aplicarFiltros();
-        });
+        fetch(fetchUrl, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.text())
+        .then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
 
-        attachPaginationListeners();
-    });
+            // Actualizar contenedores
+            const ids = ['tablaUnidades', 'unidadesPagination', 'activeFiltersContainer'];
+            ids.forEach(id => {
+                const element = document.getElementById(id);
+                const newElement = doc.getElementById(id);
+                if (element && newElement) {
+                    element.innerHTML = newElement.innerHTML;
+                }
+            });
+
+            // Re-vincular eventos a los nuevos botones de página
+            attachPaginationListeners();
+        })
+        .catch(error => console.error('Error al filtrar:', error));
+    }, 300);
+}
 </script>
 @endpush
 @endsection

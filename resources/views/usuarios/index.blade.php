@@ -121,68 +121,84 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const cedulaInput = document.getElementById('cedula');
-        const errorCedula = document.getElementById('error-cedula');
-        const correoInput = document.getElementById('correo');
-        const errorCorreo = document.getElementById('error-correo');
-        const filterForm = document.getElementById('filterForm');
+    const cedulaInput = document.getElementById('cedula');
+    const errorCedula = document.getElementById('error-cedula');
+    const correoInput = document.getElementById('correo');
+    const errorCorreo = document.getElementById('error-correo');
+    const filterForm = document.getElementById('filterForm');
 
-        // Lógica de Máscara de Cédula V-00.000.000
-        cedulaInput.addEventListener('input', function (e) {
-            let value = e.target.value;
+    // 1. Lógica de Cédula (V-00.000.000)
+    cedulaInput.addEventListener('input', function (e) {
+        let cursorPosition = e.target.selectionStart;
+        let value = e.target.value.toUpperCase();
 
-            // Extraer solo los dígitos
-            let digits = value.replace(/\D/g, '');
+        // Solo permitir V o E al inicio (por si acaso tienes extranjeros)
+        if (value.length > 0 && !value.startsWith('V-') && !value.startsWith('E-')) {
+            value = 'V-' + value.replace(/[^0-9]/g, '');
+        }
 
-            // Mostrar error si el usuario intentó meter letras
-            if (value.replace(/[Vv\-\.]/g, '').match(/\D/)) {
-                errorCedula.classList.remove('hidden');
-                setTimeout(() => errorCedula.classList.add('hidden'), 2000);
-            }
+        let digits = value.replace(/[^0-9]/g, '').slice(0, 8);
 
-            // Limitar a 8 dígitos de cédula
-            digits = digits.slice(0, 8);
+        // Feedback visual de error si mete letras
+        if (/[a-zA-Z]/.test(e.data) && !['V','E'].includes(e.data?.toUpperCase())) {
+            errorCedula.classList.remove('hidden');
+            setTimeout(() => errorCedula.classList.add('hidden'), 2000);
+        }
 
-            // Construir el formato
-            let formatted = "";
-            if (digits.length > 0) {
-                formatted = "V-";
-                if (digits.length <= 2) {
-                    formatted += digits;
-                } else if (digits.length <= 5) {
-                    formatted += digits.slice(0, 2) + "." + digits.slice(2);
-                } else {
-                    formatted += digits.slice(0, 2) + "." + digits.slice(2, 5) + "." + digits.slice(5);
-                }
-            }
+        // Formateo dinámico según la longitud
+        let formatted = "";
+        if (digits.length > 0) {
+            let prefix = value.startsWith('E-') ? 'E-' : 'V-';
+            formatted = prefix;
 
-            e.target.value = formatted;
-        });
-
-        // Correo: Validación y Máximo 40
-        correoInput.addEventListener('blur', function (e) {
-            const emailValue = e.target.value.trim();
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-            if (emailValue !== "" && !emailRegex.test(emailValue)) {
-                errorCorreo.classList.remove('hidden');
-                correoInput.classList.add('border-red-500');
+            if (digits.length <= 2) {
+                formatted += digits;
+            } else if (digits.length <= 5) {
+                formatted += digits.slice(0, 2) + "." + digits.slice(2);
             } else {
-                errorCorreo.classList.add('hidden');
-                correoInput.classList.remove('border-red-500');
-            }
-        });
+                // Maneja tanto 7 como 8 dígitos correctamente
+                let part1 = digits.length === 7 ? digits.slice(0, 1) : digits.slice(0, 2);
+                let part2 = digits.length === 7 ? digits.slice(1, 4) : digits.slice(2, 5);
+                let part3 = digits.length === 7 ? digits.slice(4) : digits.slice(5);
 
-        // Prevenir envío con errores
-        filterForm.addEventListener('submit', function (e) {
-            const emailValue = correoInput.value.trim();
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-            if (emailValue !== "" && !emailRegex.test(emailValue)) {
-                e.preventDefault();
-                errorCorreo.classList.remove('hidden');
+                // Si prefieres mantener el formato fijo de 8 aunque sean 7:
+                formatted += digits.slice(0, 2) + "." + digits.slice(2, 5) + "." + digits.slice(5);
             }
-        });
+        }
+
+        e.target.value = formatted;
+
+        // Devolver el cursor a su sitio para permitir edición interna
+        e.target.setSelectionRange(cursorPosition, cursorPosition);
     });
+
+    // 2. Correo: Límite y Validación
+    correoInput.setAttribute('maxlength', '40'); // Aseguramos el límite físico
+
+    const validarEmail = () => {
+        const emailValue = correoInput.value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (emailValue !== "" && !emailRegex.test(emailValue)) {
+            errorCorreo.classList.remove('hidden');
+            correoInput.classList.add('border-red-500');
+            return false;
+        } else {
+            errorCorreo.classList.add('hidden');
+            correoInput.classList.remove('border-red-500');
+            return true;
+        }
+    };
+
+    correoInput.addEventListener('blur', validarEmail);
+
+    // 3. Prevenir envío
+    filterForm.addEventListener('submit', function (e) {
+        if (!validarEmail()) {
+            e.preventDefault();
+            correoInput.focus();
+        }
+    });
+});
 </script>
 @endsection

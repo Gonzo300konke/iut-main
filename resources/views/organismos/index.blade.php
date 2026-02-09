@@ -141,35 +141,21 @@
 <script>
     let fetchTimeout;
 
-    // --- ELEMENTOS ---
-    const inputBuscar = document.getElementById('buscar');
-    const msgErrorBuscar = document.getElementById('error-buscar-msg');
-    const inputCodigo = document.getElementById('codigo');
-    const msgErrorCodigo = document.getElementById('error-codigo-msg');
+    // --- FUNCIÓN PARA MANTENER EL CURSOR EN SU SITIO ---
+    function validarYLimpiar(input, regex, msgError) {
+        const cursorPosition = input.selectionStart;
+        const originalValue = input.value;
+        const cleanValue = originalValue.replace(regex, '');
 
-    // --- VALIDACIÓN BÚSQUEDA GENERAL (Alfanumérico y espacios) ---
-    if (inputBuscar) {
-        inputBuscar.addEventListener('input', function() {
-            // Permite letras, números, espacios y acentos básicos. Bloquea símbolos.
-            const regex = /[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/g;
-            if (regex.test(this.value)) {
-                msgErrorBuscar.classList.remove('hidden');
-                this.value = this.value.replace(regex, '');
-                setTimeout(() => msgErrorBuscar.classList.add('hidden'), 2000);
+        if (originalValue !== cleanValue) {
+            if (msgError) {
+                msgError.classList.remove('hidden');
+                setTimeout(() => msgError.classList.add('hidden'), 2000);
             }
-        });
-    }
-
-    // --- VALIDACIÓN CÓDIGO (Sólo números) ---
-    if (inputCodigo) {
-        inputCodigo.addEventListener('input', function() {
-            const regex = /[^0-9]/g;
-            if (regex.test(this.value)) {
-                msgErrorCodigo.classList.remove('hidden');
-                this.value = this.value.replace(regex, '');
-                setTimeout(() => msgErrorCodigo.classList.add('hidden'), 2000);
-            }
-        });
+            input.value = cleanValue;
+            // Reubicar el cursor para que no salte al final
+            input.setSelectionRange(cursorPosition - 1, cursorPosition - 1);
+        }
     }
 
     function aplicarFiltros(url = null) {
@@ -177,11 +163,22 @@
 
         fetchTimeout = setTimeout(() => {
             const form = document.getElementById('filtrosForm');
-            const baseUrl = url || form.action;
+            const baseUrl = form.action.split('?')[0];
             const formData = new FormData(form);
-            const formParams = new URLSearchParams(formData);
-            const fetchUrl = baseUrl.split('?')[0] + '?' + formParams.toString();
+            const params = new URLSearchParams(formData);
 
+            // --- CORRECCIÓN DE PAGINACIÓN ---
+            // Si recibimos una URL (de la paginación), extraemos el 'page' y lo inyectamos
+            if (url) {
+                const urlObj = new URL(url);
+                const page = urlObj.searchParams.get('page');
+                if (page) params.set('page', page);
+            } else {
+                // Si cambiamos un filtro manual, volvemos a la página 1
+                params.delete('page');
+            }
+
+            const fetchUrl = `${baseUrl}?${params.toString()}`;
             window.history.pushState(null, '', fetchUrl);
 
             fetch(fetchUrl, {
@@ -192,9 +189,13 @@
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
-                document.getElementById('tablaOrganismos').innerHTML = doc.querySelector('#tablaOrganismos').innerHTML;
-                document.getElementById('organismosPagination').innerHTML = doc.querySelector('#organismosPagination').innerHTML;
-                document.getElementById('activeFiltersContainer').innerHTML = doc.querySelector('#activeFiltersContainer').innerHTML;
+                // Actualización dinámica de fragmentos
+                const targets = ['tablaOrganismos', 'organismosPagination', 'activeFiltersContainer'];
+                targets.forEach(id => {
+                    const el = document.getElementById(id);
+                    const newEl = doc.getElementById(id);
+                    if (el && newEl) el.innerHTML = newEl.innerHTML;
+                });
 
                 attachPaginationListeners();
             })
@@ -204,50 +205,47 @@
 
     function attachPaginationListeners() {
         document.querySelectorAll('#organismosPagination a').forEach(link => {
-            link.addEventListener('click', function(e) {
+            link.onclick = function(e) {
                 e.preventDefault();
                 aplicarFiltros(this.href);
-            });
+            };
         });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const buscarInput = document.getElementById('buscar');
-        const errorMsg = document.getElementById('error-msg-buscar');
+        const inputBuscar = document.getElementById('buscar');
+        const inputCodigo = document.getElementById('codigo');
 
-        // Validación de caracteres especiales en búsqueda
-        if(buscarInput) {
-            buscarInput.addEventListener('input', function(e) {
-                const originalValue = e.target.value;
-                const cleanValue = originalValue.replace(/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/g, '');
-
-                if (originalValue !== cleanValue) {
-                    errorMsg.classList.remove('hidden');
-                    setTimeout(() => errorMsg.classList.add('hidden'), 2500);
-                }
-
-                e.target.value = cleanValue.slice(0, 40);
+        // Validaciones con corrección de cursor
+        if (inputBuscar) {
+            inputBuscar.addEventListener('input', function() {
+                validarYLimpiar(this, /[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/g, document.getElementById('error-buscar-msg'));
             });
         }
 
+        if (inputCodigo) {
+            inputCodigo.addEventListener('input', function() {
+                validarYLimpiar(this, /[^0-9]/g, document.getElementById('error-codigo-msg'));
+            });
+        }
+
+        // Listeners automáticos
         document.querySelectorAll('.filtro-auto').forEach(el => {
             el.addEventListener('change', () => aplicarFiltros());
         });
 
         document.querySelectorAll('.filtro-input').forEach(el => {
             el.addEventListener('keyup', (e) => {
-                // Evita disparar el fetch si la tecla presionada fue un carácter inválido
-                if (el.id === 'codigo' && /[^0-9]/.test(e.key) && e.key.length === 1) return;
-                if (el.id === 'buscar' && /[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ]/.test(e.key) && e.key.length === 1) return;
-
+                // No disparar si son teclas de control (flechas, shift, etc)
+                if (e.key.length > 1 && e.key !== 'Backspace' && e.key !== 'Delete') return;
                 aplicarFiltros();
             });
         });
 
-        document.getElementById('filtrosForm').addEventListener('submit', function(e) {
+        document.getElementById('filtrosForm').onsubmit = (e) => {
             e.preventDefault();
             aplicarFiltros();
-        });
+        };
 
         attachPaginationListeners();
     });
