@@ -132,6 +132,17 @@
             </div>
         </div>
 
+        {{-- Filtro para Bienes sin Dependencias --}}
+        <div class="flex flex-col">
+            <label for="sin_dependencia" class="text-sm font-medium text-gray-700 mb-1">Sin Dependencia</label>
+            <select name="sin_dependencia" id="sin_dependencia"
+                    class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto bg-white">
+                <option value="">Todos</option>
+                <option value="1" @selected(request('sin_dependencia') == '1')>Sí</option>
+                <option value="0" @selected(request('sin_dependencia') == '0')>No</option>
+            </select>
+        </div>
+
         {{-- Estados y Acciones --}}
         <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-gray-50">
             <div class="flex flex-wrap gap-4">

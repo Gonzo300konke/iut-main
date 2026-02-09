@@ -35,13 +35,7 @@
         Movimiento #{{ $movimiento->id }} — {{ $movimiento->tipo }}
     </h1>
     <div class="flex flex-wrap gap-2 md:justify-end">
-        <a
-            href="{{ route('movimientos.pdf', $movimiento) }}"
-            class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded hover:bg-indigo-100 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
-        >
-            <x-heroicon-o-arrow-down-tray class="w-4 h-4 mr-1" />
-            Descargar PDF
-        </a>
+        @include('components.show-actions', ['resource' => 'movimientos', 'model' => $movimiento])
     </div>
 </div>
 
@@ -108,6 +102,15 @@
                 </div>
             </div>
         </div>
+
+        <!-- Acta de Desincorporación -->
+        @if ($movimiento->acta_desincorporacion)
+            <div class="col-span-1 md:col-span-2">
+                <h2 class="text-lg font-bold text-gray-800">Acta de Desincorporación</h2>
+                <a href="{{ Storage::url($movimiento->acta_desincorporacion) }}" target="_blank"
+                   class="text-blue-600 hover:underline">Ver Acta</a>
+            </div>
+        @endif
 
         <!-- Historial de cambios -->
         @if($movimiento->tipo === 'Actualización' && $movimiento->historialMovimientos && $movimiento->historialMovimientos->isNotEmpty())

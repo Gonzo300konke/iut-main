@@ -165,11 +165,17 @@ class BienController extends Controller
             'estado' => ['required', Rule::enum(EstadoBien::class)],
             'tipo_bien' => ['required', Rule::enum(TipoBien::class)],
             'fecha_registro' => ['required', 'date'],
+            'acta_desincorporacion' => ['required_if:estado,desincorporado', 'file', 'mimes:pdf', 'max:2048'],
         ]);
 
         if ($request->hasFile('fotografia')) {
             $foto = $this->procesarFotografia($request);
             if ($foto) $validated['fotografia'] = $foto;
+        }
+
+        if ($request->hasFile('acta_desincorporacion')) {
+            $actaPath = $request->file('acta_desincorporacion')->store('actas_desincorporacion', 'public');
+            $validated['acta_desincorporacion'] = $actaPath;
         }
 
         $bien = Bien::create($validated);
@@ -255,16 +261,47 @@ class BienController extends Controller
         return redirect()->route('bienes.index')->with('success', 'Bien actualizado.');
     }
 
-    // ... el resto de métodos (show, destroy, etc.) se mantienen ...
-
-
-
-    public function edit(Bien $bien)
+    /**
+     * Mostrar formulario de desincorporación.
+     */
+    public function showDesincorporarForm(Bien $bien)
     {
-        $dependencias = Dependencia::with('responsable')->get();
-        return view('bienes.edit', compact('bien', 'dependencias'));
+        return view('bienes.desincorporar', compact('bien'));
     }
 
+    /**
+     * Procesar la desincorporación de un bien.
+     */
+    public function desincorporar(Request $request, Bien $bien)
+    {
+        $validated = $request->validate([
+            'motivo' => 'required|string|max:255',
+            'acta_desincorporacion' => 'required|file|mimes:pdf|max:2048',
+        ]);
+
+        // Guardar el archivo del acta
+        $path = $request->file('acta_desincorporacion')->store('actas_desincorporacion', 'public');
+
+        // Mover el bien a la tabla de eliminados
+        \DB::table('eliminados')->insert([
+            'model_type' => Bien::class,
+            'model_id' => $bien->id,
+            'data' => json_encode($bien->toArray()),
+            'deleted_by' => auth()->id(),
+            'deleted_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Eliminar el bien de la tabla principal
+        $bien->delete();
+
+        return redirect()->route('bienes.index')->with('success', 'El bien ha sido desincorporado y movido a la tabla de eliminados.');
+    }
+
+    /**
+     * Desincorporar un bien.
+     */
     public function destroy(Bien $bien)
     {
         if (!auth()->user()->canDeleteData()) {

@@ -33,20 +33,7 @@
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <h1 class="text-3xl font-bold text-gray-800 leading-tight">{{ $usuario->nombre_completo }}</h1>
             <div class="flex flex-wrap gap-2 md:justify-end">
-                <a href="{{ route('usuarios.pdf', $usuario) }}"
-                   class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded hover:bg-indigo-100 transition">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                    Descargar PDF
-                </a>
-                @include('components.action-buttons', [
-                    'resource' => 'usuarios',
-                    'model' => $usuario,
-                    'canDelete' => auth()->user()->canDeleteUser($usuario),
-                    'confirm' => '¿Estás seguro? No podrás deshacer esta acción.',
-                    'label' => $usuario->nombre_completo
-                ])
+                @include('components.show-actions', ['resource' => 'usuarios', 'model' => $usuario])
             </div>
         </div>
 

@@ -33,20 +33,7 @@ use Illuminate\Support\Str;
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <h1 class="text-3xl font-bold text-gray-800 leading-tight">Organismo: {{ $organismo->codigo }} — {{ $organismo->nombre }}</h1>
             <div class="flex flex-wrap gap-2 md:justify-end">
-                <a
-                    href="{{ route('organismos.pdf', $organismo) }}"
-                    class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded hover:bg-indigo-100 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
-                >
-                    <x-heroicon-o-arrow-down-tray class="w-4 h-4 mr-1" />
-                    Descargar PDF
-                </a>
-                @include('components.action-buttons', [
-                    'resource' => 'organismos',
-                    'model' => $organismo,
-                    'canDelete' => auth()->user()->canDeleteData(),
-                    'confirm' => '¿Estás seguro?',
-                    'label' => $organismo->nombre
-                ])
+                @include('components.show-actions', ['resource' => 'organismos', 'model' => $organismo])
             </div>
         </div>
 

@@ -38,21 +38,7 @@ use Illuminate\Support\Str;
                 Bien: {{ $bien->codigo }} — {{ Str::limit($bien->descripcion, 80) }}
             </h1>
             <div class="flex flex-wrap gap-2 md:justify-end">
-                <a
-                    href="{{ route('bienes.pdf', $bien) }}"
-                    class="inline-flex items-center px-2 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded hover:bg-indigo-100 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1"
-                >
-                    <x-heroicon-o-arrow-down-tray class="w-4 h-4 mr-1" />
-                    Descargar PDF
-                </a>
-                @include('components.action-buttons', [
-                    'resource' => 'bienes',
-                    'model' => $bien,
-                    'canDelete' => auth()->user()->canDeleteData(),
-                    'confirm' => "¿Seguro que deseas desincorporar este bien?",
-                    'label' => $bien->codigo,
-                    'buttonText' => 'Desincorporar'
-                ])
+                @include('components.show-actions', ['resource' => 'bienes', 'model' => $bien])
             </div>
         </div>
 

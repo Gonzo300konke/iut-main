@@ -10,6 +10,7 @@ enum EstadoBien: string
     case EN_MANTENIMIENTO = 'EN_MANTENIMIENTO';
     case EN_CAMINO = 'EN_CAMINO';
     case EXTRAVIADO = 'EXTRAVIADO';
+    case DESINCORPORADO = 'DESINCORPORADO';
 
     /** Etiqueta amigable (opcional) */
     public function label(): string
@@ -20,6 +21,7 @@ enum EstadoBien: string
             self::EN_MANTENIMIENTO => 'En mantenimiento',
             self::EN_CAMINO => 'En camino',
             self::EXTRAVIADO => 'Extraviado',
+            self::DESINCORPORADO => 'Desincorporado',
         };
     }
 

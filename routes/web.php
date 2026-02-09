@@ -76,6 +76,10 @@ Route::middleware(['auth', 'redirigir.rol', 'prevent-back'])->group(function () 
     Route::get('/bienes/galeria-completa', [BienController::class, 'galeriaCompleta'])->name('bienes.galeria');
     Route::get('bienes/{bien}/pdf', [BienController::class, 'exportPdf'])->name('bienes.pdf');
 
+    // Ruta para desincorporar un bien
+    Route::get('/bienes/{bien}/desincorporar', [BienController::class, 'showDesincorporarForm'])->name('bienes.desincorporar.form');
+    Route::post('/bienes/{bien}/desincorporar', [BienController::class, 'desincorporar'])->name('bienes.desincorporar');
+
     // 2. Ruta de recurso (Genera las rutas automáticas como bienes.index, bienes.show, etc.)
     Route::resource('bienes', BienController::class)->parameters(['bienes' => 'bien']);
     // --- DEPENDENCIAS ---

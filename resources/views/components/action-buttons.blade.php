@@ -56,6 +56,16 @@
             $destroyUrl = '#';
         }
     }
+
+    try {
+        $desincorporarUrl = route($resource . '.desincorporar.form', [$paramName => $model->getKey()]);
+    } catch (\Throwable $e) {
+        try {
+            $desincorporarUrl = route($resource . '.desincorporar.form', $model);
+        } catch (\Throwable $e) {
+            $desincorporarUrl = '#';
+        }
+    }
 @endphp
 
 <a href="{{ $showUrl }}"
@@ -68,11 +78,16 @@
     <x-heroicon-o-pencil-square class="w-4 h-4 mr-1"/> Editar
 </a>
 
+<a href="{{ $desincorporarUrl }}"
+   class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100">
+    <x-heroicon-o-trash class="w-4 h-4 mr-1" /> Desincorporar
+</a>
+
 @php
     $buttonText = $buttonText ?? 'Eliminar';
 @endphp
 
-@if($canDelete)
+@if($canDelete && $buttonText !== 'Desincorporar')
     <form action="{{ $destroyUrl }}" method="POST" class="inline delete-form" data-can-delete="{{ auth()->user() && auth()->user()->canDeleteData() ? '1' : '0' }}" data-confirm="{{ e($confirm) }}" data-label="{{ e($label ?? '') }}">
         @csrf
         @method('DELETE')
