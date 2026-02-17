@@ -84,8 +84,8 @@
                     </div>
                 </div>
 
-                {{-- Roles (Solo Admin) --}}
-                @if(auth()->user()->isAdmin())
+                {{-- Roles (Solo Admin, no modificar si el usuario es admin) --}}
+                @if(auth()->user()->isAdmin() && !$usuario->isAdmin())
                     <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
                         <h3 class="text-sm font-semibold text-gray-800 mb-3">Rol del Usuario</h3>
                         <select name="rol_id" id="rol_id" class="block w-full rounded-md border border-gray-300 px-3 py-2">
@@ -96,6 +96,10 @@
                             @endforeach
                         </select>
                     </div>
+                @elseif($usuario->isAdmin())
+                    <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <p class="text-sm text-yellow-800">Este usuario es Administrador — su rol está protegido.</p>
+                    </div>
                 @endif
 
                 {{-- Estado --}}
@@ -103,9 +107,12 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
                     <div class="flex items-center">
                         <input type="checkbox" name="activo" id="activo" value="1"
-                            class="rounded border-gray-300 text-blue-600 shadow-sm" {{ $usuario->activo ? 'checked' : '' }}>
+                                class="rounded border-gray-300 text-blue-600 shadow-sm" {{ $usuario->activo ? 'checked' : '' }} @if($usuario->isAdmin()) disabled @endif>
                         <label for="activo" class="ml-2 block text-sm text-gray-700">Usuario activo</label>
                     </div>
+                        @if($usuario->isAdmin())
+                            <p class="text-xs text-gray-500 italic mt-1">El estado de administradores está protegido y no puede modificarse aquí.</p>
+                        @endif
                 </div>
 
                 <div class="flex gap-4 border-t pt-6">

@@ -78,10 +78,29 @@
     <x-heroicon-o-pencil-square class="w-4 h-4 mr-1"/> Editar
 </a>
 
-<a href="{{ $desincorporarUrl }}"
-   class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100">
-    <x-heroicon-o-trash class="w-4 h-4 mr-1" /> Desincorporar
-</a>
+@php
+    $showDesincorporar = true;
+    try {
+        // Ocultar siempre Desincorporar en la vista de usuarios
+        if (isset($resource) && $resource === 'usuarios') {
+            $showDesincorporar = false;
+        }
+
+        // Además, si el modelo es Usuario y es admin, también ocultar
+        if ($model instanceof \App\Models\Usuario && method_exists($model, 'isAdmin') && $model->isAdmin()) {
+            $showDesincorporar = false;
+        }
+    } catch (\Throwable $e) {
+        // si hay algún error, mantener el comportamiento por defecto
+    }
+@endphp
+
+@if($showDesincorporar && ($canDelete ?? true))
+    <a href="{{ $desincorporarUrl }}"
+       class="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100">
+        <x-heroicon-o-trash class="w-4 h-4 mr-1" /> Desincorporar
+    </a>
+@endif
 
 @php
     $buttonText = $buttonText ?? 'Eliminar';

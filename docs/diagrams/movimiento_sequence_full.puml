@@ -1,0 +1,58 @@
+@startuml
+title Secuencia: Registro de Movimientos (Controller y Observers)
+
+actor "Usuario (Admin)" as User
+participant "Browser / Client" as Client
+participant "MovimientoController" as Controller
+participant "Subject Model\n(Bien, Usuario,...)" as Subject
+participant "Movimiento Model" as Movimiento
+participant "MovimientoService" as Service
+participant "ModelObserver" as Observer
+participant "HistorialMovimiento Model" as Historial
+database "DB" as DB
+
+== Flujo A: Usuario -> MovimientoController@store ==
+User -> Client: Envía formulario POST /movimientos
+Client -> Controller: POST /movimientos (request)
+Controller -> Controller: validate($request)
+alt subject_type provisto
+    Controller -> Subject: ModelClass::where('id', subject_id)->exists()
+    alt existe
+        Controller -> Controller: prepare data (bien_id fallback)
+    else no existe
+        Controller --> Client: 302 + errors (back) / 422
+        stop
+    end
+end
+Controller -> Movimiento: Movimiento::create(validated)
+Movimiento -> DB: INSERT movimientos
+alt expectsJson
+    Controller --> Client: 201 JSON (movimiento)
+else
+    Controller --> Client: Redirect to movimientos.index (success)
+end
+
+== Flujo B1: Evento Eloquent (trait GeneratesMovimiento) ==
+note left: Para modelos que usan `GeneratesMovimiento` (no Bien)
+Subject -> Subject: created/updated/deleted (Eloquent event)
+Subject -> Service: MovimientoService::registrarMovimiento(subject, tipo, observaciones?)
+Service -> Service: resolveAuthenticatedUserId()
+alt user resolved
+    Service -> Movimiento: Movimiento::create([...])
+    Movimiento -> DB: INSERT movimientos
+else user no resuelto
+    Service -> Log: info('sin usuario autenticado; se omite registro')
+end
+
+== Flujo B2: Observer centralizado (ModelObserver) ==
+note left: Para modelos observados por `ModelObserver` (incluye Bien)
+Subject -> Observer: created/updated/deleting (Observer callback)
+Observer -> Observer: build $observaciones / $detalle
+Observer -> Movimiento: Movimiento::create([...])
+Movimiento -> DB: INSERT movimientos
+alt tipo == "Actualización"
+    Observer -> Historial: HistorialMovimiento::create([...])
+    Historial -> DB: INSERT historial_movimientos
+end
+
+@enduml

@@ -3,164 +3,148 @@
 @section('title', 'Editar Bien')
 
 @section('content')
-    <div class="max-w-2xl mx-auto">
-        <div class="bg-white shadow rounded-lg p-6">
-            <h1 class="text-2xl font-bold text-gray-800 mb-6">Editar Bien</h1>
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
+            {{-- Encabezado idéntico a Create --}}
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-5">
+                <h1 class="text-xl font-bold text-white flex items-center gap-2">
+                    <x-heroicon-o-pencil-square class="w-5 h-5 text-blue-100" />
+                    Editar Bien: <span class="text-blue-200 font-mono">{{ $bien->codigo }}</span>
+                </h1>
+                <p class="text-blue-100 text-xs mt-1 opacity-90">
+                    Modifique la información técnica o administrativa del activo patrimonial seleccionado.
+                </p>
+            </div>
 
-            <form action="{{ route('bienes.update', ['bien' => $bien->getKey()]) }}" method="POST"
-                enctype="multipart/form-data" class="space-y-6">
+            <form action="{{ route('bienes.update', $bien) }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
                 @csrf
-                @method('PATCH')
+                @method('PUT')
 
-                <div>
-                    <label for="dependencia_id" class="block text-sm font-semibold text-gray-700 mb-2">Dependencia</label>
-                    <select name="dependencia_id" id="dependencia_id"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        <option value="">Seleccione...</option>
-                        @foreach($dependencias as $dep)
-                            <option value="{{ $dep->id }}" {{ old('dependencia_id', $bien->dependencia_id) == $dep->id ? 'selected' : '' }}>
-                                {{ $dep->nombre }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('dependencia_id')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
+                {{-- Sección 1: Ubicación Administrativa --}}
+                <div class="space-y-4">
+                    <h2 class="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
+                        <x-heroicon-o-home-modern class="w-5 h-5 text-blue-600" /> Asignación Administrativa
+                    </h2>
 
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">Responsable</label>
-                    <div id="responsable_display" class="w-full px-4 py-3 border border-gray-200 rounded-lg text-gray-700">
-                        {{ $bien->dependencia->responsable->nombre ?? 'No hay responsable asignado' }}
-                    </div>
-                </div>
-
-                <div>
-                    <label for="codigo" class="block text-sm font-semibold text-gray-700 mb-2">Código</label>
-                    <input type="text" name="codigo" id="codigo" value="{{ old('codigo', $bien->codigo) }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                        placeholder="Ej: BN001" maxlength="10">
-
-                    <div id="sugerencia-container" class="mt-1 hidden">
-                        <button type="button" id="btn-sugerencia"
-                            class="text-[10px] text-blue-600 hover:underline font-bold italic">
-                            💡 ¿Restaurar código original: <span id="span-sugerencia"></span>?
-                        </button>
-                    </div>
-
-                    @error('codigo')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <div class="flex justify-between items-center mb-2">
-                        <label for="descripcion" class="block text-sm font-semibold text-gray-700">Descripción</label>
-                        <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 50</span>
-                    </div>
-                    <textarea name="descripcion" id="descripcion" rows="3"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                        placeholder="Describe el bien..."
-                        maxlength="50">{{ old('descripcion', $bien->descripcion) }}</textarea>
-                    @error('descripcion')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                {{-- CAMPO PRECIO CON MÁSCARA --}}
-                <div>
-                    <label for="precio_display" class="block text-sm font-semibold text-gray-700 mb-2">Precio (Bs.)</label>
-                    <input type="text" id="precio_display"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-right font-mono"
-                        placeholder="0,00">
-
-                    {{-- Campo oculto que Laravel procesará --}}
-                    <input type="hidden" name="precio" id="precio_hidden" value="{{ old('precio', $bien->precio) }}">
-
-                    @error('precio')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="space-y-2">
-                    <label for="fotografia" class="block text-sm font-semibold text-gray-700">Fotografía</label>
-                    @if($bien->fotografia)
-                        <div class="flex items-center gap-4">
-                            <div class="w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
-                                <img src="{{ str_starts_with($bien->fotografia, 'http') ? $bien->fotografia : asset('storage/' . $bien->fotografia) }}"
-                                    alt="Fotografía actual" class="w-full h-full object-cover">
-                            </div>
-                            <p class="text-sm text-gray-500">Puedes subir una nueva imagen para reemplazarla.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="dependencia_id" class="block text-sm font-bold text-gray-700 mb-2">Dependencia</label>
+                            <select name="dependencia_id" id="dependencia_id"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                                <option value="">Sin asignar (Almacén Central)</option>
+                                @foreach($dependencias as $dep)
+                                    <option value="{{ $dep->id }}" {{ old('dependencia_id', $bien->dependencia_id) == $dep->id ? 'selected' : '' }}>
+                                        {{ $dep->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                    @endif
-                    <input type="file" name="fotografia" id="fotografia" accept="image/*"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white">
-                    <p class="text-gray-500 text-xs">Formatos admitidos: JPG, PNG, WEBP. Máx 2MB.</p>
-                    @error('fotografia')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
 
-                <div>
-                    <label for="ubicacion" class="block text-sm font-semibold text-gray-700 mb-2">Ubicación</label>
-                    <input type="text" name="ubicacion" id="ubicacion" value="{{ old('ubicacion', $bien->ubicacion) }}"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                        placeholder="Oficina 101" maxlength="50">
-                    @error('ubicacion')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="estado" class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
-                    <select name="estado" id="estado"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        <option value="">Seleccione...</option>
-                        @foreach(\App\Enums\EstadoBien::cases() as $estado)
-                            <option value="{{ $estado->value }}" {{ old('estado', $bien->estado?->value) == $estado->value ? 'selected' : '' }}>
-                                {{ ucfirst($estado->name) }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('estado')
-                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div>
-                    <label for="fecha_registro" class="block text-sm font-semibold text-gray-700 mb-2">📅 Fecha de
-                        Registro</label>
-                    <div class="relative">
-                        <input type="date" name="fecha_registro" id="fecha_registro"
-                            value="{{ old('fecha_registro', optional($bien->fecha_registro)->format('Y-m-d')) }}"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                            style="font-size: 16px;">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Responsable de la Dependencia</label>
+                            <div id="responsable_display"
+                                class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 italic text-sm flex items-center h-[50px]">
+                                {{ $bien->dependencia->responsable->nombre ?? 'Cargando responsable...' }}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div>
-                    <label for="tipo" class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Bien</label>
-                    <select name="tipo" id="tipo"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                        <option value="">Seleccione...</option>
-                        <option value="inmueble" {{ old('tipo', $bien->tipo) == 'inmueble' ? 'selected' : '' }}>Inmueble
-                        </option>
-                        <option value="electrónico" {{ old('tipo', $bien->tipo) == 'electrónico' ? 'selected' : '' }}>
-                            Electrónico</option>
-                        <option value="mueble" {{ old('tipo', $bien->tipo) == 'mueble' ? 'selected' : '' }}>Mueble</option>
-                        <option value="otro" {{ old('tipo', $bien->tipo) == 'otro' ? 'selected' : '' }}>Otro</option>
-                    </select>
+                {{-- Sección 2: Identificación del Bien --}}
+                <div class="space-y-4">
+                    <h2 class="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
+                        <x-heroicon-o-identification class="w-5 h-5 text-blue-600" /> Identificación Técnica
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {{-- Código --}}
+                        <div>
+                            <label for="codigo" class="block text-sm font-bold text-gray-700 mb-2">Código del Bien</label>
+                            <input type="text" name="codigo" id="codigo" value="{{ old('codigo', $bien->codigo) }}"
+                                maxlength="8" inputmode="numeric"
+                                class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg font-mono focus:ring-2 focus:ring-blue-500 outline-none transition uppercase">
+                            
+                            <div id="sugerencia-container" class="mt-1 hidden">
+                                <button type="button" id="btn-sugerencia" class="text-[10px] text-blue-600 hover:underline font-bold italic">
+                                    💡 ¿Restaurar código original: <span id="span-sugerencia"></span>?
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Tipo de Bien --}}
+                        <div>
+                            <label for="tipo_bien" class="block text-sm font-bold text-gray-700 mb-2">Tipo de Bien</label>
+                            <select name="tipo_bien" id="tipo_bien" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                                @foreach($tiposBien as $value => $label)
+                                    <option value="{{ $value }}" {{ old('tipo_bien', $bien->tipo_bien->value ?? '') == $value ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        {{-- Estado --}}
+                        <div>
+                            <label for="estado" class="block text-sm font-bold text-gray-700 mb-2">Estado Físico</label>
+                            <select name="estado" id="estado" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                                @foreach($estados as $value => $label)
+                                    <option value="{{ $value }}" {{ old('estado', $bien->estado->value ?? '') == $value ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Descripción --}}
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="descripcion" class="block text-sm font-bold text-gray-700">Descripción General</label>
+                            <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 50</span>
+                        </div>
+                        <textarea name="descripcion" id="descripcion" rows="2" required maxlength="50"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">{{ old('descripcion', $bien->descripcion) }}</textarea>
+                    </div>
                 </div>
 
-                <div id="campos-tipo-bien" class="space-y-6"></div>
+                {{-- Sección 3: Valores y Archivos --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Precio (Bs.)</label>
+                        <input type="number" name="precio" step="0.01" min="0" value="{{ old('precio', $bien->precio) }}"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Fecha de Adquisición</label>
+                        <input type="date" name="fecha_registro" value="{{ old('fecha_registro', optional($bien->fecha_registro)->format('Y-m-d')) }}"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Fotografía (Opcional)</label>
+                        @if($bien->fotografia)
+                            <div class="mb-2 flex items-center gap-2 p-2 border rounded bg-gray-50">
+                                <img src="{{ asset('storage/' . $bien->fotografia) }}" class="w-10 h-10 object-cover rounded">
+                                <span class="text-[10px] text-gray-500">Imagen actual preservada</span>
+                            </div>
+                        @endif
+                        <input type="file" name="fotografia" accept="image/*"
+                            class="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                </div>
 
-                <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
+                {{-- Contenedor dinámico (Campos extra según tipo) --}}
+                <div id="campos-tipo-bien" class="transition-all duration-300"></div>
+
+                {{-- Botones --}}
+                <div class="flex justify-end gap-4 pt-8 border-t border-gray-100">
                     <a href="{{ route('bienes.index') }}"
-                        class="px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition">✗
-                        Cancelar</a>
+                        class="px-6 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition">Cancelar</a>
                     <button type="submit"
-                        class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:shadow-lg transition">✓
-                        Guardar Bien</button>
+                        class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition">
+                        Actualizar Activo
+                    </button>
                 </div>
             </form>
         </div>
@@ -169,101 +153,100 @@
 
 @push('scripts')
     <script>
-        // --- RESPONSABLE ---
-        const dependenciaSelect = document.getElementById('dependencia_id');
-        const responsableDisplay = document.getElementById('responsable_display');
-        const dependencias = {
-            @foreach($dependencias as $d)
-                '{{ $d->id }}': { responsable: {!! json_encode($d->responsable ? $d->responsable->nombre : null) !!} },
-            @endforeach
-            };
+        /* 1. Datos de Dependencias */
+        const dependenciasData = @json($dependencias->mapWithKeys(fn($d) => [$d->id => $d->responsable->nombre ?? 'Sin responsable']));
+        const depSelect = document.getElementById('dependencia_id');
+        const respDisplay = document.getElementById('responsable_display');
 
-        function actualizarResponsable() {
-            const id = dependenciaSelect.value;
-            const dep = dependencias[id];
-            responsableDisplay.textContent = dep?.responsable ?? 'No hay responsable asignado';
-        }
-        dependenciaSelect.addEventListener('change', actualizarResponsable);
+        depSelect.addEventListener('change', function () {
+            respDisplay.textContent = dependenciasData[this.value] || 'Seleccione una dependencia...';
+            respDisplay.classList.toggle('text-gray-900', !!this.value);
+            respDisplay.classList.toggle('font-bold', !!this.value);
+        });
 
-        // --- CÓDIGO SUGERENCIA ---
+        /* 2. Código Original Sugerido (para restaurar si se cambia) */
+        const codigoOriginal = "{{ $bien->codigo }}";
         const codigoInput = document.getElementById('codigo');
         const sugerenciaContainer = document.getElementById('sugerencia-container');
         const spanSugerencia = document.getElementById('span-sugerencia');
-        const btnSugerencia = document.getElementById('btn-sugerencia');
-        const codigoOriginal = "{{ $bien->codigo }}";
 
         codigoInput.addEventListener('input', function (e) {
-            e.target.value = e.target.value.replace(/[^A-Za-z0-9]/g, '');
-            if (e.target.value !== codigoOriginal) {
+            this.value = this.value.replace(/\D/g, '');
+            if (this.value !== codigoOriginal) {
                 spanSugerencia.textContent = codigoOriginal;
                 sugerenciaContainer.classList.remove('hidden');
             } else {
                 sugerenciaContainer.classList.add('hidden');
             }
         });
-        btnSugerencia.addEventListener('click', () => {
+
+        document.getElementById('btn-sugerencia').addEventListener('click', () => {
             codigoInput.value = codigoOriginal;
             sugerenciaContainer.classList.add('hidden');
         });
 
-        // --- DESCRIPCIÓN 50 CHARS ---
+        /* 3. Contador Caracteres */
         const descTextarea = document.getElementById('descripcion');
         const charCount = document.getElementById('char-count');
 
-        function actualizarContador() {
-            const len = descTextarea.value.length;
-            charCount.textContent = `${len} / 50`;
-            charCount.classList.toggle('text-red-500', len >= 50);
-        }
-        descTextarea.addEventListener('input', function (e) {
-            const regex = /[^A-Za-z0-9.,;:()áéíóúÁÉÍÓÚñÑ\s\-]/g;
-            e.target.value = e.target.value.replace(regex, '');
-            actualizarContador();
+        descTextarea.addEventListener('input', function () {
+            charCount.textContent = `${this.value.length} / 50`;
+            charCount.classList.toggle('text-red-500', this.value.length >= 50);
         });
 
-        // --- PRECIO: MÁSCARA CONTABLE (ENTRADA POR DERECHA) ---
-        const precioDisplay = document.getElementById('precio_display');
-        const precioHidden = document.getElementById('precio_hidden');
+        /* 4. Campos Dinámicos (Idénticos a Create) */
+        const camposPorTipo = {
+            'ELECTRONICO': [
+                { name: 'serial', label: 'Número de Serie', type: 'text' },
+                { name: 'modelo', label: 'Modelo/Versión', type: 'text' }
+            ],
+            'VEHICULO': [
+                { name: 'placa', label: 'Número de Placa', type: 'text' },
+                { name: 'marca', label: 'Marca', type: 'text' }
+            ],
+            'MOBILIARIO': [
+                { name: 'material', label: 'Material', type: 'text' },
+                { name: 'color', label: 'Color', type: 'text' }
+            ]
+        };
 
-        precioDisplay.addEventListener('input', function (e) {
-            let value = this.value.replace(/\D/g, '');
-            if (value === "") value = "0";
+        const tipoBienSelect = document.getElementById('tipo_bien');
+        const container = document.getElementById('campos-tipo-bien');
+        
+        // Cargamos los valores actuales del bien para los campos dinámicos
+        const bienData = @json($bien->toArray());
 
-            let numericValue = (parseInt(value) / 100).toFixed(2);
-            let displayValue = numericValue.replace('.', ',')
-                .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-
-            this.value = displayValue;
-            precioHidden.value = numericValue;
-        });
-
-        precioDisplay.addEventListener('click', function () {
-            this.setSelectionRange(this.value.length, this.value.length);
-        });
-
-        // --- CAMPOS DINÁMICOS ---
-        document.getElementById('tipo').addEventListener('change', function () {
+        tipoBienSelect.addEventListener('change', function () {
             const tipo = this.value;
-            const container = document.getElementById('campos-tipo-bien');
             container.innerHTML = '';
-            if (tipo === 'electrónico') {
-                container.innerHTML = `<div><label class="block text-sm font-semibold text-gray-700 mb-2">Serial</label><input type="text" name="serial" value="{{ old('serial', $bien->serial) }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition"></div>`;
-            }
+            if (!tipo || !camposPorTipo[tipo]) return;
+
+            let html = `
+                <div class="bg-blue-50/50 border border-blue-100 p-6 rounded-xl space-y-4 animate-fade-in">
+                    <h3 class="text-blue-800 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                        <x-heroicon-o-information-circle class="w-5 h-5" /> Detalles Técnicos del ${tipo}
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            `;
+
+            camposPorTipo[tipo].forEach(campo => {
+                // Prioridad: Old Input -> Valor en BD -> Vacío
+                const val = @json(old())[campo.name] || bienData[campo.name] || '';
+                html += `
+                    <div>
+                        <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
+                        <input type="${campo.type}" name="${campo.name}" value="${val}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">
+                    </div>`;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
         });
 
-        // --- INICIALIZACIÓN ---
-        window.addEventListener('load', () => {
-            actualizarResponsable();
-            actualizarContador();
-
-            // Inicializar precio si existe
-            if (precioHidden.value) {
-                let initialValue = Math.round(parseFloat(precioHidden.value) * 100).toString();
-                precioDisplay.value = initialValue;
-                precioDisplay.dispatchEvent(new Event('input'));
-            }
-
-            document.getElementById('tipo').dispatchEvent(new Event('change'));
-        });
+        // Inicializar al cargar
+        window.onload = () => {
+            descTextarea.dispatchEvent(new Event('input'));
+            tipoBienSelect.dispatchEvent(new Event('change'));
+        };
     </script>
 @endpush

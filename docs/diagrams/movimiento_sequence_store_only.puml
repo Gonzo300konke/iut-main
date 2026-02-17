@@ -1,0 +1,27 @@
+@startuml
+title Secuencia: MovimientoController@store (simplificado)
+
+actor "Usuario (Admin)" as User
+participant "Browser / Client" as Client
+participant "MovimientoController" as Controller
+participant "Subject Model\n(Bien, Usuario,...)" as Subject
+participant "Movimiento Model" as Movimiento
+database "DB" as DB
+
+User -> Client: Envía formulario POST /movimientos
+Client -> Controller: POST /movimientos (request)
+Controller -> Controller: validate($request)
+alt subject_type provisto
+    Controller -> Subject: ModelClass::where('id', subject_id)->exists()
+    alt existe
+        Controller -> Controller: preparar datos (bien_id fallback)
+    else
+        Controller --> Client: 302 + errors (back)
+        stop
+    end
+end
+Controller -> Movimiento: Movimiento::create(validated)
+Movimiento -> DB: INSERT movimientos
+Controller --> Client: Redirect to movimientos.index (success) or 201 JSON
+
+@enduml

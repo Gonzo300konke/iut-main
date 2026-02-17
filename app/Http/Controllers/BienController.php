@@ -227,7 +227,25 @@ class BienController extends Controller
         $filename = uniqid('bien_') . '.' . $file->getClientOriginalExtension();
         return $file->storeAs('bienes', $filename, 'public');
     }
+    /**
+ * Mostrar el formulario para editar un bien específico.
+ */
+    public function edit(Bien $bien)
+    {
+        // Cargamos los datos para los selectores de la vista
+        $dependencias = Dependencia::with('responsable')->get();
 
+        // Obtenemos los labels de los Enums (tal como hiciste en index/create)
+        $tiposBien = collect(TipoBien::cases())->mapWithKeys(
+            fn(TipoBien $tipo) => [$tipo->value => $tipo->label()]
+        );
+
+        $estados = collect(EstadoBien::cases())->mapWithKeys(
+            fn(EstadoBien $estado) => [$estado->value => $estado->label()]
+        );
+
+        return view('bienes.edit', compact('bien', 'dependencias', 'tiposBien', 'estados'));
+    }
     public function update(Request $request, Bien $bien)
     {
         $validated = $request->validate([

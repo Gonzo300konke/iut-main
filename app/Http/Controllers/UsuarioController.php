@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Usuario;
+use App\Models\Rol;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -180,6 +181,14 @@ class UsuarioController extends Controller
             'hash_password' => ['nullable', 'string', 'min:8'],
             'activo'   => ['boolean'],
         ]);
+
+        // Protección adicional: un usuario con flag admin no puede ver modificados
+        // su rol ni su estado desde la interfaz web. Esto evita cambios por manipulación.
+        if ($usuario->isAdmin()) {
+            if (array_key_exists('rol_id', $validated) || array_key_exists('activo', $validated)) {
+                abort(403, 'No se puede modificar el rol o el estado de un administrador.');
+            }
+        }
 
         $rolAdmin = Rol::where('nombre', 'Administrador')->first();
         if (isset($validated['rol_id']) && $rolAdmin) {
