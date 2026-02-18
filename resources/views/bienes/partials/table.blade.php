@@ -25,10 +25,10 @@
                     <tr class="hover:bg-blue-50/30 transition-colors">
                         <td class="px-6 py-4 text-sm font-semibold text-blue-600 font-mono">{{ $bien->codigo }}</td>
                         <td class="px-6 py-4 text-sm text-gray-900 font-medium">{{ $bien->descripcion }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">{{ $bien->dependencia->unidadAdministradora->organismo->nombre ?? '-' }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">{{ $bien->dependencia->unidadAdministradora->nombre ?? '-' }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">{{ $bien->dependencia->nombre ?? '-' }}</td>
-                        <td class="px-6 py-4 text-sm text-gray-700">{{ $bien->dependencia->responsable->nombre ?? '-' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ $bien->dependencia?->unidadAdministradora?->organismo?->nombre ?? '-' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ $bien->dependencia?->unidadAdministradora?->nombre ?? '-' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ $bien->dependencia?->nombre ?? '-' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-700">{{ $bien->dependencia?->responsable?->nombre ?? '-' }}</td>
                         <td class="px-6 py-4 text-sm">
                             @php
                                 $tipoBienLabel = $bien->tipo_bien?->label() ?? 'N/A';

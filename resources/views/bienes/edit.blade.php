@@ -63,7 +63,7 @@
                             <input type="text" name="codigo" id="codigo" value="{{ old('codigo', $bien->codigo) }}"
                                 maxlength="8" inputmode="numeric"
                                 class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg font-mono focus:ring-2 focus:ring-blue-500 outline-none transition uppercase">
-                            
+
                             <div id="sugerencia-container" class="mt-1 hidden">
                                 <button type="button" id="btn-sugerencia" class="text-[10px] text-blue-600 hover:underline font-bold italic">
                                     💡 ¿Restaurar código original: <span id="span-sugerencia"></span>?
@@ -212,7 +212,7 @@
 
         const tipoBienSelect = document.getElementById('tipo_bien');
         const container = document.getElementById('campos-tipo-bien');
-        
+
         // Cargamos los valores actuales del bien para los campos dinámicos
         const bienData = @json($bien->toArray());
 
@@ -248,5 +248,47 @@
             descTextarea.dispatchEvent(new Event('input'));
             tipoBienSelect.dispatchEvent(new Event('change'));
         };
+
+        /* 5. Validación antes de enviar: evitar enviar strings vacíos y validar campos obligatorios */
+        const formEdit = document.querySelector('form[action="' + window.location.pathname + '"]');
+        if (formEdit) {
+            formEdit.addEventListener('submit', function (e) {
+                // Rehabilitar cualquier campo deshabilitado previamente
+                [...formEdit.elements].forEach(el => el.disabled = el.disabled && false);
+
+                const codigo = document.getElementById('codigo').value.trim();
+                const descripcion = document.getElementById('descripcion').value.trim();
+                const tipo = tipoBienSelect.value;
+                const estado = document.getElementById('estado')?.value || '';
+
+                if (!codigo || codigo.length !== 8) {
+                    e.preventDefault();
+                    alert('El código debe contener exactamente 8 dígitos.');
+                    return;
+                }
+                if (!descripcion) {
+                    e.preventDefault();
+                    alert('La descripción es obligatoria.');
+                    return;
+                }
+                if (!tipo) {
+                    e.preventDefault();
+                    alert('Debe seleccionar el tipo de bien.');
+                    return;
+                }
+                if (!estado) {
+                    e.preventDefault();
+                    alert('Debe seleccionar el estado del bien.');
+                    return;
+                }
+
+                // Deshabilitar inputs opcionales vacíos
+                [...formEdit.elements].forEach(el => {
+                    if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.type !== 'file' && el.name) {
+                        if (String(el.value).trim() === '') el.disabled = true;
+                    }
+                });
+            });
+        }
     </script>
 @endpush

@@ -287,5 +287,48 @@
         });
 
         if (tipoBienSelect.value) tipoBienSelect.dispatchEvent(new Event('change'));
+
+            /* 5. Validación antes de enviar: evitar enviar strings vacíos y validar campos obligatorios */
+            const form = document.querySelector('form[action="' + window.location.pathname + '"]');
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    // Rehabilitar cualquier campo deshabilitado previamente
+                    [...form.elements].forEach(el => el.disabled = el.disabled && false);
+
+                    // Campos requeridos básicos
+                    const codigo = document.getElementById('codigo').value.trim();
+                    const descripcion = document.getElementById('descripcion').value.trim();
+                    const tipo = tipoBienSelect.value;
+                    const estado = document.getElementById('estado')?.value || '';
+
+                    if (!codigo || codigo.length !== 8) {
+                        e.preventDefault();
+                        alert('El código debe contener exactamente 8 dígitos.');
+                        return;
+                    }
+                    if (!descripcion) {
+                        e.preventDefault();
+                        alert('La descripción es obligatoria.');
+                        return;
+                    }
+                    if (!tipo) {
+                        e.preventDefault();
+                        alert('Debe seleccionar el tipo de bien.');
+                        return;
+                    }
+                    if (!estado) {
+                        e.preventDefault();
+                        alert('Debe seleccionar el estado del bien.');
+                        return;
+                    }
+
+                    // Evitar enviar inputs opcionales vacíos: los deshabilitamos para que no aparezcan en el request
+                    [...form.elements].forEach(el => {
+                        if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.type !== 'file' && el.name) {
+                            if (String(el.value).trim() === '') el.disabled = true;
+                        }
+                    });
+                });
+            }
     </script>
 @endpush
