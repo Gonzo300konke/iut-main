@@ -487,13 +487,27 @@ class ReporteController extends Controller
             case 'bienesPorTipo':
                 $q = Bien::query(); $applyFilters($q);
                 $items = (clone $q)->selectRaw('tipo_bien, COUNT(*) as count')->groupBy('tipo_bien')->get();
-                foreach ($items as $it) $data[(string)$it->tipo_bien] = (int)$it->count;
+                foreach ($items as $it) {
+                    $tipo = $it->tipo_bien instanceof \App\Enums\TipoBien
+                        ? $it->tipo_bien
+                        : \App\Enums\TipoBien::tryFrom($it->tipo_bien);
+
+                    $label = $tipo ? $tipo->label() : ((string) $it->tipo_bien);
+                    $data[(string)$label] = (int)$it->count;
+                }
                 $title = 'Bienes por Tipo';
                 break;
             case 'bienesPorEstado':
                 $q = Bien::query(); $applyFilters($q);
                 $items = (clone $q)->selectRaw('estado, COUNT(*) as count')->groupBy('estado')->get();
-                foreach ($items as $it) $data[(string)$it->estado] = (int)$it->count;
+                foreach ($items as $it) {
+                    $estado = $it->estado instanceof \App\Enums\EstadoBien
+                        ? $it->estado
+                        : \App\Enums\EstadoBien::tryFrom($it->estado);
+
+                    $label = $estado ? $estado->label() : ((string) $it->estado);
+                    $data[(string)$label] = (int)$it->count;
+                }
                 $title = 'Bienes por Estado';
                 break;
             default:
