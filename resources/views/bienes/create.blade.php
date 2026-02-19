@@ -27,17 +27,20 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="dependencia_id" class="block text-sm font-bold text-gray-700 mb-2">Dependencia
-                                (Opcional)</label>
-                            <select name="dependencia_id" id="dependencia_id"
+                            <label for="dependencia_id" class="block text-sm font-bold text-gray-700 mb-2">Dependencia <span class="text-red-500">*</span></label>
+                            <select name="dependencia_id" id="dependencia_id" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
-                                <option value="">Sin asignar (Almacén Central)</option>
+                                <option value="" disabled {{ old('dependencia_id') ? '' : 'selected' }}>Seleccione dependencia...</option>
                                 @foreach($dependencias as $dep)
                                     <option value="{{ $dep->id }}" {{ old('dependencia_id') == $dep->id ? 'selected' : '' }}>
                                         {{ $dep->nombre }}
                                     </option>
                                 @endforeach
                             </select>
+
+                            @error('dependencia_id')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         <div>
@@ -300,6 +303,13 @@
                     const descripcion = document.getElementById('descripcion').value.trim();
                     const tipo = tipoBienSelect.value;
                     const estado = document.getElementById('estado')?.value || '';
+                    const dependenciaSel = depSelect.value;
+
+                    if (!dependenciaSel) {
+                        e.preventDefault();
+                        alert('Debe asignar una dependencia antes de guardar el bien.');
+                        return;
+                    }
 
                     if (!codigo || codigo.length !== 8) {
                         e.preventDefault();

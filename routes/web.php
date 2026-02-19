@@ -106,6 +106,7 @@ Route::middleware(['auth', 'redirigir.rol', 'prevent-back'])->group(function () 
     Route::resource('reportes', ReporteController::class);
     Route::get('reportes/pdf/{tipo}', [ReporteController::class, 'generarPdf'])->name('reportes.pdf');
     Route::get('graficas', [ReporteController::class, 'graficas'])->name('graficas');
+    Route::get('graficas/pdf', [ReporteController::class, 'graficasPdf'])->name('graficas.pdf');
 
     // --- UNIDADES ADMINISTRADORAS ---
     Route::resource('unidades', UnidadAdministradoraController::class)->parameters(['unidades' => 'unidadAdministradora']);

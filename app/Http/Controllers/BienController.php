@@ -155,8 +155,8 @@ class BienController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            // CAMBIO: 'nullable' para que la dependencia no sea obligatoria
-            'dependencia_id' => ['nullable', 'exists:dependencias,id'],
+            // La dependencia ahora es obligatoria desde la vista y en servidor
+            'dependencia_id' => ['required', 'exists:dependencias,id'],
             'codigo' => [
                 'required',
                 'string',
@@ -272,6 +272,25 @@ class BienController extends Controller
         }
 
         if ($request->hasFile('fotografia')) {
+            // Evitar fotos duplicadas: comparar hash del archivo subido con fotos existentes
+            $file = $request->file('fotografia');
+            $uploadedHash = md5_file($file->getRealPath());
+
+            $existing = Bien::whereNotNull('fotografia')->get(['id', 'fotografia']);
+            foreach ($existing as $ex) {
+                try {
+                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($ex->fotografia)) {
+                        $path = \Illuminate\Support\Facades\Storage::disk('public')->path($ex->fotografia);
+                        if (file_exists($path) && md5_file($path) === $uploadedHash) {
+                            return back()->withErrors(['fotografia' => 'La fotografía ya está asociada a otro bien (ID: ' . $ex->id . ').'])->withInput();
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // En caso de problemas leyendo algún archivo remoto/antiguo, ignoramos y continuamos
+                    continue;
+                }
+            }
+
             $foto = $this->procesarFotografia($request);
             if ($foto) $validated['fotografia'] = $foto;
         }
