@@ -111,9 +111,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <label for="descripcion" class="block text-sm font-bold text-gray-700">Descripción
                                 General</label>
-                            <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 50</span>
+                            <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 255</span>
                         </div>
-                        <textarea name="descripcion" id="descripcion" rows="2" required maxlength="50"
+                        <textarea name="descripcion" id="descripcion" rows="2" required maxlength="255"
                             placeholder="Indique nombre, marca, modelo..."
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">{{ old('descripcion') }}</textarea>
                     </div>
@@ -216,13 +216,8 @@
 
         descTextarea.addEventListener('input', function () {
             const len = this.value.length;
-            charCount.textContent = `${len} / 50`;
-
-            if (len >= 50) {
-                charCount.classList.add('text-red-500');
-            } else {
-                charCount.classList.remove('text-red-500');
-            }
+            charCount.textContent = `${len} / 255`;
+            charCount.classList.toggle('text-red-500', len >= 255);
         });
 
         // Inicializar contador al cargar
@@ -231,7 +226,7 @@
         /* 4. Campos Dinámicos */
         const camposPorTipo = {
             'ELECTRONICO': [
-                { name: 'serial', label: 'Número de Serie', type: 'text' },
+                { name: 'serial', label: 'Número de Serie', type: 'text', required: true },
                 { name: 'modelo', label: 'Modelo/Versión', type: 'text' },
                 { name: 'procesador', label: 'Procesador', type: 'text' },
                 { name: 'memoria', label: 'RAM/Memoria', type: 'text' }
@@ -272,12 +267,13 @@
             camposPorTipo[tipo].forEach(campo => {
                 const val = oldValues[campo.name] || '';
                 const isFull = campo.type === 'textarea' ? 'md:col-span-2' : '';
+                const requiredAttr = campo.required ? 'required' : '';
                 html += `
                     <div class="${isFull}">
                         <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
                         ${campo.type === 'textarea'
                         ? `<textarea name="${campo.name}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">${val}</textarea>`
-                        : `<input type="${campo.type}" name="${campo.name}" value="${val}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">`
+                        : `<input type="${campo.type}" name="${campo.name}" value="${val}" ${requiredAttr} class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">`
                     }
                     </div>`;
             });
@@ -288,14 +284,10 @@
 
         if (tipoBienSelect.value) tipoBienSelect.dispatchEvent(new Event('change'));
 
-            /* 5. Validación antes de enviar: evitar enviar strings vacíos y validar campos obligatorios */
-            const form = document.querySelector('form[action="' + window.location.pathname + '"]');
+            /* 5. Validación antes de enviar */
+            const form = document.querySelector('form[action*="bienes"]');
             if (form) {
                 form.addEventListener('submit', function (e) {
-                    // Rehabilitar cualquier campo deshabilitado previamente
-                    [...form.elements].forEach(el => el.disabled = el.disabled && false);
-
-                    // Campos requeridos básicos
                     const codigo = document.getElementById('codigo').value.trim();
                     const descripcion = document.getElementById('descripcion').value.trim();
                     const tipo = tipoBienSelect.value;
@@ -321,13 +313,6 @@
                         alert('Debe seleccionar el estado del bien.');
                         return;
                     }
-
-                    // Evitar enviar inputs opcionales vacíos: los deshabilitamos para que no aparezcan en el request
-                    [...form.elements].forEach(el => {
-                        if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.type !== 'file' && el.name) {
-                            if (String(el.value).trim() === '') el.disabled = true;
-                        }
-                    });
                 });
             }
     </script>
