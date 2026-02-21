@@ -21,23 +21,24 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validated = $request->validate([
-            'cedula'   => ['required', 'string'],
-            'password' => ['nullable', 'string', 'min:8'],
-            'remember' => ['sometimes', 'boolean'],
-        ]);
+        'cedula'   => ['required', 'string'],
+        'password' => ['required', 'string', 'min:8'], // Cambiado de nullable a required si es login
+        'remember' => ['sometimes', 'boolean'],
+    ]);
 
-        // Normalizar cédula a solo dígitos para evitar fallos con formatos (V-xx.xxx.xxx)
-        $cedula = $this->normalizeCedulaDigits($validated['cedula']);
+    $cedulaOriginal = $request->input('cedula'); // Guardamos como lo escribió el usuario
+    $cedulaNormalizada = $this->normalizeCedulaDigits($cedulaOriginal);
 
-        // 1) Buscar usuario local por cédula y activo
-        $usuario = Usuario::where('cedula', $cedula)->where('activo', true)->first();
+    $usuario = Usuario::where('cedula', $cedulaNormalizada)->where('activo', true)->first();
 
-        // 2) Si no existe localmente, intentar obtenerlo del API (mock JSON) y redirigir a set password
-        if (! $usuario) {
-            $persona = $this->buscarPersonaEnApiPorCedula($cedula);
-            if (! $persona) {
-                return back()->with('error', 'No se encontró persona con esa cédula en el sistema externo.')->withInput();
-            }
+    if (! $usuario) {
+        $persona = $this->buscarPersonaEnApiPorCedula($cedulaNormalizada);
+        if (! $persona) {
+            // Importante: withInput() devuelve TODO lo que vino en el request
+            return back()
+                ->with('error', 'No se encontró persona con esa cédula en el sistema externo.')
+                ->withInput();
+        }
 
             // Guardar datos básicos en sesión para prellenar el formulario de contraseña
             session([

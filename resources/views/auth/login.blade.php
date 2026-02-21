@@ -37,7 +37,7 @@
                     <div>
                         <label for="cedula" class="block text-sm font-bold text-gray-700 mb-2">Cédula de Identidad</label>
                         <div class="relative">
-                            <input type="text" name="cedula" id="cedula" 
+                            <input type="text" name="cedula" id="cedula"
                                    value="{{ old('cedula') }}"
                                    class="w-full pl-4 pr-4 py-3.5 border-2 @error('cedula') border-red-500 @else border-gray-200 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 focus:border-transparent transition-all duration-200 bg-gray-50"
                                    placeholder="V-00.000.000" required autofocus>
@@ -52,16 +52,14 @@
                     <div>
                         <div class="flex justify-between items-center mb-2">
                             <label for="password" class="block text-sm font-bold text-gray-700">Contraseña</label>
-                            <a href="#" class="text-xs font-bold hover:underline" style="color: #800020;">
-                                ¿Olvidó su clave?
-                            </a>
+
                         </div>
                        <div class="relative">
     <input type="password" name="password" id="password"
-           maxlength="20" 
+           maxlength="20"
            class="w-full pl-4 pr-12 py-3.5 border-2 @error('password') border-red-500 @else border-gray-200 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-red-800 focus:border-transparent transition-all duration-200 bg-gray-50"
            placeholder="••••••••">
-    
+
     <button type="button" id="togglePassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-900 transition-colors">
         <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
             <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -77,7 +75,7 @@
                     </div>
 
                     <div class="flex items-center">
-                        <input type="checkbox" name="remember" id="remember" 
+                        <input type="checkbox" name="remember" id="remember"
                                class="w-5 h-5 text-red-800 border-gray-300 rounded focus:ring-red-700 cursor-pointer">
                         <label for="remember" class="ml-2 text-sm text-gray-600 cursor-pointer select-none">Mantener sesión iniciada</label>
                     </div>
@@ -111,10 +109,14 @@
             mask: [
                 { mask: 'V-00.000.000' },
                 { mask: 'E-00.000.000' }
-            ]
+            ],
+            lazy: false // Muestra la máscara siempre para que sea consistente
         };
-        IMask(cedulaInput, maskOptions);
-
+        const mask = IMask(cedulaInput, maskOptions)
+        if (cedulaInput.value) {
+            mask.unmaskedValue = cedulaInput.value.replace(/\D/g, ''); // Le pasamos solo los números
+            mask.updateValue();
+        }
         // 2. VER CONTRASEÑA
         const toggleBtn = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
@@ -123,7 +125,7 @@
         toggleBtn.addEventListener('click', () => {
             const isPassword = passwordInput.type === 'password';
             passwordInput.type = isPassword ? 'text' : 'password';
-            
+
             // Cambiar icono (opcional: podrías cambiar el SVG aquí)
             eyeIcon.style.color = isPassword ? '#800020' : '#9CA3AF';
         });
@@ -138,7 +140,7 @@
             // Deshabilitar botón para evitar múltiples clics
             btnSubmit.disabled = true;
             btnSubmit.classList.add('opacity-70', 'cursor-not-allowed');
-            
+
             // Cambiar texto y mostrar spinner
             btnText.innerText = 'VERIFICANDO...';
             btnSpinner.classList.remove('hidden');

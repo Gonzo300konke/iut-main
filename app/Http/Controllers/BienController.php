@@ -188,6 +188,25 @@ class BienController extends Controller
 
         // Procesar fotografía
         if ($request->hasFile('fotografia')) {
+            // Evitar fotos duplicadas: comparar hash del archivo subido con fotos existentes
+            $file = $request->file('fotografia');
+            $uploadedHash = md5_file($file->getRealPath());
+
+            $existing = Bien::whereNotNull('fotografia')->get(['id', 'fotografia']);
+            foreach ($existing as $ex) {
+                try {
+                    if (\Illuminate\Support\Facades\Storage::disk('public')->exists($ex->fotografia)) {
+                        $path = \Illuminate\Support\Facades\Storage::disk('public')->path($ex->fotografia);
+                        if (file_exists($path) && md5_file($path) === $uploadedHash) {
+                            return back()->withErrors(['fotografia' => 'La fotografía ya está asociada a otro bien (ID: ' . $ex->id . ').'])->withInput();
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // En caso de problemas leyendo algún archivo remoto/antiguo, ignoramos y continuamos
+                    continue;
+                }
+            }
+
             $foto = $this->procesarFotografia($request);
             if ($foto) $validated['fotografia'] = $foto;
         }
@@ -439,7 +458,7 @@ class BienController extends Controller
                 'memoria' => ['nullable', 'string', 'max:255'],
                 'almacenamiento' => ['nullable', 'string', 'max:255'],
                 'pantalla' => ['nullable', 'string', 'max:255'],
-                'serial' => ['nullable', 'string', 'max:255'],
+                'serial' => ['required_if:tipo_bien,ELECTRONICO', 'string', 'max:255'],
                 'garantia' => ['nullable', 'date'],
             ],
             'VEHICULO' => [
