@@ -16,8 +16,23 @@
                 </p>
             </div>
 
-            <form action="{{ route('bienes.store') }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
+            <form action="{{ route('bienes.store') }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8" id="form-create">
                 @csrf
+
+                {{-- Contenedor General de Errores --}}
+                @if ($errors->any())
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+                        <div class="flex items-center">
+                            <x-heroicon-o-exclamation-circle class="w-5 h-5 text-red-500 mr-2" />
+                            <p class="text-sm font-bold text-red-700">Por favor, corrija los siguientes errores:</p>
+                        </div>
+                        <ul class="mt-2 text-sm text-red-600 list-disc list-inside">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
                 {{-- Sección 1: Ubicación Administrativa --}}
                 <div class="space-y-4">
@@ -29,7 +44,7 @@
                         <div>
                             <label for="dependencia_id" class="block text-sm font-bold text-gray-700 mb-2">Dependencia <span class="text-red-500">*</span></label>
                             <select name="dependencia_id" id="dependencia_id" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                                class="w-full px-4 py-3 border @error('dependencia_id') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
                                 <option value="" disabled {{ old('dependencia_id') ? '' : 'selected' }}>Seleccione dependencia...</option>
                                 @foreach($dependencias as $dep)
                                     <option value="{{ $dep->id }}" {{ old('dependencia_id') == $dep->id ? 'selected' : '' }}>
@@ -37,10 +52,6 @@
                                     </option>
                                 @endforeach
                             </select>
-
-                            @error('dependencia_id')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
                         </div>
 
                         <div>
@@ -62,17 +73,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {{-- Código del Bien con Sugerencia --}}
                         <div>
-                            <label for="codigo" class="block text-sm font-bold text-gray-700 mb-2">Código del Bien</label>
+                            <label for="codigo" class="block text-sm font-bold text-gray-700 mb-2">Código del Bien <span class="text-red-500">*</span></label>
                             <input type="text" name="codigo" id="codigo" value="{{ old('codigo', $codigoSugerido ?? '') }}"
                                 maxlength="8" inputmode="numeric" placeholder="Ej: 00000001"
                                 class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg font-mono focus:ring-2 focus:ring-blue-500 outline-none transition uppercase"
                                 required pattern="\d{8}" title="El código debe contener exactamente 8 dígitos numéricos">
 
-                            @error('codigo')
-                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                            @enderror
-
-                            {{-- Contenedor para la sugerencia --}}
                             <div id="sugerencia-container" class="mt-1 hidden">
                                 <button type="button" id="btn-sugerencia"
                                     class="text-[10px] text-blue-600 hover:underline font-bold italic">
@@ -83,9 +89,9 @@
 
                         {{-- Tipo de Bien --}}
                         <div>
-                            <label for="tipo_bien" class="block text-sm font-bold text-gray-700 mb-2">Tipo de Bien</label>
+                            <label for="tipo_bien" class="block text-sm font-bold text-gray-700 mb-2">Tipo de Bien <span class="text-red-500">*</span></label>
                             <select name="tipo_bien" id="tipo_bien" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                                class="w-full px-4 py-3 border @error('tipo_bien') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
                                 <option value="">Seleccione tipo...</option>
                                 @foreach($tiposBien as $value => $label)
                                     <option value="{{ $value }}" {{ old('tipo_bien') == $value ? 'selected' : '' }}>{{ $label }}
@@ -96,9 +102,9 @@
 
                         {{-- Estado --}}
                         <div>
-                            <label for="estado" class="block text-sm font-bold text-gray-700 mb-2">Estado Físico</label>
+                            <label for="estado" class="block text-sm font-bold text-gray-700 mb-2">Estado Físico <span class="text-red-500">*</span></label>
                             <select name="estado" id="estado" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                                class="w-full px-4 py-3 border @error('estado') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
                                 <option value="">Seleccione estado...</option>
                                 @foreach(\App\Enums\EstadoBien::cases() as $estado)
                                     <option value="{{ $estado->value }}" {{ old('estado') == $estado->value ? 'selected' : '' }}>
@@ -109,16 +115,15 @@
                         </div>
                     </div>
 
-                    {{-- Descripción con Límite de 50 --}}
+                    {{-- Descripción --}}
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <label for="descripcion" class="block text-sm font-bold text-gray-700">Descripción
-                                General</label>
+                            <label for="descripcion" class="block text-sm font-bold text-gray-700">Descripción General <span class="text-red-500">*</span></label>
                             <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 50</span>
                         </div>
                         <textarea name="descripcion" id="descripcion" rows="2" required maxlength="50"
                             placeholder="Indique nombre, marca, modelo..."
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">{{ old('descripcion') }}</textarea>
+                            class="w-full px-4 py-3 border @error('descripcion') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">{{ old('descripcion') }}</textarea>
                     </div>
                 </div>
 
@@ -136,8 +141,9 @@
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2">Fotografía</label>
-                        <input type="file" name="fotografia" accept="image/*"
+                        <input type="file" name="fotografia" id="fotografia" accept="image/jpeg, image/png, image/jpg"
                             class="w-full px-2 py-2 text-sm border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <p id="file-error" class="text-red-500 text-xs mt-1 hidden">La imagen no debe superar los 2MB.</p>
                     </div>
                 </div>
 
@@ -147,8 +153,7 @@
                     <a href="{{ route('bienes.index') }}"
                         class="px-6 py-3 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition">Cancelar</a>
                     <button type="submit"
-                        class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition">Guardar
-                        Activo</button>
+                        class="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 transition">Guardar Activo</button>
                 </div>
             </form>
         </div>
@@ -157,188 +162,152 @@
 
 @push('scripts')
     <script>
-        /* 1. Lógica de Responsable */
-        const dependenciasData = {
-            @foreach($dependencias as $d)
-                '{{ $d->id }}': '{{ $d->responsable ? $d->responsable->nombre : "Sin responsable asignado" }}',
-            @endforeach
-        };
+        document.addEventListener('DOMContentLoaded', function () {
+            /* 1. Lógica de Responsable */
+            const dependenciasData = {
+                @foreach($dependencias as $d)
+                    '{{ $d->id }}': '{{ $d->responsable ? $d->responsable->nombre : "Sin responsable asignado" }}',
+                @endforeach
+            };
 
-        const depSelect = document.getElementById('dependencia_id');
-        const respDisplay = document.getElementById('responsable_display');
+            const depSelect = document.getElementById('dependencia_id');
+            const respDisplay = document.getElementById('responsable_display');
 
-        depSelect.addEventListener('change', function () {
-            respDisplay.textContent = dependenciasData[this.value] || 'Seleccione una dependencia...';
-            respDisplay.classList.toggle('text-gray-900', !!this.value);
-            respDisplay.classList.toggle('font-bold', !!this.value);
-        });
+            depSelect.addEventListener('change', function () {
+                respDisplay.textContent = dependenciasData[this.value] || 'Seleccione una dependencia...';
+                respDisplay.classList.toggle('text-gray-900', !!this.value);
+                respDisplay.classList.toggle('font-bold', !!this.value);
+            });
+            // Auto-trigger si hay old value
+            if (depSelect.value) depSelect.dispatchEvent(new Event('change'));
 
-        /* 2. Lógica de Código con Sugerencia */
-        const codigoInput = document.getElementById('codigo');
-        const codigoError = document.getElementById('codigo-error');
-        const sugerenciaContainer = document.getElementById('sugerencia-container');
-        const spanSugerencia = document.getElementById('span-sugerencia');
-        const btnSugerencia = document.getElementById('btn-sugerencia');
+            /* 2. Lógica de Código con Sugerencia */
+            const codigoInput = document.getElementById('codigo');
+            const sugerenciaContainer = document.getElementById('sugerencia-container');
+            const spanSugerencia = document.getElementById('span-sugerencia');
+            const btnSugerencia = document.getElementById('btn-sugerencia');
+            const codigoOriginalSugerido = "{{ $codigoSugerido ?? '' }}";
 
-        // El código que vino del servidor originalmente
-        const codigoOriginalSugerido = "{{ $codigoSugerido ?? '' }}";
+            codigoInput.addEventListener('input', function (e) {
+                const original = e.target.value;
+                const cleaned = original.replace(/\D/g, '');
+                e.target.value = cleaned;
 
-        codigoInput.addEventListener('input', function (e) {
-            const original = e.target.value;
-            const cleaned = original.replace(/\D/g, '');
-
-            if (original !== cleaned) {
-                codigoError.classList.remove('hidden');
-                setTimeout(() => codigoError.classList.add('hidden'), 2000);
-            }
-            e.target.value = cleaned;
-
-            // Si el usuario borra o cambia el código sugerido, mostramos la recomendación
-            if (codigoOriginalSugerido && cleaned !== codigoOriginalSugerido) {
-                spanSugerencia.textContent = codigoOriginalSugerido;
-                sugerenciaContainer.classList.remove('hidden');
-            } else {
-                sugerenciaContainer.classList.add('hidden');
-            }
-        });
-
-        btnSugerencia.addEventListener('click', function () {
-            codigoInput.value = codigoOriginalSugerido;
-            sugerenciaContainer.classList.add('hidden');
-        });
-
-        codigoInput.addEventListener('blur', function () {
-            if (this.value && this.value.length > 0) {
-                this.value = this.value.padStart(8, '0');
-            }
-        });
-
-        /* 3. Límite de Caracteres en Descripción */
-        const descTextarea = document.getElementById('descripcion');
-        const charCount = document.getElementById('char-count');
-
-        descTextarea.addEventListener('input', function () {
-            const len = this.value.length;
-            charCount.textContent = `${len} / 50`;
-
-            if (len >= 50) {
-                charCount.classList.add('text-red-500');
-            } else {
-                charCount.classList.remove('text-red-500');
-            }
-        });
-
-        // Inicializar contador al cargar
-        if (descTextarea) descTextarea.dispatchEvent(new Event('input'));
-
-        /* 4. Campos Dinámicos */
-        const camposPorTipo = {
-            'ELECTRONICO': [
-                { name: 'serial', label: 'Número de Serie', type: 'text' },
-                { name: 'modelo', label: 'Modelo/Versión', type: 'text' },
-                { name: 'procesador', label: 'Procesador', type: 'text' },
-                { name: 'memoria', label: 'RAM/Memoria', type: 'text' }
-            ],
-            'VEHICULO': [
-                { name: 'placa', label: 'Número de Placa', type: 'text' },
-                { name: 'marca', label: 'Marca', type: 'text' },
-                { name: 'motor', label: 'Serial de Motor', type: 'text' },
-                { name: 'chasis', label: 'Serial de Carrocería', type: 'text' }
-            ],
-            'MOBILIARIO': [
-                { name: 'material', label: 'Material de Fabricación', type: 'text' },
-                { name: 'color', label: 'Color', type: 'text' },
-                { name: 'dimensiones', label: 'Dimensiones (Largo x Ancho)', type: 'text' }
-            ],
-            'OTROS': [
-                { name: 'especificaciones', label: 'Especificaciones Extra', type: 'textarea' }
-            ]
-        };
-
-        const tipoBienSelect = document.getElementById('tipo_bien');
-        const container = document.getElementById('campos-tipo-bien');
-        const oldValues = @json(old());
-
-        tipoBienSelect.addEventListener('change', function () {
-            const tipo = this.value;
-            container.innerHTML = '';
-            if (!tipo || !camposPorTipo[tipo]) return;
-
-            let html = `
-                <div class="bg-blue-50/50 border border-blue-100 p-6 rounded-xl space-y-4 animate-fade-in">
-                    <h3 class="text-blue-800 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
-                        <x-heroicon-o-information-circle class="w-5 h-5" /> Detalles Técnicos del ${tipo}
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            `;
-
-            camposPorTipo[tipo].forEach(campo => {
-                const val = oldValues[campo.name] || '';
-                const isFull = campo.type === 'textarea' ? 'md:col-span-2' : '';
-                html += `
-                    <div class="${isFull}">
-                        <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
-                        ${campo.type === 'textarea'
-                        ? `<textarea name="${campo.name}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">${val}</textarea>`
-                        : `<input type="${campo.type}" name="${campo.name}" value="${val}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">`
-                    }
-                    </div>`;
+                if (codigoOriginalSugerido && cleaned !== codigoOriginalSugerido) {
+                    spanSugerencia.textContent = codigoOriginalSugerido;
+                    sugerenciaContainer.classList.remove('hidden');
+                } else {
+                    sugerenciaContainer.classList.add('hidden');
+                }
             });
 
-            html += `</div></div>`;
-            container.innerHTML = html;
-        });
+            btnSugerencia.addEventListener('click', function () {
+                codigoInput.value = codigoOriginalSugerido;
+                sugerenciaContainer.classList.add('hidden');
+            });
 
-        if (tipoBienSelect.value) tipoBienSelect.dispatchEvent(new Event('change'));
+            codigoInput.addEventListener('blur', function () {
+                if (this.value && this.value.length > 0) {
+                    this.value = this.value.padStart(8, '0');
+                }
+            });
 
-            /* 5. Validación antes de enviar: evitar enviar strings vacíos y validar campos obligatorios */
-            const form = document.querySelector('form[action="' + window.location.pathname + '"]');
-            if (form) {
-                form.addEventListener('submit', function (e) {
-                    // Rehabilitar cualquier campo deshabilitado previamente
-                    [...form.elements].forEach(el => el.disabled = el.disabled && false);
+            /* 3. Límite de Caracteres en Descripción */
+            const descTextarea = document.getElementById('descripcion');
+            const charCount = document.getElementById('char-count');
 
-                    // Campos requeridos básicos
-                    const codigo = document.getElementById('codigo').value.trim();
-                    const descripcion = document.getElementById('descripcion').value.trim();
-                    const tipo = tipoBienSelect.value;
-                    const estado = document.getElementById('estado')?.value || '';
-                    const dependenciaSel = depSelect.value;
+            descTextarea.addEventListener('input', function () {
+                const len = this.value.length;
+                charCount.textContent = `${len} / 50`;
+                charCount.classList.toggle('text-red-500', len >= 50);
+            });
+            if (descTextarea) descTextarea.dispatchEvent(new Event('input'));
 
-                    if (!dependenciaSel) {
-                        e.preventDefault();
-                        alert('Debe asignar una dependencia antes de guardar el bien.');
-                        return;
-                    }
+            /* 4. Campos Dinámicos */
+            const camposPorTipo = {
+                'ELECTRONICO': [
+                    { name: 'serial', label: 'Número de Serie', type: 'text' },
+                    { name: 'modelo', label: 'Modelo/Versión', type: 'text' },
+                    { name: 'procesador', label: 'Procesador', type: 'text' },
+                    { name: 'memoria', label: 'RAM/Memoria', type: 'text' }
+                ],
+                'VEHICULO': [
+                    { name: 'placa', label: 'Número de Placa', type: 'text' },
+                    { name: 'marca', label: 'Marca', type: 'text' },
+                    { name: 'motor', label: 'Serial de Motor', type: 'text' },
+                    { name: 'chasis', label: 'Serial de Carrocería', type: 'text' }
+                ],
+                'MOBILIARIO': [
+                    { name: 'material', label: 'Material de Fabricación', type: 'text' },
+                    { name: 'color', label: 'Color', type: 'text' },
+                    { name: 'dimensiones', label: 'Dimensiones (Largo x Ancho)', type: 'text' }
+                ],
+                'OTROS': [
+                    { name: 'especificaciones', label: 'Especificaciones Extra', type: 'textarea' }
+                ]
+            };
 
-                    if (!codigo || codigo.length !== 8) {
-                        e.preventDefault();
-                        alert('El código debe contener exactamente 8 dígitos.');
-                        return;
-                    }
-                    if (!descripcion) {
-                        e.preventDefault();
-                        alert('La descripción es obligatoria.');
-                        return;
-                    }
-                    if (!tipo) {
-                        e.preventDefault();
-                        alert('Debe seleccionar el tipo de bien.');
-                        return;
-                    }
-                    if (!estado) {
-                        e.preventDefault();
-                        alert('Debe seleccionar el estado del bien.');
-                        return;
-                    }
+            const tipoBienSelect = document.getElementById('tipo_bien');
+            const container = document.getElementById('campos-tipo-bien');
+            const oldValues = @json(old());
 
-                    // Evitar enviar inputs opcionales vacíos: los deshabilitamos para que no aparezcan en el request
-                    [...form.elements].forEach(el => {
-                        if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.type !== 'file' && el.name) {
-                            if (String(el.value).trim() === '') el.disabled = true;
+            tipoBienSelect.addEventListener('change', function () {
+                const tipo = this.value;
+                container.innerHTML = '';
+                if (!tipo || !camposPorTipo[tipo]) return;
+
+                let html = `
+                    <div class="bg-blue-50/50 border border-blue-100 p-6 rounded-xl space-y-4 animate-fade-in">
+                        <h3 class="text-blue-800 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
+                            <x-heroicon-o-information-circle class="w-5 h-5" /> Detalles Técnicos del ${tipo}
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                `;
+
+                camposPorTipo[tipo].forEach(campo => {
+                    const val = oldValues[campo.name] || '';
+                    const isFull = campo.type === 'textarea' ? 'md:col-span-2' : '';
+                    html += `
+                        <div class="${isFull}">
+                            <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
+                            ${campo.type === 'textarea'
+                            ? `<textarea name="${campo.name}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">${val}</textarea>`
+                            : `<input type="${campo.type}" name="${campo.name}" value="${val}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">`
                         }
-                    });
+                        </div>`;
                 });
-            }
+
+                html += `</div></div>`;
+                container.innerHTML = html;
+            });
+
+            if (tipoBienSelect.value) tipoBienSelect.dispatchEvent(new Event('change'));
+
+            /* 5. Validación de tamaño de archivo cliente-side */
+            const fileInput = document.getElementById('fotografia');
+            const fileError = document.getElementById('file-error');
+
+            fileInput.addEventListener('change', function() {
+                if (this.files[0] && this.files[0].size > 2 * 1024 * 1024) { // 2MB
+                    fileError.classList.remove('hidden');
+                    this.value = ''; // Limpiar input
+                } else {
+                    fileError.classList.add('hidden');
+                }
+            });
+
+            /* 6. Validación de Envíos Básica */
+            document.getElementById('form-create').addEventListener('submit', function (e) {
+                const codigo = codigoInput.value.trim();
+
+                if (codigo.length !== 8) {
+                    e.preventDefault();
+                    alert('El código debe contener exactamente 8 dígitos.');
+                    codigoInput.focus();
+                }
+                // NOTA: Se eliminó el loop que deshabilitaba los inputs vacíos,
+                // ya que rompía el request al controlador y la recuperación via old().
+            });
+        });
     </script>
 @endpush
