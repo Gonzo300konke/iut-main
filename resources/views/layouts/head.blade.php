@@ -6,7 +6,8 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 21h18M6 21V5a2 2 0 012-2h8a2 2 0 012 2v16M9 8h2m-2 4h2m-2 4h2m3-8h2m-2 4h2m-2 4h2"/>
                 </svg>
-                <span class="text-sm font-semibold tracking-wide">SISTEMA DE GESTIÓN</span>
+            
+                <span class="text-sm font-semibold tracking-wide">SISTEMA DE GESTIÓN DE BIENES</span>
             </div>
 
             @auth
