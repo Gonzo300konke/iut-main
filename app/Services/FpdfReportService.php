@@ -72,20 +72,82 @@ class FpdfReportService
         return $pdf;
     }
 
-    protected function renderHeader(FPDF $pdf, string $title, ?string $subtitle, string $generatedAt): void
+            protected function renderHeader(\FPDF $pdf, string $title, ?string $subtitle, string $generatedAt, array $data): void
     {
-        $pdf->SetFont('Arial', 'B', 14);
-        $pdf->Cell(0, 8, $this->t($title), 0, 1, 'C');
+        // --- FILA 1: ENCABEZADO SUPERIOR (Institución, Título y Fecha) ---
+        $pdf->SetFont('Arial', 'B', 8);
 
-        if ($subtitle) {
-            $pdf->SetFont('Arial', '', 11);
-            $pdf->Cell(0, 6, $this->t($subtitle), 0, 1, 'C');
-        }
+        // Guardamos la posición inicial para que los tres cuadros tengan la misma altura
+        $yInicio = $pdf->GetY();
 
-        $pdf->Ln(2);
-        $pdf->SetFont('Arial', '', 9);
-        $pdf->Cell(0, 5, $this->t('Generado el '.$generatedAt), 0, 1, 'R');
-        $pdf->Ln(3);
+        // 1.1 Cuadro Izquierdo: Datos de la Institución
+        $pdf->MultiCell(70, 4.5, "UPTOS \"CLODOSBALDO RUSSIAN\"\nUNIDAD DE BIENES PÚBLICOS", 1, 'L');
+        $altFila1 = $pdf->GetY() - $yInicio; // Calculamos la altura alcanzada
+
+        // 1.2 Cuadro Centro: Título del reporte (Usamos SetXY para posicionarlo al lado)
+        $pdf->SetXY(80, $yInicio);
+        $pdf->SetFont('Arial', 'B', 10);
+        $pdf->Cell(95, $altFila1, $this->t(strtoupper($title)), 1, 0, 'C');
+
+        // 1.3 Cuadro Derecho: Fecha (Dividido en etiqueta y valor)
+        $pdf->SetXY(175, $yInicio);
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(31, 5, $this->t('Fecha'), 1, 1, 'L');
+        $pdf->SetX(175);
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(31, $altFila1 - 5, $generatedAt, 1, 1, 'L');
+
+        // --- FILA 2: SECCIÓN ORGANISMO ---
+        $pdf->SetFillColor(240, 240, 240); // Gris claro para los títulos
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(0, 5, $this->t('ORGANISMO'), 1, 1, 'L', true);
+
+        // Sub-encabezados de Organismo
+        $pdf->Cell(25, 5, $this->t('Código'), 1, 0, 'L');
+        $pdf->Cell(0, 5, $this->t('Denominación'), 1, 1, 'L');
+
+        // Datos de Organismo
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(25, 6, $data['org_codigo'] ?? '0', 1, 0, 'C');
+        $pdf->Cell(0, 6, $this->t($data['org_nombre'] ?? 'MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN UNIVERSITARIA'), 1, 1, 'L');
+
+        // --- FILA 3: SECCIÓN UNIDAD Y DEPENDENCIA ---
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(98, 5, $this->t('UNIDAD ADMINISTRADORA'), 1, 0, 'L', true);
+        $pdf->Cell(98, 5, $this->t('DEPENDENCIA USUARIA'), 1, 1, 'L', true);
+
+        // Sub-encabezados de Unidad y Dependencia
+        $pdf->Cell(20, 5, $this->t('Código'), 1, 0, 'L');
+        $pdf->Cell(78, 5, $this->t('Denominación'), 1, 0, 'L');
+        $pdf->Cell(20, 5, $this->t('Código'), 1, 0, 'L');
+        $pdf->Cell(78, 5, $this->t('Denominación'), 1, 1, 'L');
+
+        // Datos de Unidad y Dependencia
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(20, 6, $data['uni_codigo'] ?? '', 1, 0, 'C');
+        $pdf->Cell(78, 6, $this->t($data['uni_nombre'] ?? ''), 1, 0, 'L');
+        $pdf->Cell(20, 6, $data['dep_codigo'] ?? '', 1, 0, 'C');
+        $pdf->Cell(78, 6, $this->t($data['dep_nombre'] ?? ''), 1, 1, 'L');
+
+        // --- FILA 4: SECCIÓN RESPONSABLES ---
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(98, 5, $this->t('RESPONSABLE PATRIMONIAL PRIMARIO'), 1, 0, 'L', true);
+        $pdf->Cell(98, 5, $this->t('RESPONSABLE PATRIMONIAL POR USO'), 1, 1, 'L', true);
+
+        // Sub-encabezados de Responsables
+        $pdf->Cell(25, 5, $this->t('Cédula'), 1, 0, 'L');
+        $pdf->Cell(73, 5, $this->t('Apellidos y Nombres'), 1, 0, 'L');
+        $pdf->Cell(25, 5, $this->t('Cédula'), 1, 0, 'L');
+        $pdf->Cell(73, 5, $this->t('Apellidos y Nombres'), 1, 1, 'L');
+
+        // Datos de Responsables
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->Cell(25, 6, $data['res_p_cedula'] ?? '', 1, 0, 'L');
+        $pdf->Cell(73, 6, $this->t($data['res_p_nombre'] ?? ''), 1, 0, 'L');
+        $pdf->Cell(25, 6, $data['res_u_cedula'] ?? '', 1, 0, 'L');
+        $pdf->Cell(73, 6, $this->t($data['res_u_nombre'] ?? ''), 1, 1, 'L');
+
+        $pdf->Ln(4); // Espacio antes de empezar la tabla de bienes
     }
 
     /**
@@ -98,42 +160,86 @@ class FpdfReportService
         string $generatedAt,
         iterable $bienes
     ) {
+        // 1. Extraer datos para los cuadros superiores (Organismo, Unidad, Responsables)
+        // Usamos el primer bien de la colección para rellenar la cabecera institucional
+        $primerBien = $bienes instanceof \Illuminate\Support\Collection ? $bienes->first() : ($bienes[0] ?? null);
+
+        $datosCabecera = [
+            'org_codigo' => $primerBien->dependencia->unidadAdministradora->organismo->codigo ?? '0',
+            'org_nombre' => $primerBien->dependencia->unidadAdministradora->organismo->nombre ?? 'MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN UNIVERSITARIA',
+            'uni_codigo' => $primerBien->dependencia->unidadAdministradora->codigo ?? 'N/A',
+            'uni_nombre' => $primerBien->dependencia->unidadAdministradora->nombre ?? 'N/A',
+            'dep_codigo' => $primerBien->dependencia->codigo ?? 'N/A',
+            'dep_nombre' => $primerBien->dependencia->nombre ?? 'N/A',
+            // Responsables (Asegúrate de que estas relaciones existan en tu modelo)
+            'res_p_cedula' => $primerBien->dependencia->unidadAdministradora->responsable->cedula ?? '3873777',
+            'res_p_nombre' => $primerBien->dependencia->unidadAdministradora->responsable->nombre_completo ?? 'ENRY GOMEZ MAIZ',
+            'res_u_cedula' => $primerBien->dependencia->responsable->cedula ?? '',
+            'res_u_nombre' => $primerBien->dependencia->responsable->nombre_completo ?? '',
+        ];
+
         $pdf = $this->make('P');
-        $this->renderHeader($pdf, $title, $subtitle, $generatedAt);
 
-        $widths = [20, 45, 22, 30, 30, 28, 20];
-        $headers = ['Cod.', 'Descripción', 'Estado', 'Dep.', 'Unid.', 'Org.', 'Precio'];
+        // 2. Llamamos a renderHeader pasando los datos dinámicos
+        $this->renderHeader($pdf, $title, $subtitle, $generatedAt, $datosCabecera);
 
-        // Encabezado
-        $pdf->SetFillColor(240, 240, 240);
+        // 3. Configuración de la tabla de bienes (Anchos ajustados a Letter)
+        // [Código, Descripción, Precio, Dependencia, Fotos, Fecha]
+        $widths = [25, 80, 25, 25, 16, 25];
+        $headers = ['Código', 'Descripción', 'Precio Bs.', 'Dependencia', 'Fotos', 'Fecha'];
+
+        // Dibujar Encabezado de la Tabla
+        $pdf->SetFillColor(255, 255, 255); // Fondo blanco como en la imagen
         $pdf->SetFont('Arial', 'B', 8);
         foreach ($headers as $i => $header) {
-            $pdf->Cell($widths[$i], 7, $this->t($header), 1, 0, 'C', true);
+            $pdf->Cell($widths[$i], 7, $this->t($header), 1, 0, 'C');
         }
         $pdf->Ln();
 
-        // Datos
+        // 4. Dibujar los Datos
         $pdf->SetFont('Arial', '', 7);
+        $totalBs = 0;
         $hasData = false;
+
         foreach ($bienes as $bien) {
             $hasData = true;
-            $estadoStr = $bien->estado instanceof \App\Enums\EstadoBien
-                ? $bien->estado->label()
-                : (string)$bien->estado;
 
-            $pdf->Cell($widths[0], 6, $this->t((string)($bien->codigo ?? '')), 1);
-            $pdf->Cell($widths[1], 6, $this->t($this->truncate((string)($bien->descripcion ?? ''), 30)), 1);
-            $pdf->Cell($widths[2], 6, $this->t($estadoStr), 1, 0, 'C');
-            $pdf->Cell($widths[3], 6, $this->t($this->truncate(optional($bien->dependencia)->nombre ?? '', 18)), 1);
-            $pdf->Cell($widths[4], 6, $this->t($this->truncate(optional(optional($bien->dependencia)->unidadAdministradora)->nombre ?? '', 18)), 1);
-            $pdf->Cell($widths[5], 6, $this->t($this->truncate(optional(optional(optional($bien->dependencia)->unidadAdministradora)->organismo)->nombre ?? '', 18)), 1);
-            $pdf->Cell($widths[6], 6, number_format((float)($bien->precio ?? 0), 2, ',', '.'), 1, 1, 'R');
+            // Guardar posición inicial para controlar el alto de la fila si la descripción es larga
+            $x = $pdf->GetX();
+            $y = $pdf->GetY();
+
+            $pdf->Cell($widths[0], 6, $this->t((string)($bien->codigo ?? '')), 1, 0, 'C');
+
+            // Descripción con truncado para no romper la celda
+            $pdf->Cell($widths[1], 6, $this->t($this->truncate((string)($bien->descripcion ?? ''), 50)), 1);
+
+            // Precio
+            $precio = (float)($bien->precio ?? 0);
+            $pdf->Cell($widths[2], 6, number_format($precio, 2, ',', '.'), 1, 0, 'R');
+            $totalBs += $precio;
+
+            // Dependencia (nombre corto)
+            $pdf->Cell($widths[3], 6, $this->t($this->truncate($bien->dependencia->nombre ?? '', 15)), 1, 0, 'C');
+
+            // Fotos (SI/NO)
+            $pdf->Cell($widths[4], 6, ($bien->fotografia ? 'SI' : 'NO'), 1, 0, 'C');
+
+            // Fecha
+            $pdf->Cell($widths[5], 6, $bien->created_at ? $bien->created_at->format('d/m/Y') : '', 1, 1, 'C');
         }
 
+        // 5. Espacio vacío si no hay datos
         if (!$hasData) {
-            $pdf->Cell(array_sum($widths), 10, $this->t('No se encontraron bienes con los filtros seleccionados.'), 1, 1, 'C');
+            $pdf->Cell(array_sum($widths), 10, $this->t('No se encontraron registros.'), 1, 1, 'C');
         }
 
+        // 6. Fila de Total (Pie de tabla igual a la imagen)
+        $pdf->SetFont('Arial', 'B', 9);
+        $pdf->Cell($widths[0] + $widths[1], 8, $this->t('Total Bs.:'), 1, 0, 'R');
+        $pdf->Cell($widths[2], 8, number_format($totalBs, 2, ',', '.'), 1, 0, 'C');
+        $pdf->Cell($widths[3] + $widths[4] + $widths[5], 8, '', 1, 1);
+
+        // 7. Retornar Respuesta
         return response($pdf->Output('S'), 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.$fileName.'"',
