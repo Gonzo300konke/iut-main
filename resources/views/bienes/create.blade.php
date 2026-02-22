@@ -118,10 +118,11 @@
                     {{-- Descripción --}}
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <label for="descripcion" class="block text-sm font-bold text-gray-700">Descripción General <span class="text-red-500">*</span></label>
+                            <label for="descripcion" class="block text-sm font-bold text-gray-700">Descripción
+                                General</label>
                             <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 50</span>
                         </div>
-                        <textarea name="descripcion" id="descripcion" rows="2" required maxlength="50"
+                        <textarea name="descripcion" id="descripcion" rows="2" required maxlength="255"
                             placeholder="Indique nombre, marca, modelo..."
                             class="w-full px-4 py-3 border @error('descripcion') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">{{ old('descripcion') }}</textarea>
                     </div>
@@ -216,36 +217,43 @@
             const descTextarea = document.getElementById('descripcion');
             const charCount = document.getElementById('char-count');
 
-            descTextarea.addEventListener('input', function () {
-                const len = this.value.length;
-                charCount.textContent = `${len} / 50`;
-                charCount.classList.toggle('text-red-500', len >= 50);
-            });
-            if (descTextarea) descTextarea.dispatchEvent(new Event('input'));
+        descTextarea.addEventListener('input', function () {
+            const len = this.value.length;
+            charCount.textContent = `${len} / 50`;
 
-            /* 4. Campos Dinámicos */
-            const camposPorTipo = {
-                'ELECTRONICO': [
-                    { name: 'serial', label: 'Número de Serie', type: 'text' },
-                    { name: 'modelo', label: 'Modelo/Versión', type: 'text' },
-                    { name: 'procesador', label: 'Procesador', type: 'text' },
-                    { name: 'memoria', label: 'RAM/Memoria', type: 'text' }
-                ],
-                'VEHICULO': [
-                    { name: 'placa', label: 'Número de Placa', type: 'text' },
-                    { name: 'marca', label: 'Marca', type: 'text' },
-                    { name: 'motor', label: 'Serial de Motor', type: 'text' },
-                    { name: 'chasis', label: 'Serial de Carrocería', type: 'text' }
-                ],
-                'MOBILIARIO': [
-                    { name: 'material', label: 'Material de Fabricación', type: 'text' },
-                    { name: 'color', label: 'Color', type: 'text' },
-                    { name: 'dimensiones', label: 'Dimensiones (Largo x Ancho)', type: 'text' }
-                ],
-                'OTROS': [
-                    { name: 'especificaciones', label: 'Especificaciones Extra', type: 'textarea' }
-                ]
-            };
+            if (len >= 50) {
+                charCount.classList.add('text-red-500');
+            } else {
+                charCount.classList.remove('text-red-500');
+            }
+        });
+
+        // Inicializar contador al cargar
+        if (descTextarea) descTextarea.dispatchEvent(new Event('input'));
+
+        /* 4. Campos Dinámicos */
+        const camposPorTipo = {
+            'ELECTRONICO': [
+                { name: 'serial', label: 'Número de Serie', type: 'text' },
+                { name: 'modelo', label: 'Modelo/Versión', type: 'text' },
+                { name: 'procesador', label: 'Procesador', type: 'text' },
+                { name: 'memoria', label: 'RAM/Memoria', type: 'text' }
+            ],
+            'VEHICULO': [
+                { name: 'placa', label: 'Número de Placa', type: 'text' },
+                { name: 'marca', label: 'Marca', type: 'text' },
+                { name: 'motor', label: 'Serial de Motor', type: 'text' },
+                { name: 'chasis', label: 'Serial de Carrocería', type: 'text' }
+            ],
+            'MOBILIARIO': [
+                { name: 'material', label: 'Material de Fabricación', type: 'text' },
+                { name: 'color', label: 'Color', type: 'text' },
+                { name: 'dimensiones', label: 'Dimensiones (Largo x Ancho)', type: 'text' }
+            ],
+            'OTROS': [
+                { name: 'especificaciones', label: 'Especificaciones Extra', type: 'textarea' }
+            ]
+        };
 
             const tipoBienSelect = document.getElementById('tipo_bien');
             const container = document.getElementById('campos-tipo-bien');
@@ -264,18 +272,18 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 `;
 
-                camposPorTipo[tipo].forEach(campo => {
-                    const val = oldValues[campo.name] || '';
-                    const isFull = campo.type === 'textarea' ? 'md:col-span-2' : '';
-                    html += `
-                        <div class="${isFull}">
-                            <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
-                            ${campo.type === 'textarea'
-                            ? `<textarea name="${campo.name}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">${val}</textarea>`
-                            : `<input type="${campo.type}" name="${campo.name}" value="${val}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">`
-                        }
-                        </div>`;
-                });
+            camposPorTipo[tipo].forEach(campo => {
+                const val = oldValues[campo.name] || '';
+                const isFull = campo.type === 'textarea' ? 'md:col-span-2' : '';
+                html += `
+                    <div class="${isFull}">
+                        <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
+                        ${campo.type === 'textarea'
+                        ? `<textarea name="${campo.name}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">${val}</textarea>`
+                        : `<input type="${campo.type}" name="${campo.name}" value="${val}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">`
+                    }
+                    </div>`;
+            });
 
                 html += `</div></div>`;
                 container.innerHTML = html;
@@ -283,31 +291,54 @@
 
             if (tipoBienSelect.value) tipoBienSelect.dispatchEvent(new Event('change'));
 
-            /* 5. Validación de tamaño de archivo cliente-side */
-            const fileInput = document.getElementById('fotografia');
-            const fileError = document.getElementById('file-error');
+            /* 5. Validación antes de enviar: evitar enviar strings vacíos y validar campos obligatorios */
+            const form = document.querySelector('form[action="' + window.location.pathname + '"]');
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    // Rehabilitar cualquier campo deshabilitado previamente
+                    [...form.elements].forEach(el => el.disabled = el.disabled && false);
 
-            fileInput.addEventListener('change', function() {
-                if (this.files[0] && this.files[0].size > 2 * 1024 * 1024) { // 2MB
-                    fileError.classList.remove('hidden');
-                    this.value = ''; // Limpiar input
-                } else {
-                    fileError.classList.add('hidden');
-                }
-            });
+                    // Campos requeridos básicos
+                    const codigo = document.getElementById('codigo').value.trim();
+                    const descripcion = document.getElementById('descripcion').value.trim();
+                    const tipo = tipoBienSelect.value;
+                    const estado = document.getElementById('estado')?.value || '';
+                    const dependenciaSel = depSelect.value;
 
-            /* 6. Validación de Envíos Básica */
-            document.getElementById('form-create').addEventListener('submit', function (e) {
-                const codigo = codigoInput.value.trim();
+                    if (!dependenciaSel) {
+                        e.preventDefault();
+                        alert('Debe asignar una dependencia antes de guardar el bien.');
+                        return;
+                    }
 
-                if (codigo.length !== 8) {
-                    e.preventDefault();
-                    alert('El código debe contener exactamente 8 dígitos.');
-                    codigoInput.focus();
-                }
-                // NOTA: Se eliminó el loop que deshabilitaba los inputs vacíos,
-                // ya que rompía el request al controlador y la recuperación via old().
-            });
-        });
+                    if (!codigo || codigo.length !== 8) {
+                        e.preventDefault();
+                        alert('El código debe contener exactamente 8 dígitos.');
+                        return;
+                    }
+                    if (!descripcion) {
+                        e.preventDefault();
+                        alert('La descripción es obligatoria.');
+                        return;
+                    }
+                    if (!tipo) {
+                        e.preventDefault();
+                        alert('Debe seleccionar el tipo de bien.');
+                        return;
+                    }
+                    if (!estado) {
+                        e.preventDefault();
+                        alert('Debe seleccionar el estado del bien.');
+                        return;
+                    }
+
+                    // Evitar enviar inputs opcionales vacíos: los deshabilitamos para que no aparezcan en el request
+                    [...form.elements].forEach(el => {
+                        if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.type !== 'file' && el.name) {
+                            if (String(el.value).trim() === '') el.disabled = true;
+                        }
+                    });
+                });
+            }
     </script>
 @endpush

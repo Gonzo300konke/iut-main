@@ -154,9 +154,9 @@ class BienController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            // La dependencia ahora es obligatoria desde la vista y en servidor
-            'dependencia_id' => ['required', 'exists:dependencias,id'],
+        // Construir reglas base
+        $rules = [
+            'dependencia_id' => ['nullable', 'exists:dependencias,id'],
             'codigo' => [
                 'required',
                 'string',
@@ -176,101 +176,17 @@ class BienController extends Controller
             'estado' => ['required', Rule::enum(EstadoBien::class)],
             'tipo_bien' => ['required', Rule::enum(TipoBien::class)],
             'fecha_registro' => ['required', 'date'],
-            'acta_desincorporacion' => ['required_if:estado,desincorporado', 'file', 'mimes:pdf', 'max:2048'],
-        ]);
+            'acta_desincorporacion' => ['nullable', 'required_if:estado,DESINCORPORADO', 'file', 'mimes:pdf', 'max:2048'],
+            'motivo_desincorporacion' => ['nullable', 'required_if:estado,DESINCORPORADO', 'string', 'max:500'],
+        ];
 
-        // Validaciones específicas según el tipo de bien (update)
-        $tipo = $validated['tipo_bien'] ?? $request->input('tipo_bien');
-        $specificRules = [];
-        if ($tipo === 'ELECTRONICO') {
-            $specificRules = [
-                'subtipo' => ['nullable','string','max:20'],
-                'procesador' => ['nullable','string','max:255'],
-                'memoria' => ['nullable','string','max:255'],
-                'almacenamiento' => ['nullable','string','max:255'],
-                'pantalla' => ['nullable','string','max:255'],
-                'serial' => ['nullable','string','max:255'],
-                'garantia' => ['nullable','date'],
-            ];
-        } elseif ($tipo === 'VEHICULO') {
-            $specificRules = [
-                'marca' => ['nullable','string','max:100'],
-                'modelo' => ['nullable','string','max:100'],
-                'anio' => ['nullable','string','max:10'],
-                'placa' => ['nullable','string','max:50'],
-                'motor' => ['nullable','string','max:100'],
-                'chasis' => ['nullable','string','max:100'],
-                'combustible' => ['nullable','string','max:50'],
-                'kilometraje' => ['nullable','string','max:50'],
-            ];
-        } elseif ($tipo === 'MOBILIARIO') {
-            $specificRules = [
-                'material' => ['nullable','string','max:255'],
-                'dimensiones' => ['nullable','string','max:255'],
-                'color' => ['nullable','string','max:100'],
-                'capacidad' => ['nullable','string','max:100'],
-                'cantidad_piezas' => ['nullable','integer','min:0'],
-                'acabado' => ['nullable','string','max:100'],
-            ];
-        } elseif ($tipo === 'OTROS') {
-            $specificRules = [
-                'especificaciones' => ['nullable','string'],
-                'cantidad' => ['nullable','integer','min:0'],
-                'presentacion' => ['nullable','string','max:255'],
-            ];
-        }
+        // Reglas específicas según tipo de bien
+        $tipo = $request->input('tipo_bien');
+        $rules = array_merge($rules, $this->reglasEspecificasPorTipo($tipo));
 
-        if (!empty($specificRules)) {
-            $validatedSpecific = $request->validate($specificRules);
-            $validated = array_merge($validated, $validatedSpecific);
-        }
+        $validated = $request->validate($rules);
 
-        // Validaciones específicas según el tipo de bien
-        $tipo = $validated['tipo_bien'] ?? $request->input('tipo_bien');
-        $specificRules = [];
-        if ($tipo === 'ELECTRONICO') {
-            $specificRules = [
-                'subtipo' => ['nullable','string','max:20'],
-                'procesador' => ['nullable','string','max:255'],
-                'memoria' => ['nullable','string','max:255'],
-                'almacenamiento' => ['nullable','string','max:255'],
-                'pantalla' => ['nullable','string','max:255'],
-                'serial' => ['nullable','string','max:255'],
-                'garantia' => ['nullable','date'],
-            ];
-        } elseif ($tipo === 'VEHICULO') {
-            $specificRules = [
-                'marca' => ['nullable','string','max:100'],
-                'modelo' => ['nullable','string','max:100'],
-                'anio' => ['nullable','string','max:10'],
-                'placa' => ['nullable','string','max:50'],
-                'motor' => ['nullable','string','max:100'],
-                'chasis' => ['nullable','string','max:100'],
-                'combustible' => ['nullable','string','max:50'],
-                'kilometraje' => ['nullable','string','max:50'],
-            ];
-        } elseif ($tipo === 'MOBILIARIO') {
-            $specificRules = [
-                'material' => ['nullable','string','max:255'],
-                'dimensiones' => ['nullable','string','max:255'],
-                'color' => ['nullable','string','max:100'],
-                'capacidad' => ['nullable','string','max:100'],
-                'cantidad_piezas' => ['nullable','integer','min:0'],
-                'acabado' => ['nullable','string','max:100'],
-            ];
-        } elseif ($tipo === 'OTROS') {
-            $specificRules = [
-                'especificaciones' => ['nullable','string'],
-                'cantidad' => ['nullable','integer','min:0'],
-                'presentacion' => ['nullable','string','max:255'],
-            ];
-        }
-
-        if (!empty($specificRules)) {
-            $validatedSpecific = $request->validate($specificRules);
-            $validated = array_merge($validated, $validatedSpecific);
-        }
-
+        // Procesar fotografía
         if ($request->hasFile('fotografia')) {
             // Evitar fotos duplicadas: comparar hash del archivo subido con fotos existentes
             $file = $request->file('fotografia');
@@ -295,22 +211,32 @@ class BienController extends Controller
             if ($foto) $validated['fotografia'] = $foto;
         }
 
-        if ($request->hasFile('acta_desincorporacion')) {
-            $actaPath = $request->file('acta_desincorporacion')->store('actas_desincorporacion', 'public');
-            $validated['acta_desincorporacion'] = $actaPath;
-        }
+        // Separar datos que NO pertenecen a la tabla bienes
+        $actaFile = $request->file('acta_desincorporacion');
+        $motivoDesincorporacion = $validated['motivo_desincorporacion'] ?? null;
+        $datosBien = collect($validated)->except([
+            'acta_desincorporacion', 'motivo_desincorporacion',
+            // Campos de subtablas
+            'subtipo', 'procesador', 'memoria', 'almacenamiento', 'pantalla', 'serial', 'garantia',
+            'marca', 'modelo', 'anio', 'placa', 'motor', 'chasis', 'combustible', 'kilometraje',
+            'material', 'dimensiones', 'color', 'capacidad', 'cantidad_piezas', 'acabado',
+            'especificaciones', 'cantidad', 'presentacion',
+        ])->toArray();
 
-        $bien = Bien::create($validated);
+        $bien = Bien::create($datosBien);
 
-        // Guardar/actualizar datos específicos según el tipo de bien (servicio centralizado)
-        $tipo = $validated['tipo_bien'] ?? $request->input('tipo_bien');
+        // Guardar datos específicos del tipo con datos validados
         if ($tipo) {
-            $this->bienTypeService->sync($bien, $tipo, $request->all());
+            $this->bienTypeService->sync($bien, $tipo, $validated);
         }
 
-        // Si el bien no tiene dependencia y no se envió una ubicación, mantener NULL
-        if (!$request->filled('dependencia_id')) {
-            $bien->update(['ubicacion' => $request->ubicacion ? $request->ubicacion : null]);
+        // Crear registro de desincorporación si aplica
+        if ($bien->estado === EstadoBien::DESINCORPORADO && $actaFile) {
+            $actaPath = $actaFile->store('actas_desincorporacion', 'public');
+            $bien->desincorporado()->create([
+                'motivo_desincorporacion' => $motivoDesincorporacion ?? 'Sin motivo especificado',
+                'acta_desincorporacion' => $actaPath,
+            ]);
         }
 
         return redirect()->route('bienes.index')->with('success', 'Bien creado correctamente.');
@@ -360,10 +286,11 @@ class BienController extends Controller
  */
     public function edit(Bien $bien)
     {
-        // Cargamos los datos para los selectores de la vista
+        // Eager-load relaciones de subtipo para popular campos dinámicos
+        $bien->load(['dependencia.responsable', 'electronico', 'mobiliario', 'vehiculo', 'otro']);
+
         $dependencias = Dependencia::with('responsable')->get();
 
-        // Obtenemos los labels de los Enums (tal como hiciste en index/create)
         $tiposBien = collect(TipoBien::cases())->mapWithKeys(
             fn(TipoBien $tipo) => [$tipo->value => $tipo->label()]
         );
@@ -372,16 +299,22 @@ class BienController extends Controller
             fn(EstadoBien $estado) => [$estado->value => $estado->label()]
         );
 
-        return view('bienes.edit', compact('bien', 'dependencias', 'tiposBien', 'estados'));
+        // Datos del subtipo actual para los campos dinámicos en JS
+        $subtipoData = $this->obtenerDatosSubtipo($bien);
+
+        return view('bienes.edit', compact('bien', 'dependencias', 'tiposBien', 'estados', 'subtipoData'));
     }
+
     public function update(Request $request, Bien $bien)
     {
-        $validated = $request->validate([
+        // Construir reglas base
+        $rules = [
             'dependencia_id' => ['nullable', 'exists:dependencias,id'],
             'codigo' => [
                 'sometimes',
                 'string',
                 'size:8',
+                'regex:/^[0-9]+$/',
                 function ($attribute, $value, $fail) use ($bien) {
                     if (CodigoUnicoService::codigoExiste($value, 'bienes', $bien->id)) {
                         $info = CodigoUnicoService::obtenerUbicacionCodigo($value);
@@ -396,20 +329,41 @@ class BienController extends Controller
             'estado' => ['sometimes', Rule::enum(EstadoBien::class)],
             'tipo_bien' => ['sometimes', Rule::enum(TipoBien::class)],
             'fecha_registro' => ['sometimes', 'date'],
-        ]);
+        ];
 
+        // Reglas específicas según tipo de bien
+        $tipo = $request->input('tipo_bien', $bien->tipo_bien?->value);
+        $rules = array_merge($rules, $this->reglasEspecificasPorTipo($tipo));
+
+        $validated = $request->validate($rules);
+
+        // Procesar fotografía
         if ($request->hasFile('fotografia')) {
             $foto = $this->procesarFotografia($request, $bien);
             if ($foto) $validated['fotografia'] = $foto;
         }
 
-        $bien->update($validated);
+        // Separar datos que NO pertenecen a la tabla bienes
+        $datosBien = collect($validated)->except([
+            'subtipo', 'procesador', 'memoria', 'almacenamiento', 'pantalla', 'serial', 'garantia',
+            'marca', 'modelo', 'anio', 'placa', 'motor', 'chasis', 'combustible', 'kilometraje',
+            'material', 'dimensiones', 'color', 'capacidad', 'cantidad_piezas', 'acabado',
+            'especificaciones', 'cantidad', 'presentacion',
+        ])->toArray();
 
-        // Actualizar o crear datos específicos según el tipo de bien usando el servicio
-        $tipo = $validated['tipo_bien'] ?? $request->input('tipo_bien');
-        if ($tipo) {
-            $this->bienTypeService->sync($bien, $tipo, $request->all());
+        // Si cambió el tipo de bien, eliminar el subtipo anterior
+        $tipoAnterior = $bien->tipo_bien?->value;
+        if ($tipo && $tipoAnterior && strtoupper($tipo) !== strtoupper($tipoAnterior)) {
+            $this->eliminarSubtipoAnterior($bien, $tipoAnterior);
         }
+
+        $bien->update($datosBien);
+
+        // Sincronizar datos específicos del tipo con datos validados
+        if ($tipo) {
+            $this->bienTypeService->sync($bien, $tipo, $validated);
+        }
+
         return redirect()->route('bienes.index')->with('success', 'Bien actualizado.');
     }
 
@@ -488,6 +442,83 @@ class BienController extends Controller
             ]);
 
         return view('bienes.galeria-completa', compact('imagenes'));
+    }
+
+    /**
+     * Reglas de validación específicas según el tipo de bien.
+     */
+    private function reglasEspecificasPorTipo(?string $tipo): array
+    {
+        $tipo = strtoupper($tipo ?? '');
+
+        return match ($tipo) {
+            'ELECTRONICO' => [
+                'subtipo' => ['nullable', 'string', 'max:20'],
+                'procesador' => ['nullable', 'string', 'max:255'],
+                'memoria' => ['nullable', 'string', 'max:255'],
+                'almacenamiento' => ['nullable', 'string', 'max:255'],
+                'pantalla' => ['nullable', 'string', 'max:255'],
+                'serial' => ['required_if:tipo_bien,ELECTRONICO', 'string', 'max:255'],
+                'garantia' => ['nullable', 'date'],
+            ],
+            'VEHICULO' => [
+                'marca' => ['nullable', 'string', 'max:100'],
+                'modelo' => ['nullable', 'string', 'max:100'],
+                'anio' => ['nullable', 'string', 'max:10'],
+                'placa' => ['nullable', 'string', 'max:50'],
+                'motor' => ['nullable', 'string', 'max:100'],
+                'chasis' => ['nullable', 'string', 'max:100'],
+                'combustible' => ['nullable', 'string', 'max:50'],
+                'kilometraje' => ['nullable', 'string', 'max:50'],
+            ],
+            'MOBILIARIO' => [
+                'material' => ['nullable', 'string', 'max:255'],
+                'dimensiones' => ['nullable', 'string', 'max:255'],
+                'color' => ['nullable', 'string', 'max:100'],
+                'capacidad' => ['nullable', 'string', 'max:100'],
+                'cantidad_piezas' => ['nullable', 'integer', 'min:0'],
+                'acabado' => ['nullable', 'string', 'max:100'],
+            ],
+            'OTROS' => [
+                'especificaciones' => ['nullable', 'string'],
+                'cantidad' => ['nullable', 'integer', 'min:0'],
+                'presentacion' => ['nullable', 'string', 'max:255'],
+            ],
+            default => [],
+        };
+    }
+
+    /**
+     * Eliminar el registro de subtipo anterior cuando cambia el tipo de bien.
+     */
+    private function eliminarSubtipoAnterior(Bien $bien, string $tipoAnterior): void
+    {
+        match (strtoupper($tipoAnterior)) {
+            'ELECTRONICO' => $bien->electronico()?->delete(),
+            'VEHICULO' => $bien->vehiculo()?->delete(),
+            'MOBILIARIO' => $bien->mobiliario()?->delete(),
+            'OTROS' => $bien->otro()?->delete(),
+            default => null,
+        };
+    }
+
+    /**
+     * Obtener datos del subtipo actual para los campos dinámicos en la vista edit.
+     */
+    private function obtenerDatosSubtipo(Bien $bien): array
+    {
+        $tipo = $bien->tipo_bien?->value;
+        if (!$tipo) return [];
+
+        $relacion = match (strtoupper($tipo)) {
+            'ELECTRONICO' => $bien->electronico,
+            'VEHICULO' => $bien->vehiculo,
+            'MOBILIARIO' => $bien->mobiliario,
+            'OTROS' => $bien->otro,
+            default => null,
+        };
+
+        return $relacion ? $relacion->toArray() : [];
     }
 
     public function generarReporte(Request $request)

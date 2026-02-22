@@ -102,9 +102,9 @@
                     <div>
                         <div class="flex justify-between items-center mb-2">
                             <label for="descripcion" class="block text-sm font-bold text-gray-700">Descripción General</label>
-                            <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 50</span>
+                            <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 255</span>
                         </div>
-                        <textarea name="descripcion" id="descripcion" rows="2" required maxlength="50"
+                        <textarea name="descripcion" id="descripcion" rows="2" required maxlength="255"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">{{ old('descripcion', $bien->descripcion) }}</textarea>
                     </div>
                 </div>
@@ -190,31 +190,52 @@
         const charCount = document.getElementById('char-count');
 
         descTextarea.addEventListener('input', function () {
-            charCount.textContent = `${this.value.length} / 50`;
-            charCount.classList.toggle('text-red-500', this.value.length >= 50);
+            charCount.textContent = `${this.value.length} / 255`;
+            charCount.classList.toggle('text-red-500', this.value.length >= 255);
         });
 
-        /* 4. Campos Dinámicos (Idénticos a Create) */
+        /* 4. Campos Dinámicos (Completos, igual que Create) */
         const camposPorTipo = {
             'ELECTRONICO': [
                 { name: 'serial', label: 'Número de Serie', type: 'text' },
-                { name: 'modelo', label: 'Modelo/Versión', type: 'text' }
+                { name: 'subtipo', label: 'Subtipo', type: 'text' },
+                { name: 'procesador', label: 'Procesador', type: 'text' },
+                { name: 'memoria', label: 'RAM/Memoria', type: 'text' },
+                { name: 'almacenamiento', label: 'Almacenamiento', type: 'text' },
+                { name: 'pantalla', label: 'Pantalla', type: 'text' },
+                { name: 'garantia', label: 'Garantía hasta', type: 'date' }
             ],
             'VEHICULO': [
                 { name: 'placa', label: 'Número de Placa', type: 'text' },
-                { name: 'marca', label: 'Marca', type: 'text' }
+                { name: 'marca', label: 'Marca', type: 'text' },
+                { name: 'modelo', label: 'Modelo', type: 'text' },
+                { name: 'anio', label: 'Año', type: 'text' },
+                { name: 'motor', label: 'Serial de Motor', type: 'text' },
+                { name: 'chasis', label: 'Serial de Carrocería', type: 'text' },
+                { name: 'combustible', label: 'Tipo de Combustible', type: 'text' },
+                { name: 'kilometraje', label: 'Kilometraje', type: 'text' }
             ],
             'MOBILIARIO': [
-                { name: 'material', label: 'Material', type: 'text' },
-                { name: 'color', label: 'Color', type: 'text' }
+                { name: 'material', label: 'Material de Fabricación', type: 'text' },
+                { name: 'color', label: 'Color', type: 'text' },
+                { name: 'dimensiones', label: 'Dimensiones (Largo x Ancho)', type: 'text' },
+                { name: 'capacidad', label: 'Capacidad', type: 'text' },
+                { name: 'cantidad_piezas', label: 'Cantidad de Piezas', type: 'number' },
+                { name: 'acabado', label: 'Tipo de Acabado', type: 'text' }
+            ],
+            'OTROS': [
+                { name: 'especificaciones', label: 'Especificaciones Extra', type: 'textarea' },
+                { name: 'cantidad', label: 'Cantidad de Unidades', type: 'number' },
+                { name: 'presentacion', label: 'Presentación/Formato', type: 'text' }
             ]
         };
 
         const tipoBienSelect = document.getElementById('tipo_bien');
         const container = document.getElementById('campos-tipo-bien');
 
-        // Cargamos los valores actuales del bien para los campos dinámicos
-        const bienData = @json($bien->toArray());
+        // Datos del subtipo actual cargados desde el controller
+        const subtipoData = @json($subtipoData ?? []);
+        const oldValues = @json(old() ?? []);
 
         tipoBienSelect.addEventListener('change', function () {
             const tipo = this.value;
@@ -230,12 +251,16 @@
             `;
 
             camposPorTipo[tipo].forEach(campo => {
-                // Prioridad: Old Input -> Valor en BD -> Vacío
-                const val = @json(old())[campo.name] || bienData[campo.name] || '';
+                // Prioridad: Old Input -> Datos subtipo BD -> Vacío
+                const val = oldValues[campo.name] || subtipoData[campo.name] || '';
+                const isFull = campo.type === 'textarea' ? 'md:col-span-2' : '';
                 html += `
-                    <div>
+                    <div class="${isFull}">
                         <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
-                        <input type="${campo.type}" name="${campo.name}" value="${val}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">
+                        ${campo.type === 'textarea'
+                        ? `<textarea name="${campo.name}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">${val}</textarea>`
+                        : `<input type="${campo.type}" name="${campo.name}" value="${val}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">`
+                    }
                     </div>`;
             });
 
@@ -249,13 +274,10 @@
             tipoBienSelect.dispatchEvent(new Event('change'));
         };
 
-        /* 5. Validación antes de enviar: evitar enviar strings vacíos y validar campos obligatorios */
-        const formEdit = document.querySelector('form[action="' + window.location.pathname + '"]');
+        /* 5. Validación antes de enviar */
+        const formEdit = document.querySelector('form[action*="bienes"]');
         if (formEdit) {
             formEdit.addEventListener('submit', function (e) {
-                // Rehabilitar cualquier campo deshabilitado previamente
-                [...formEdit.elements].forEach(el => el.disabled = el.disabled && false);
-
                 const codigo = document.getElementById('codigo').value.trim();
                 const descripcion = document.getElementById('descripcion').value.trim();
                 const tipo = tipoBienSelect.value;
@@ -281,13 +303,6 @@
                     alert('Debe seleccionar el estado del bien.');
                     return;
                 }
-
-                // Deshabilitar inputs opcionales vacíos
-                [...formEdit.elements].forEach(el => {
-                    if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.type !== 'file' && el.name) {
-                        if (String(el.value).trim() === '') el.disabled = true;
-                    }
-                });
             });
         }
     </script>

@@ -66,14 +66,9 @@
                 @error('nombre')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-<<<<<<< HEAD
                 {{-- Alerta visual para el usuario --}}
                 <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">⚠️ Solo se permiten letras y espacios.</p>
-                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Máximo 30 caracteres (solo letras y espacios).</p>
-=======
-                <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">Solo se permiten letras.</p>
-                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Límite: 40 caracteres (solo letras).</p>
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
+                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Máximo 40 caracteres (solo letras y espacios).</p>
             </div>
 
             {{-- Botones de Acción --}}
@@ -133,17 +128,10 @@
             let currentVal = e.target.value;
             let filteredValue = currentVal.replace(/[^0-9]/g, '');
 
-<<<<<<< HEAD
-        if (originalValue !== filteredValue) {
-            errorNombre.classList.remove('hidden');
-                setTimeout(() => errorNombre.classList.add('hidden'), 2500);
-        }
-=======
             if (currentVal !== filteredValue) {
                 errorCodigo.classList.remove('hidden');
                 setTimeout(() => errorCodigo.classList.add('hidden'), 2000);
             }
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
 
             e.target.value = filteredValue.slice(0, 8);
 

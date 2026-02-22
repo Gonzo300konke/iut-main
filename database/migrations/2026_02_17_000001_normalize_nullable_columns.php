@@ -94,61 +94,8 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Revert changes: make columns nullable again and remove defaults where applicable.
-        if (Schema::hasTable('bienes_electronicos')) {
-            Schema::table('bienes_electronicos', function (Blueprint $table) {
-                $table->string('subtipo', 20)->nullable()->change();
-                $table->string('procesador', 255)->nullable()->change();
-                $table->string('memoria', 255)->nullable()->change();
-                $table->string('almacenamiento', 255)->nullable()->change();
-                $table->string('pantalla', 255)->nullable()->change();
-                $table->string('serial', 255)->nullable()->change();
-                $table->date('garantia')->nullable()->change();
-            });
-        }
-
-        if (Schema::hasTable('bienes_mobiliarios')) {
-            Schema::table('bienes_mobiliarios', function (Blueprint $table) {
-                $table->string('material', 255)->nullable()->change();
-                $table->string('dimensiones', 255)->nullable()->change();
-                $table->string('color', 100)->nullable()->change();
-                $table->string('capacidad', 100)->nullable()->change();
-                $table->integer('cantidad_piezas')->nullable()->change();
-                $table->string('acabado', 100)->nullable()->change();
-            });
-        }
-
-        if (Schema::hasTable('bienes_vehiculos')) {
-            Schema::table('bienes_vehiculos', function (Blueprint $table) {
-                $table->string('marca', 100)->nullable()->change();
-                $table->string('modelo', 100)->nullable()->change();
-                $table->string('anio', 10)->nullable()->change();
-                $table->string('placa', 50)->nullable()->change();
-                $table->string('motor', 100)->nullable()->change();
-                $table->string('chasis', 100)->nullable()->change();
-                $table->string('combustible', 50)->nullable()->change();
-                $table->string('kilometraje', 50)->nullable()->change();
-            });
-        }
-
-        if (Schema::hasTable('bienes_otros')) {
-            Schema::table('bienes_otros', function (Blueprint $table) {
-                $table->text('especificaciones')->nullable()->change();
-                $table->integer('cantidad')->nullable()->change();
-                $table->string('presentacion', 255)->nullable()->change();
-            });
-        }
-
-        if (Schema::hasTable('reportes')) {
-            Schema::table('reportes', function (Blueprint $table) {
-                $table->string('archivo_pdf_path', 255)->nullable()->change();
-            });
-        }
-
-        if (Schema::hasTable('bienes') && Schema::hasColumn('bienes', 'caracteristicas')) {
-            Schema::table('bienes', function (Blueprint $table) {
-                $table->json('caracteristicas')->nullable()->change();
-            });
-        }
+        // No-op: la transformación de datos (cadenas vacías → NULL) es irreversible.
+        // Las columnas ya eran nullable en las migraciones originales, por lo que
+        // los cambios de esquema en up() no alteraron la estructura real.
     }
 };
