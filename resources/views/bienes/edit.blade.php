@@ -118,7 +118,9 @@
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2">Fecha de Adquisición</label>
-                        <input type="date" name="fecha_registro" value="{{ old('fecha_registro', optional($bien->fecha_registro)->format('Y-m-d')) }}"
+                        <input type="date" name="fecha_registro" id="fecha_registro"
+                            min="2000-01-01" max="{{ now()->format('Y-m-d') }}"
+                            value="{{ old('fecha_registro', optional($bien->fecha_registro)->format('Y-m-d')) }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
@@ -239,10 +241,9 @@
         const tipoBienSelect = document.getElementById('tipo_bien');
         const container = document.getElementById('campos-tipo-bien');
 
-        // Datos del subtipo actual cargados desde el controller
-        // Capturamos los datos que vienen del modelo y de old()
         const valoresExistentes = @json($bien);
         const oldValues = @json(old());
+        
         tipoBienSelect.addEventListener('change', function () {
             const tipo = this.value;
             container.innerHTML = '';
@@ -253,7 +254,6 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
 
             config.fields.forEach(campo => {
-                // Buscamos el valor: 1. De old(), 2. De la base de datos, 3. Por defecto S/N o vacío
                 const valorCargado = oldValues[campo.name] || valoresExistentes[campo.name] || (config.isParent ? 'S/N' : '');
 
                 if (campo.type === 'select') {
@@ -282,11 +282,8 @@
             html += `</div></div>`;
             container.innerHTML = html;
 
-            // Lógica para manejar el subtipo
             if (tipo === 'ELECTRONICO') {
                 const selector = document.getElementById('subtipo_selector');
-
-                // Función para refrescar visibilidad
                 const refrescarCampos = (subtipo) => {
                     const camposVisibles = config.subtipos[subtipo] || [];
                     document.querySelectorAll('.dynamic-field').forEach(input => {
@@ -301,21 +298,13 @@
                         }
                     });
                 };
-
-                // Escuchar cambios manuales
                 selector.addEventListener('change', (e) => refrescarCampos(e.target.value));
-
-                // EJECUCIÓN INICIAL: Si ya hay un subtipo (al cargar el edit), activar campos
                 if (selector.value) refrescarCampos(selector.value);
             }
         });
 
-        // Inicializar al cargar
         window.onload = () => {
-            // Si descTextarea existe en tu DOM
-            if (typeof descTextarea !== 'undefined') descTextarea.dispatchEvent(new Event('input'));
-
-            // Disparar el cambio de tipo para que dibuje los campos con los valores del Bien
+            if (descTextarea) descTextarea.dispatchEvent(new Event('input'));
             tipoBienSelect.dispatchEvent(new Event('change'));
         };
 
@@ -327,6 +316,17 @@
                 const descripcion = document.getElementById('descripcion').value.trim();
                 const tipo = tipoBienSelect.value;
                 const estado = document.getElementById('estado')?.value || '';
+                
+                // Validación de Fecha (Mismo cambio solicitado)
+                const fechaInput = document.getElementById('fecha_registro');
+                const fechaSeleccionada = new Date(fechaInput.value);
+                const fechaMinima = new Date('2000-01-01');
+
+                if (fechaInput.value && fechaSeleccionada < fechaMinima) {
+                    e.preventDefault();
+                    alert('La fecha de adquisición no puede ser anterior al año 2000.');
+                    return;
+                }
 
                 if (!codigo || codigo.length !== 8) {
                     e.preventDefault();
