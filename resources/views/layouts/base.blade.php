@@ -3,39 +3,36 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@yield('title', 'Inventario')</title>
+    <title>@yield('title', 'Sistema de Bienes')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>
-        head {
-            background-color: #640B21;
-        }
-    </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 text-gray-800 antialiased">
+
+    {{-- Navbar --}}
     @include('layouts.head')
 
-    <main class="max-w-screen-2xl mx-auto px-6 py-8">
+    {{-- Contenido Principal --}}
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         @yield('content')
     </main>
 
-    {{-- Script para filtros automáticos --}}
+    {{-- Script de filtros automáticos (Debounce optimizado) --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const form = document.getElementById('filtrosForm');
             if (!form) return;
 
             const filtros = form.querySelectorAll('input, select');
-
             filtros.forEach(filtro => {
-                filtro.addEventListener('change', () => {
-                    form.submit();
-                });
+                // Para selects y checkboxes
+                filtro.addEventListener('change', () => form.submit());
 
+                // Para búsqueda de texto (evita recargar en cada letra)
                 if (filtro.type === 'text') {
                     let timeout;
                     filtro.addEventListener('input', () => {
                         clearTimeout(timeout);
-                        timeout = setTimeout(() => form.submit(), 400);
+                        timeout = setTimeout(() => form.submit(), 500);
                     });
                 }
             });
@@ -45,4 +42,3 @@
     @stack('scripts')
 </body>
 </html>
-
