@@ -131,7 +131,9 @@
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2">Fecha de Adquisición</label>
-                        <input type="date" name="fecha_registro" value="{{ old('fecha_registro', now()->format('Y-m-d')) }}"
+                        <input type="date" name="fecha_registro" id="fecha_registro" 
+                            min="2000-01-01" max="{{ now()->format('Y-m-d') }}"
+                            value="{{ old('fecha_registro', now()->format('Y-m-d')) }}"
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                     <div>
@@ -188,12 +190,14 @@
             const cleaned = original.replace(/\D/g, '');
 
             if (original !== cleaned) {
-                codigoError.classList.remove('hidden');
-                setTimeout(() => codigoError.classList.add('hidden'), 2000);
+                // Si codigoError no existe en el HTML original, esta línea no hará nada o dará error si no se maneja
+                if(codigoError) {
+                    codigoError.classList.remove('hidden');
+                    setTimeout(() => codigoError.classList.add('hidden'), 2000);
+                }
             }
             e.target.value = cleaned;
 
-            // Si el usuario borra o cambia el código sugerido, mostramos la recomendación
             if (codigoOriginalSugerido && cleaned !== codigoOriginalSugerido) {
                 spanSugerencia.textContent = codigoOriginalSugerido;
                 sugerenciaContainer.classList.remove('hidden');
@@ -223,55 +227,52 @@
             charCount.classList.toggle('text-red-500', len >= 255);
         });
 
-        // Inicializar contador al cargar
         if (descTextarea) descTextarea.dispatchEvent(new Event('input'));
 
         /* 4. Campos Dinámicos */
-       /* 4. Campos Dinámicos (Versión Completa) */
         const camposPorTipo = {
-        'ELECTRONICO': {
-            isParent: true,
-            subtipos: {
-                'MONITOR': ['serial', 'pantalla'],
-                'PC': ['serial', 'procesador', 'memoria', 'almacenamiento'],
-                'IMPRESORA': ['serial', 'modelo'],
-                'TELEVISOR': ['serial', 'pantalla', 'modelo']
+            'ELECTRONICO': {
+                isParent: true,
+                subtipos: {
+                    'MONITOR': ['serial', 'pantalla'],
+                    'PC': ['serial', 'procesador', 'memoria', 'almacenamiento'],
+                    'IMPRESORA': ['serial', 'modelo'],
+                    'TELEVISOR': ['serial', 'pantalla', 'modelo']
+                },
+                fields: [
+                    { name: 'subtipo', label: 'Subtipo', type: 'select', options: ['MONITOR', 'PC', 'IMPRESORA', 'TELEVISOR'], required: true },
+                    { name: 'serial', label: 'Número de Serie', type: 'text' },
+                    { name: 'modelo', label: 'Modelo', type: 'text' },
+                    { name: 'procesador', label: 'Procesador', type: 'text' },
+                    { name: 'memoria', label: 'RAM/Memoria', type: 'text' },
+                    { name: 'almacenamiento', label: 'Almacenamiento', type: 'text' },
+                    { name: 'pantalla', label: 'Pulgadas de Pantalla', type: 'text' }
+                ]
             },
-            fields: [
-                { name: 'subtipo', label: 'Subtipo', type: 'select', options: ['MONITOR', 'PC', 'IMPRESORA', 'TELEVISOR'], required: true },
-                { name: 'serial', label: 'Número de Serie', type: 'text' },
-                { name: 'modelo', label: 'Modelo', type: 'text' },
-                { name: 'procesador', label: 'Procesador', type: 'text' },
-                { name: 'memoria', label: 'RAM/Memoria', type: 'text' },
-                { name: 'almacenamiento', label: 'Almacenamiento', type: 'text' },
-                { name: 'pantalla', label: 'Pulgadas de Pantalla', type: 'text' }
-            ]
-        },
-        'VEHICULO': {
-            fields: [
-                { name: 'placa', label: 'Número de Placa', type: 'text' },
-                { name: 'marca', label: 'Marca', type: 'text' },
-                { name: 'motor', label: 'Serial de Motor', type: 'text' },
-                { name: 'chasis', label: 'Serial de Carrocería', type: 'text' }
-            ]
-        },
-        'MOBILIARIO': {
-            fields: [
-                { name: 'material', label: 'Material', type: 'text' },
-                { name: 'color', label: 'Color', type: 'text' },
-                { name: 'dimensiones', label: 'Dimensiones', type: 'text' }
-            ]
-        },
-        'OTROS': {
-            fields: [
-                { name: 'especificaciones', label: 'Especificaciones Extra', type: 'textarea' }
-            ]
-        }
-    };
+            'VEHICULO': {
+                fields: [
+                    { name: 'placa', label: 'Número de Placa', type: 'text' },
+                    { name: 'marca', label: 'Marca', type: 'text' },
+                    { name: 'motor', label: 'Serial de Motor', type: 'text' },
+                    { name: 'chasis', label: 'Serial de Carrocería', type: 'text' }
+                ]
+            },
+            'MOBILIARIO': {
+                fields: [
+                    { name: 'material', label: 'Material', type: 'text' },
+                    { name: 'color', label: 'Color', type: 'text' },
+                    { name: 'dimensiones', label: 'Dimensiones', type: 'text' }
+                ]
+            },
+            'OTROS': {
+                fields: [
+                    { name: 'especificaciones', label: 'Especificaciones Extra', type: 'textarea' }
+                ]
+            }
+        };
 
         const tipoBienSelect = document.getElementById('tipo_bien');
         const container = document.getElementById('campos-tipo-bien');
-        const oldValues = @json(old());
 
         tipoBienSelect.addEventListener('change', function () {
             const tipo = this.value;
@@ -280,10 +281,10 @@
 
             const config = camposPorTipo[tipo];
             let html = `<div class="bg-blue-50/50 border border-blue-100 p-6 rounded-xl space-y-4 animate-fade-in">
-                        <h3 class="text-blue-800 font-bold text-sm uppercase flex items-center gap-2">
-                            <x-heroicon-o-information-circle class="w-5 h-5" /> Detalles Técnicos del ${tipo}
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+                            <h3 class="text-blue-800 font-bold text-sm uppercase flex items-center gap-2">
+                                <x-heroicon-o-information-circle class="w-5 h-5" /> Detalles Técnicos del ${tipo}
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
 
             config.fields.forEach(campo => {
                 if (campo.type === 'select') {
@@ -300,7 +301,6 @@
                                 <textarea name="${campo.name}" data-field="${campo.name}" class="dynamic-field w-full px-4 py-2 border border-blue-200 rounded-lg bg-white uppercase"></textarea>
                             </div>`;
                 } else {
-                    // Si es un tipo normal (no electrónico), el fondo es blanco y no es readonly
                     const isReadonly = config.isParent ? 'readonly' : '';
                     const bgClass = config.isParent ? 'bg-gray-100' : 'bg-white';
                     const defaultValue = config.isParent ? 'S/N' : '';
@@ -317,7 +317,6 @@
             html += `</div></div>`;
             container.innerHTML = html;
 
-            // Lógica de Subtipos solo si es "Padre" (ELECTRONICO)
             if (config.isParent) {
                 const selector = document.getElementById('subtipo_selector');
                 selector.addEventListener('change', function() {
@@ -344,43 +343,54 @@
 
         if (tipoBienSelect.value) tipoBienSelect.dispatchEvent(new Event('change'));
 
-            /* 5. Validación antes de enviar */
-            const form = document.querySelector('form[action*="bienes"]');
-            if (form) {
-                form.addEventListener('submit', function (e) {
-                    const codigo = document.getElementById('codigo').value.trim();
-                    const descripcion = document.getElementById('descripcion').value.trim();
-                    const tipo = tipoBienSelect.value;
-                    const estado = document.getElementById('estado')?.value || '';
-                    const dependenciaSel = depSelect.value;
+        /* 5. Validación antes de enviar */
+        const form = document.querySelector('form[action*="bienes"]');
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                const codigo = document.getElementById('codigo').value.trim();
+                const descripcion = document.getElementById('descripcion').value.trim();
+                const tipo = tipoBienSelect.value;
+                const estado = document.getElementById('estado')?.value || '';
+                const dependenciaSel = depSelect.value;
+                
+                // Validación de Fecha (A partir del año 2000)
+                const fechaInput = document.getElementById('fecha_registro');
+                const fechaSeleccionada = new Date(fechaInput.value);
+                const fechaMinima = new Date('2000-01-01');
 
-                    if (!dependenciaSel) {
-                        e.preventDefault();
-                        alert('Debe asignar una dependencia antes de guardar el bien.');
-                        return;
-                    }
+                if (fechaInput.value && fechaSeleccionada < fechaMinima) {
+                    e.preventDefault();
+                    alert('La fecha de adquisición no puede ser anterior al año 2000.');
+                    return;
+                }
 
-                    if (!codigo || codigo.length !== 8) {
-                        e.preventDefault();
-                        alert('El código debe contener exactamente 8 dígitos.');
-                        return;
-                    }
-                    if (!descripcion) {
-                        e.preventDefault();
-                        alert('La descripción es obligatoria.');
-                        return;
-                    }
-                    if (!tipo) {
-                        e.preventDefault();
-                        alert('Debe seleccionar el tipo de bien.');
-                        return;
-                    }
-                    if (!estado) {
-                        e.preventDefault();
-                        alert('Debe seleccionar el estado del bien.');
-                        return;
-                    }
-                });
-            }
+                if (!dependenciaSel) {
+                    e.preventDefault();
+                    alert('Debe asignar una dependencia antes de guardar el bien.');
+                    return;
+                }
+
+                if (!codigo || codigo.length !== 8) {
+                    e.preventDefault();
+                    alert('El código debe contener exactamente 8 dígitos.');
+                    return;
+                }
+                if (!descripcion) {
+                    e.preventDefault();
+                    alert('La descripción es obligatoria.');
+                    return;
+                }
+                if (!tipo) {
+                    e.preventDefault();
+                    alert('Debe seleccionar el tipo de bien.');
+                    return;
+                }
+                if (!estado) {
+                    e.preventDefault();
+                    alert('Debe seleccionar el estado del bien.');
+                    return;
+                }
+            });
+        }
     </script>
 @endpush
