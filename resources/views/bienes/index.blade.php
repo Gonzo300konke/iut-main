@@ -229,9 +229,7 @@
 </div>
 
 {{-- Elimina el div de paginación de aquí si ya está dentro del partial --}}
-<div class="mt-6" id="bienesPagination">
-    {{ $bienes->links() }}
-</div>
+
 
 
 @push('scripts')
