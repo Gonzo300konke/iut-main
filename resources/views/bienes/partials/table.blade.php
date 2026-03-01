@@ -24,7 +24,7 @@
                 @forelse($bienes as $bien)
                     <tr class="group hover:bg-red-50/40 transition-all duration-300 hover:shadow-inner">
                         <td class="px-6 py-5 text-sm font-black font-mono text-[#640B21] tracking-tight">
-                            {{ $bien->codigo }}
+                            {{ str_pad($bien->codigo, 8, '0', STR_PAD_LEFT) }}
                         </td>
                         <td class="px-6 py-5 text-sm font-medium text-slate-900">
                             {{ $bien->descripcion }}
@@ -119,7 +119,7 @@
     </div>
 </div>
 
-{{-- Paginación (usa el tema tailwind si lo tienes configurado) --}}
+{{-- Paginación --}}
 <div class="mt-8 flex justify-center" id="bienesPagination">
     @if($bienes->hasPages())
         {{ $bienes->links('pagination::tailwind') }}
