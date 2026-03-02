@@ -133,6 +133,10 @@ class BienController extends Controller
 }
 
     /**
+     * Procesa la desincorporación de un bien
+     */
+
+    /**
      * Mostrar formulario de creación con lógica de código secuencial.
      */
     public function create()
@@ -378,32 +382,36 @@ class BienController extends Controller
     /**
      * Procesar la desincorporación de un bien.
      */
-    public function desincorporar(Request $request, Bien $bien)
-    {
-        $validated = $request->validate([
-            'motivo' => 'required|string|max:255',
-            'acta_desincorporacion' => 'required|file|mimes:pdf|max:2048',
-        ]);
+   public function desincorporar(Request $request, Bien $bien)
+{
+    $validated = $request->validate([
+        'motivo' => 'required|string|min:10|max:2000',
+        // ya no: 'acta_desincorporacion' => ...
+    ]);
 
-        // Guardar el archivo del acta
-        $path = $request->file('acta_desincorporacion')->store('actas_desincorporacion', 'public');
+    // Ya no guardamos archivo subido
+    // $rutaActaFisica = ... → eliminar esta línea
 
-        // Mover el bien a la tabla de eliminados
-        \DB::table('eliminados')->insert([
-            'model_type' => Bien::class,
-            'model_id' => $bien->id,
-            'data' => json_encode($bien->toArray()),
-            'deleted_by' => auth()->id(),
-            'deleted_at' => now(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+    $bien->estado = \App\Enums\EstadoBien::DESINCORPORADO; // o el valor que uses
+    $bien->save();
 
-        // Eliminar el bien de la tabla principal
-        $bien->delete();
+    // Registrar movimiento (sin archivo)
+    $bien->movimientos()->create([
+        'tipo'          => 'DESINCORPORACION',
+        'observaciones' => $request->motivo,
+        'user_id'       => auth()->id(),
+        // 'archivo'       => $rutaActaFisica,  ← eliminar o poner null
+    ]);
 
-        return redirect()->route('bienes.index')->with('success', 'El bien ha sido desincorporado y movido a la tabla de eliminados.');
-    }
+    // Generar y descargar el acta automática
+    $service = new \App\Services\ActaDesincorporacionService();
+
+    return $service->generar(
+        bien: $bien,
+        motivo: $request->motivo,
+        usuario: auth()->user()
+    );
+}
 
     /**
      * Desincorporar un bien.
