@@ -10,17 +10,21 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasColumn('bienes', 'dependencia_id')) {
-            $constraint = DB::selectOne("
-                SELECT CONSTRAINT_NAME as name
-                FROM information_schema.KEY_COLUMN_USAGE
-                WHERE TABLE_SCHEMA = DATABASE()
-                  AND TABLE_NAME = 'bienes'
-                  AND COLUMN_NAME = 'dependencia_id'
-                  AND REFERENCED_TABLE_NAME = 'dependencias'
-            ");
+            // Evitar consultas a information_schema en drivers que no sean MySQL (p. ej. SQLite en tests)
+            $driver = DB::getPdo() ? DB::getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME) : null;
+            if ($driver === 'mysql') {
+                $constraint = DB::selectOne("
+                    SELECT CONSTRAINT_NAME as name
+                    FROM information_schema.KEY_COLUMN_USAGE
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'bienes'
+                      AND COLUMN_NAME = 'dependencia_id'
+                      AND REFERENCED_TABLE_NAME = 'dependencias'
+                ");
 
-            if ($constraint && isset($constraint->name)) {
-                DB::statement("ALTER TABLE `bienes` DROP FOREIGN KEY `{$constraint->name}`");
+                if ($constraint && isset($constraint->name)) {
+                    DB::statement("ALTER TABLE `bienes` DROP FOREIGN KEY `{$constraint->name}`");
+                }
             }
 
             Schema::table('bienes', function (Blueprint $table) {
@@ -36,17 +40,20 @@ return new class extends Migration
     public function down(): void
     {
         if (Schema::hasColumn('bienes', 'dependencia_id')) {
-            $constraint = DB::selectOne("
-                SELECT CONSTRAINT_NAME as name
-                FROM information_schema.KEY_COLUMN_USAGE
-                WHERE TABLE_SCHEMA = DATABASE()
-                  AND TABLE_NAME = 'bienes'
-                  AND COLUMN_NAME = 'dependencia_id'
-                  AND REFERENCED_TABLE_NAME = 'dependencias'
-            ");
+            $driver = DB::getPdo() ? DB::getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME) : null;
+            if ($driver === 'mysql') {
+                $constraint = DB::selectOne("
+                    SELECT CONSTRAINT_NAME as name
+                    FROM information_schema.KEY_COLUMN_USAGE
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = 'bienes'
+                      AND COLUMN_NAME = 'dependencia_id'
+                      AND REFERENCED_TABLE_NAME = 'dependencias'
+                ");
 
-            if ($constraint && isset($constraint->name)) {
-                DB::statement("ALTER TABLE `bienes` DROP FOREIGN KEY `{$constraint->name}`");
+                if ($constraint && isset($constraint->name)) {
+                    DB::statement("ALTER TABLE `bienes` DROP FOREIGN KEY `{$constraint->name}`");
+                }
             }
 
             Schema::table('bienes', function (Blueprint $table) {

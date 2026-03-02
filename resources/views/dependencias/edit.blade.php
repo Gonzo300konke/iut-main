@@ -78,24 +78,15 @@
             {{-- Nombre de la Dependencia --}}
             <div class="px-2">
                 <label for="nombre" class="block text-sm font-bold text-slate-700 mb-2">Nombre de la Dependencia</label>
-                <input type="text" name="nombre" id="nombre" value="{{ old('nombre', $dependencia->nombre) }}"
-                       placeholder="Ej: Dirección de Finanzas"
-<<<<<<< HEAD
-                       maxlength="40"
-=======
-                       maxlength="40" autocomplete="off"
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
-                       class="w-full px-4 py-3 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" required>
+                  <input type="text" name="nombre" id="nombre" value="{{ old('nombre', $dependencia->nombre) }}"
+                      placeholder="Ej: Dirección de Finanzas"
+                      maxlength="40" autocomplete="off"
+                      class="w-full px-4 py-3 border @error('nombre') border-red-500 @else border-gray-300 @enderror rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition" required>
                 @error('nombre')
                     <p class="text-red-600 text-sm mt-1 font-medium">{{ $message }}</p>
                 @enderror
-<<<<<<< HEAD
                 <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">⚠️ Solo se permiten letras y espacios.</p>
                 <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Máximo 40 caracteres (solo letras y espacios).</p>
-=======
-                <p id="error-nombre" class="text-red-500 text-[10px] mt-1 hidden font-bold italic">Solo se permiten letras.</p>
-                <p class="text-gray-400 text-[11px] mt-2 italic font-medium">Límite: 40 caracteres (sin números).</p>
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
             </div>
 
             {{-- Responsable --}}
@@ -162,23 +153,7 @@
         const errorNombre = document.getElementById('error-nombre');
         const form = document.getElementById('editDependenciaForm');
 
-<<<<<<< HEAD
-        // 1. Validación de Nombre: Solo letras, tildes y espacios
-        nombreInput.addEventListener('input', function(e) {
-            let original = e.target.value;
-            let filtrado = original.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-
-            if (original !== filtrado) {
-                errorNombre.classList.remove('hidden');
-                setTimeout(() => errorNombre.classList.add('hidden'), 2500);
-            }
-            e.target.value = filtrado.slice(0, 40);
-        });
-
-        // 2. Validación de Código: Solo números
-=======
-        // 1. LÓGICA DE CÓDIGO CON RECOMENDACIÓN PROACTIVA
->>>>>>> 44fa59c4714a6fbc0641edd2b17c64cc51d1efc7
+    // 1. LÓGICA DE CÓDIGO CON RECOMENDACIÓN PROACTIVA
         codigoInput.addEventListener('input', function(e) {
             let originalValue = e.target.value;
             let filteredValue = originalValue.replace(/[^0-9]/g, '');

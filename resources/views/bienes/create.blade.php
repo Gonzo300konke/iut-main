@@ -114,9 +114,9 @@
                         <div class="flex justify-between items-center mb-2">
                             <label for="descripcion" class="block text-sm font-bold text-gray-700">Descripción
                                 General</label>
-                            <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 50</span>
+                            <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 255</span>
                         </div>
-                        <textarea name="descripcion" id="descripcion" rows="2" required maxlength="50"
+                        <textarea name="descripcion" id="descripcion" rows="2" required maxlength="255"
                             placeholder="Indique nombre, marca, modelo..."
                             class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">{{ old('descripcion') }}</textarea>
                     </div>
@@ -219,41 +219,55 @@
 
         descTextarea.addEventListener('input', function () {
             const len = this.value.length;
-            charCount.textContent = `${len} / 50`;
-
-            if (len >= 50) {
-                charCount.classList.add('text-red-500');
-            } else {
-                charCount.classList.remove('text-red-500');
-            }
+            charCount.textContent = `${len} / 255`;
+            charCount.classList.toggle('text-red-500', len >= 255);
         });
 
         // Inicializar contador al cargar
         if (descTextarea) descTextarea.dispatchEvent(new Event('input'));
 
         /* 4. Campos Dinámicos */
+       /* 4. Campos Dinámicos (Versión Completa) */
         const camposPorTipo = {
-            'ELECTRONICO': [
+        'ELECTRONICO': {
+            isParent: true,
+            subtipos: {
+                'MONITOR': ['serial', 'pantalla'],
+                'PC': ['serial', 'procesador', 'memoria', 'almacenamiento'],
+                'IMPRESORA': ['serial', 'modelo'],
+                'TELEVISOR': ['serial', 'pantalla', 'modelo']
+            },
+            fields: [
+                { name: 'subtipo', label: 'Subtipo', type: 'select', options: ['MONITOR', 'PC', 'IMPRESORA', 'TELEVISOR'], required: true },
                 { name: 'serial', label: 'Número de Serie', type: 'text' },
-                { name: 'modelo', label: 'Modelo/Versión', type: 'text' },
+                { name: 'modelo', label: 'Modelo', type: 'text' },
                 { name: 'procesador', label: 'Procesador', type: 'text' },
-                { name: 'memoria', label: 'RAM/Memoria', type: 'text' }
-            ],
-            'VEHICULO': [
+                { name: 'memoria', label: 'RAM/Memoria', type: 'text' },
+                { name: 'almacenamiento', label: 'Almacenamiento', type: 'text' },
+                { name: 'pantalla', label: 'Pulgadas de Pantalla', type: 'text' }
+            ]
+        },
+        'VEHICULO': {
+            fields: [
                 { name: 'placa', label: 'Número de Placa', type: 'text' },
                 { name: 'marca', label: 'Marca', type: 'text' },
                 { name: 'motor', label: 'Serial de Motor', type: 'text' },
                 { name: 'chasis', label: 'Serial de Carrocería', type: 'text' }
-            ],
-            'MOBILIARIO': [
-                { name: 'material', label: 'Material de Fabricación', type: 'text' },
+            ]
+        },
+        'MOBILIARIO': {
+            fields: [
+                { name: 'material', label: 'Material', type: 'text' },
                 { name: 'color', label: 'Color', type: 'text' },
-                { name: 'dimensiones', label: 'Dimensiones (Largo x Ancho)', type: 'text' }
-            ],
-            'OTROS': [
+                { name: 'dimensiones', label: 'Dimensiones', type: 'text' }
+            ]
+        },
+        'OTROS': {
+            fields: [
                 { name: 'especificaciones', label: 'Especificaciones Extra', type: 'textarea' }
             ]
-        };
+        }
+    };
 
         const tipoBienSelect = document.getElementById('tipo_bien');
         const container = document.getElementById('campos-tipo-bien');
@@ -264,41 +278,76 @@
             container.innerHTML = '';
             if (!tipo || !camposPorTipo[tipo]) return;
 
-            let html = `
-                <div class="bg-blue-50/50 border border-blue-100 p-6 rounded-xl space-y-4 animate-fade-in">
-                    <h3 class="text-blue-800 font-bold text-sm uppercase tracking-wider flex items-center gap-2">
-                        <x-heroicon-o-information-circle class="w-5 h-5" /> Detalles Técnicos del ${tipo}
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            `;
+            const config = camposPorTipo[tipo];
+            let html = `<div class="bg-blue-50/50 border border-blue-100 p-6 rounded-xl space-y-4 animate-fade-in">
+                        <h3 class="text-blue-800 font-bold text-sm uppercase flex items-center gap-2">
+                            <x-heroicon-o-information-circle class="w-5 h-5" /> Detalles Técnicos del ${tipo}
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
 
-            camposPorTipo[tipo].forEach(campo => {
-                const val = oldValues[campo.name] || '';
-                const isFull = campo.type === 'textarea' ? 'md:col-span-2' : '';
-                html += `
-                    <div class="${isFull}">
-                        <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
-                        ${campo.type === 'textarea'
-                        ? `<textarea name="${campo.name}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">${val}</textarea>`
-                        : `<input type="${campo.type}" name="${campo.name}" value="${val}" class="w-full px-4 py-2 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white uppercase">`
-                    }
-                    </div>`;
+            config.fields.forEach(campo => {
+                if (campo.type === 'select') {
+                    html += `<div>
+                                <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
+                                <select name="${campo.name}" id="subtipo_selector" required class="w-full px-4 py-2 border border-blue-200 rounded-lg outline-none bg-white">
+                                    <option value="">Seleccione...</option>
+                                    ${campo.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                                </select>
+                            </div>`;
+                } else if (campo.type === 'textarea') {
+                    html += `<div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
+                                <textarea name="${campo.name}" data-field="${campo.name}" class="dynamic-field w-full px-4 py-2 border border-blue-200 rounded-lg bg-white uppercase"></textarea>
+                            </div>`;
+                } else {
+                    // Si es un tipo normal (no electrónico), el fondo es blanco y no es readonly
+                    const isReadonly = config.isParent ? 'readonly' : '';
+                    const bgClass = config.isParent ? 'bg-gray-100' : 'bg-white';
+                    const defaultValue = config.isParent ? 'S/N' : '';
+
+                    html += `<div>
+                                <label class="block text-xs font-bold text-blue-700 mb-1">${campo.label}</label>
+                                <input type="text" name="${campo.name}" data-field="${campo.name}"
+                                    class="dynamic-field w-full px-4 py-2 border border-blue-200 rounded-lg ${bgClass} uppercase"
+                                    ${isReadonly} value="${defaultValue}">
+                            </div>`;
+                }
             });
 
             html += `</div></div>`;
             container.innerHTML = html;
+
+            // Lógica de Subtipos solo si es "Padre" (ELECTRONICO)
+            if (config.isParent) {
+                const selector = document.getElementById('subtipo_selector');
+                selector.addEventListener('change', function() {
+                    const st = this.value;
+                    const camposVisibles = config.subtipos[st] || [];
+
+                    document.querySelectorAll('.dynamic-field').forEach(input => {
+                        const fieldName = input.getAttribute('data-field');
+                        if (camposVisibles.includes(fieldName)) {
+                            input.classList.remove('bg-gray-100');
+                            input.classList.add('bg-white');
+                            input.removeAttribute('readonly');
+                            if(input.value === 'S/N') input.value = '';
+                        } else {
+                            input.classList.add('bg-gray-100');
+                            input.classList.remove('bg-white');
+                            input.setAttribute('readonly', true);
+                            input.value = 'S/N';
+                        }
+                    });
+                });
+            }
         });
 
         if (tipoBienSelect.value) tipoBienSelect.dispatchEvent(new Event('change'));
 
-            /* 5. Validación antes de enviar: evitar enviar strings vacíos y validar campos obligatorios */
-            const form = document.querySelector('form[action="' + window.location.pathname + '"]');
+            /* 5. Validación antes de enviar */
+            const form = document.querySelector('form[action*="bienes"]');
             if (form) {
                 form.addEventListener('submit', function (e) {
-                    // Rehabilitar cualquier campo deshabilitado previamente
-                    [...form.elements].forEach(el => el.disabled = el.disabled && false);
-
-                    // Campos requeridos básicos
                     const codigo = document.getElementById('codigo').value.trim();
                     const descripcion = document.getElementById('descripcion').value.trim();
                     const tipo = tipoBienSelect.value;
@@ -331,13 +380,6 @@
                         alert('Debe seleccionar el estado del bien.');
                         return;
                     }
-
-                    // Evitar enviar inputs opcionales vacíos: los deshabilitamos para que no aparezcan en el request
-                    [...form.elements].forEach(el => {
-                        if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.type !== 'file' && el.name) {
-                            if (String(el.value).trim() === '') el.disabled = true;
-                        }
-                    });
                 });
             }
     </script>
