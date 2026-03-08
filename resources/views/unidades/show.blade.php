@@ -4,7 +4,7 @@
 
 @section('content')
 @push('breadcrumbs')
-<x-breadcrumbs :items="[['label' => 'Unidades Administradoras', 'url' => route('unidades.index')], ['label' => $unidad->nombre]]" />
+<x-breadcrumbs :items="[['label' => 'Unidades Administradoras', 'url' => route('unidades.index')], ['label' => $unidadAdministradora->nombre]]" />
 @endpush
 @php
 use Illuminate\Support\Str;
@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
         </div>
     @endif
 
-    <div class="bg-white shadow rounded-lg p-6 space-y-6">
+    <div class="bg-white shadow-sm rounded-lg p-6 space-y-6 border border-gray-100">
         <div>
             <a
                 href="{{ route('unidades.index') }}"

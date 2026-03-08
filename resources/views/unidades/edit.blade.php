@@ -7,7 +7,7 @@
 <x-breadcrumbs :items="[['label' => 'Unidades Administradoras', 'url' => route('unidades.index')], ['label' => $unidad->nombre, 'url' => route('unidades.show', $unidad)], ['label' => 'Editar']]" />
 @endpush
 <div class="max-w-2xl mx-auto mt-10">
-    <div class="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
+    <div class="bg-white dark:bg-slate-900 shadow-xl dark:shadow-slate-800 rounded-xl overflow-hidden border border-gray-100 dark:border-slate-700">
 
         {{-- ENCABEZADO CON GRADIENTE --}}
         <div class="bg-gradient-to-r from-slate-700 to-slate-900 px-8 py-5">

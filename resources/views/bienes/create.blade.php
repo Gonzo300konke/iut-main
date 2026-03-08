@@ -7,7 +7,7 @@
 <x-breadcrumbs :items="[['label' => 'Bienes', 'url' => route('bienes.index')], ['label' => 'Nuevo Bien']]" />
 @endpush
     <div class="max-w-4xl mx-auto">
-        <div class="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
+        <div class="bg-white dark:bg-slate-900 shadow-xl dark:shadow-slate-800 rounded-xl overflow-hidden border border-gray-100 dark:border-slate-700">
             {{-- Encabezado --}}
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-5">
                 <h1 class="text-xl font-bold text-white flex items-center gap-2">
@@ -24,15 +24,15 @@
 
                 {{-- Sección 1: Ubicación Administrativa --}}
                 <div class="space-y-4">
-                    <h2 class="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
-                        <x-heroicon-o-home-modern class="w-5 h-5 text-blue-600" /> Asignación Administrativa
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b dark:border-slate-700 pb-2 flex items-center gap-2">
+                        <x-heroicon-o-home-modern class="w-5 h-5 text-blue-600 dark:text-blue-400" /> Asignación Administrativa
                     </h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="dependencia_id" class="block text-sm font-bold text-gray-700 mb-2">Dependencia <span class="text-red-500">*</span></label>
+                            <label for="dependencia_id" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Dependencia <span class="text-red-500">*</span></label>
                             <select name="dependencia_id" id="dependencia_id" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
                                 <option value="" disabled {{ old('dependencia_id') ? '' : 'selected' }}>Seleccione dependencia...</option>
                                 @foreach($dependencias as $dep)
                                     <option value="{{ $dep->id }}" {{ old('dependencia_id') == $dep->id ? 'selected' : '' }}>
@@ -47,9 +47,9 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-2">Responsable de la Dependencia</label>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Responsable de la Dependencia</label>
                             <div id="responsable_display"
-                                class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 italic text-sm flex items-center h-[50px]">
+                                class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 italic text-sm flex items-center h-[50px]">
                                 Seleccione una dependencia...
                             </div>
                         </div>
@@ -58,17 +58,17 @@
 
                 {{-- Sección 2: Identificación del Bien --}}
                 <div class="space-y-4">
-                    <h2 class="text-lg font-bold text-gray-800 border-b pb-2 flex items-center gap-2">
-                        <x-heroicon-o-identification class="w-5 h-5 text-blue-600" /> Identificación Técnica
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b dark:border-slate-700 pb-2 flex items-center gap-2">
+                        <x-heroicon-o-identification class="w-5 h-5 text-blue-600 dark:text-blue-400" /> Identificación Técnica
                     </h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {{-- Código del Bien con Sugerencia --}}
                         <div>
-                            <label for="codigo" class="block text-sm font-bold text-gray-700 mb-2">Código del Bien</label>
+                            <label for="codigo" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Código del Bien</label>
                             <input type="text" name="codigo" id="codigo" value="{{ old('codigo', $codigoSugerido ?? '') }}"
                                 maxlength="8" inputmode="numeric" placeholder="Ej: 00000001"
-                                class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 @enderror rounded-lg font-mono focus:ring-2 focus:ring-blue-500 outline-none transition uppercase"
+                                class="w-full px-4 py-3 border @error('codigo') border-red-500 @else border-gray-300 dark:border-gray-600 @enderror rounded-lg font-mono focus:ring-2 focus:ring-blue-500 outline-none transition uppercase bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                 required pattern="\d{8}" title="El código debe contener exactamente 8 dígitos numéricos">
 
                             @error('codigo')
@@ -78,7 +78,7 @@
                             {{-- Contenedor para la sugerencia --}}
                             <div id="sugerencia-container" class="mt-1 hidden">
                                 <button type="button" id="btn-sugerencia"
-                                    class="text-[10px] text-blue-600 hover:underline font-bold italic">
+                                    class="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-bold italic">
                                     💡 ¿Usar código sugerido: <span id="span-sugerencia"></span>?
                                 </button>
                             </div>
@@ -86,9 +86,9 @@
 
                         {{-- Tipo de Bien --}}
                         <div>
-                            <label for="tipo_bien" class="block text-sm font-bold text-gray-700 mb-2">Tipo de Bien</label>
+                            <label for="tipo_bien" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tipo de Bien</label>
                             <select name="tipo_bien" id="tipo_bien" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
                                 <option value="">Seleccione tipo...</option>
                                 @foreach($tiposBien as $value => $label)
                                     <option value="{{ $value }}" {{ old('tipo_bien') == $value ? 'selected' : '' }}>{{ $label }}
@@ -99,9 +99,9 @@
 
                         {{-- Estado --}}
                         <div>
-                            <label for="estado" class="block text-sm font-bold text-gray-700 mb-2">Estado Físico</label>
+                            <label for="estado" class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Estado Físico</label>
                             <select name="estado" id="estado" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100">
                                 <option value="">Seleccione estado...</option>
                                 @foreach(\App\Enums\EstadoBien::cases() as $estado)
                                     <option value="{{ $estado->value }}" {{ old('estado') == $estado->value ? 'selected' : '' }}>
@@ -115,9 +115,9 @@
                     {{-- Descripción con Límite de 50 --}}
                     <div>
                         <div class="flex justify-between items-center mb-2">
-                            <label for="descripcion" class="block text-sm font-bold text-gray-700">Descripción
+                            <label for="descripcion" class="block text-sm font-bold text-gray-700 dark:text-gray-300">Descripción
                                 General</label>
-                            <span id="char-count" class="text-[10px] font-bold text-gray-400">0 / 255</span>
+                            <span id="char-count" class="text-[10px] font-bold text-gray-400 dark:text-gray-500">0 / 255</span>
                         </div>
                         <textarea name="descripcion" id="descripcion" rows="2" required maxlength="255"
                             placeholder="Indique nombre, marca, modelo..."

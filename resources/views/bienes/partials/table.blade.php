@@ -1,8 +1,8 @@
 {{-- resources/views/bienes/partials/table.blade.php --}}
-<div class="bg-white/80 backdrop-blur-sm border border-slate-200/70 shadow-xl rounded-3xl overflow-hidden reveal">
+<div class="bg-white border border-slate-200 shadow-sm rounded-3xl overflow-hidden reveal">
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-slate-200">
-            <thead class="bg-slate-50/70">
+            <thead class="bg-slate-50">
                 <tr>
                     <th class="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-widest">Código</th>
                     <th class="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-widest">Descripción</th>
@@ -20,9 +20,9 @@
                 </tr>
             </thead>
 
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-slate-100 bg-white">
                 @forelse($bienes as $bien)
-                    <tr class="group hover:bg-red-50/40 transition-all duration-300 hover:shadow-inner">
+                    <tr class="group hover:bg-slate-50 transition-all duration-300 hover:shadow-inner">
                         <td class="px-6 py-5 text-sm font-black font-mono text-[#640B21] tracking-tight">
                             {{ str_pad($bien->codigo, 8, '0', STR_PAD_LEFT) }}
                         </td>
@@ -49,8 +49,8 @@
                                     'INMUEBLE'     => 'bg-amber-50 text-amber-800 border border-amber-200/70',
                                     'MOBILIARIO'   => 'bg-purple-50 text-purple-800 border border-purple-200/70',
                                     'VEHICULO'     => 'bg-red-100/80 text-red-800 border border-red-200/70',
-                                    'OTROS'        => 'bg-slate-100 text-slate-700 border border-slate-200/70',
-                                    default        => 'bg-slate-50 text-slate-600 border border-slate-200/70',
+                                    'OTROS'        => 'bg-gray-100 text-gray-700 border border-gray-200',
+                                    default        => 'bg-slate-50 text-slate-600 border border-slate-200',
                                 };
                             @endphp
                             <span class="inline-flex px-3 py-1 text-xs font-bold rounded-full {{ $tipoBienColor }}">
@@ -64,7 +64,7 @@
                             @if($bien->fotografia && file_exists(public_path('storage/' . $bien->fotografia)))
                                 <img src="{{ asset('storage/' . $bien->fotografia) }}"
                                      alt="Foto del bien"
-                                     class="w-20 h-20 md:w-28 md:h-28 object-cover rounded-2xl shadow-md border border-slate-200/70 group-hover:scale-105 transition-transform duration-500">
+                                     class="w-20 h-20 md:w-28 md:h-28 object-cover rounded-2xl shadow-md border border-slate-200 group-hover:scale-105 transition-transform duration-500">
                             @else
                                 <span class="text-slate-400 italic text-sm font-medium">Sin foto</span>
                             @endif
@@ -78,8 +78,8 @@
                                     \App\Enums\EstadoBien::DANADO->value            => 'bg-red-100/80 text-red-800 border border-red-200/70',
                                     \App\Enums\EstadoBien::EN_MANTENIMIENTO->value => 'bg-yellow-100/80 text-yellow-800 border border-yellow-200/70',
                                     \App\Enums\EstadoBien::EN_CAMINO->value         => 'bg-blue-100/80 text-blue-800 border border-blue-200/70',
-                                    \App\Enums\EstadoBien::EXTRAVIADO->value        => 'bg-slate-200/80 text-slate-900 border border-slate-300/70',
-                                    default                                         => 'bg-slate-50 text-slate-700 border border-slate-200/70',
+                                    \App\Enums\EstadoBien::EXTRAVIADO->value        => 'bg-gray-200 text-gray-900 border border-gray-300',
+                                    default                                         => 'bg-slate-50 text-slate-700 border border-slate-200',
                                 };
                             @endphp
                             <span class="inline-flex px-3 py-1 text-xs font-bold rounded-full {{ $estadoColor }}">

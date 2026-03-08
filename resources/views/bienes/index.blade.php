@@ -54,7 +54,7 @@
 @endif
 
 <!-- Panel de Filtros -->
-<div class="mb-6 bg-white shadow rounded-lg p-4 space-y-4">
+<div class="mb-6 bg-white border border-slate-200 shadow-sm rounded-lg p-4 space-y-4">
     <form action="{{ route('bienes.index') }}" method="GET" class="space-y-4" id="filtrosForm">
 
         <!-- Primera fila -->
@@ -68,7 +68,7 @@
                        pattern="[a-zA-Z0-9\s\-.]*"
                        title="Solo letras, números, espacios, guiones y puntos"
                        placeholder="Código o descripción..."
-                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
+                       class="border border-gray-300 bg-white text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
                 <p id="error-msg-search" class="text-red-600 text-xs mt-1 hidden font-medium">
                     ⚠️ Solo se permiten letras, números, espacios, guiones y puntos.
                 </p>
@@ -78,7 +78,7 @@
             <div class="flex flex-col">
                 <label for="tipo_bien" class="text-sm font-medium text-gray-700 mb-1">Tipo de Bien</label>
                 <select name="tipo_bien" id="tipo_bien"
-                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto bg-white">
+                        class="border border-gray-300 bg-white text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
                     <option value="">Todos los tipos</option>
                     @foreach($tiposBien as $valor => $label)
                         <option value="{{ $valor }}" {{ old('tipo_bien', request('tipo_bien')) == $valor ? 'selected' : '' }}>
@@ -92,7 +92,7 @@
             <div class="flex flex-col">
                 <label for="organismo_id" class="text-sm font-medium text-gray-700 mb-1">Organismo</label>
                 <select name="organismo_id" id="organismo_id"
-                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto bg-white">
+                        class="border border-gray-300 bg-white text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
                     <option value="">Todos los Organismos</option>
                     @foreach($organismos as $organismo)
                         <option value="{{ $organismo->id }}" {{ old('organismo_id', request('organismo_id')) == $organismo->id ? 'selected' : '' }}>
@@ -106,7 +106,7 @@
             <div class="flex flex-col">
                 <label for="unidad_id" class="text-sm font-medium text-gray-700 mb-1">Unidad Administradora</label>
                 <select name="unidad_id" id="unidad_id"
-                        class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto bg-white">
+                        class="border border-gray-300 bg-white text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
                     <option value="">Todas las unidades</option>
                     @foreach($unidades as $unidad)
                         <option value="{{ $unidad->id }}" {{ old('unidad_id', request('unidad_id')) == $unidad->id ? 'selected' : '' }}>
@@ -124,7 +124,7 @@
                 <input type="date" name="fecha_desde" id="fecha_desde"
                        value="{{ old('fecha_desde', request('fecha_desde')) }}"
                        max="{{ date('Y-m-d') }}"
-                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
+                       class="border border-gray-300 bg-white text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
             </div>
 
             <div class="flex flex-col">
@@ -132,7 +132,7 @@
                 <input type="date" name="fecha_hasta" id="fecha_hasta"
                        value="{{ old('fecha_hasta', request('fecha_hasta')) }}"
                        max="{{ date('Y-m-d') }}"
-                       class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
+                       class="border border-gray-300 bg-white text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto">
                 <p id="error-msg-fechas" class="text-red-600 text-xs mt-1 hidden font-medium">
                     La fecha "hasta" debe ser igual o posterior a "desde"
                 </p>
@@ -141,7 +141,7 @@
             <div class="flex flex-col">
                 <label for="dependencias" class="text-sm font-medium text-gray-700 mb-1">Dependencia (Múltiple)</label>
                 <select name="dependencias[]" id="dependencias" multiple
-                        class="border border-gray-300 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto bg-white text-sm h-24">
+                        class="border border-gray-300 bg-white text-gray-900 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 filtro-auto text-sm h-24">
                     @foreach($dependencias as $dependencia)
                         <option value="{{ $dependencia->id }}"
                             {{ collect(old('dependencias', request('dependencias', [])))->contains($dependencia->id) ? 'selected' : '' }}>
@@ -153,7 +153,7 @@
         </div>
 
         <!-- Estados -->
-        <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-100">
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-200">
             <div class="flex flex-wrap gap-4">
                 <span class="text-sm font-medium text-gray-700 self-center">Estado:</span>
                 @foreach($estados as $valor => $label)
@@ -189,7 +189,7 @@
 
     @if($activeFilters->isNotEmpty())
         <div class="flex flex-wrap items-center gap-2 text-sm">
-            <span class="font-medium text-gray-600">Filtros activos:</span>
+            <span class="font-medium text-gray-600 dark:text-gray-400">Filtros activos:</span>
             @foreach($activeFilters as $key => $value)
                 <span class="inline-flex items-center px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                     <span class="font-semibold mr-1.5">

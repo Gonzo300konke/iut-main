@@ -15,9 +15,12 @@ class FpdfReportService
         $instName = config('app.name', 'Institución');
         $instAddress = config('app.address', '');
 
-        $pdf = new class($orientation, 'mm', 'Letter', $logoPath, $instName, $instAddress) extends FPDF {
+        $pdf = new class($orientation, 'mm', 'Letter', $logoPath, $instName, $instAddress) extends FPDF
+        {
             protected $logo;
+
             protected $instName;
+
             protected $instAddress;
 
             public function __construct($orientation, $unit, $size, $logo, $instName, $instAddress)
@@ -41,7 +44,7 @@ class FpdfReportService
                 $this->Cell(0, 8, utf8_decode($this->instName), 0, 1, 'C');
 
                 // Address / subtitle
-                if (!empty($this->instAddress)) {
+                if (! empty($this->instAddress)) {
                     $this->SetFont('Arial', '', 9);
                     $this->Cell(0, 5, utf8_decode($this->instAddress), 0, 1, 'C');
                 }
@@ -60,7 +63,7 @@ class FpdfReportService
                 $this->SetY(-15);
                 $this->SetFont('Arial', 'I', 8);
                 $this->SetTextColor(100, 100, 100);
-                $this->Cell(0, 10, utf8_decode('Página ' . $this->PageNo() . '/{nb}'), 0, 0, 'C');
+                $this->Cell(0, 10, utf8_decode('Página '.$this->PageNo().'/{nb}'), 0, 0, 'C');
             }
         };
 
@@ -72,7 +75,7 @@ class FpdfReportService
         return $pdf;
     }
 
-            protected function renderHeader(\FPDF $pdf, string $title, ?string $subtitle, string $generatedAt, array $data): void
+    protected function renderHeader(\FPDF $pdf, string $title, ?string $subtitle, string $generatedAt, array $data): void
     {
         // --- FILA 1: ENCABEZADO SUPERIOR (Institución, Título y Fecha) ---
         $pdf->SetFont('Arial', 'B', 8);
@@ -165,20 +168,20 @@ class FpdfReportService
 
         // 1. Extraer datos para los cuadros superiores (Organismo, Unidad, Responsables)
         // Usamos el primer bien de la colección para rellenar la cabecera institucional
-        $primerBien = !empty($bienesArray) ? reset($bienesArray) : null;
+        $primerBien = ! empty($bienesArray) ? reset($bienesArray) : null;
 
         $datosCabecera = [
-            'org_codigo' => $primerBien->dependencia->unidadAdministradora->organismo->codigo ?? '0',
-            'org_nombre' => $primerBien->dependencia->unidadAdministradora->organismo->nombre ?? 'MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN UNIVERSITARIA',
-            'uni_codigo' => $primerBien->dependencia->unidadAdministradora->codigo ?? 'N/A',
-            'uni_nombre' => $primerBien->dependencia->unidadAdministradora->nombre ?? 'N/A',
-            'dep_codigo' => $primerBien->dependencia->codigo ?? 'N/A',
-            'dep_nombre' => $primerBien->dependencia->nombre ?? 'N/A',
+            'org_codigo' => $primerBien?->dependencia?->unidadAdministradora?->organismo?->codigo ?? '0',
+            'org_nombre' => $primerBien?->dependencia?->unidadAdministradora?->organismo?->nombre ?? 'MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN UNIVERSITARIA',
+            'uni_codigo' => $primerBien?->dependencia?->unidadAdministradora?->codigo ?? 'N/A',
+            'uni_nombre' => $primerBien?->dependencia?->unidadAdministradora?->nombre ?? 'N/A',
+            'dep_codigo' => $primerBien?->dependencia?->codigo ?? 'N/A',
+            'dep_nombre' => $primerBien?->dependencia?->nombre ?? 'N/A',
             // Responsables (Asegúrate de que estas relaciones existan en tu modelo)
-            'res_p_cedula' => $primerBien->dependencia->unidadAdministradora->responsable->cedula ?? '3873777',
-            'res_p_nombre' => $primerBien->dependencia->unidadAdministradora->responsable->nombre_completo ?? 'ENRY GOMEZ MAIZ',
-            'res_u_cedula' => $primerBien->dependencia->responsable->cedula ?? '',
-            'res_u_nombre' => $primerBien->dependencia->responsable->nombre_completo ?? '',
+            'res_p_cedula' => $primerBien?->dependencia?->unidadAdministradora?->responsable?->cedula ?? '3873777',
+            'res_p_nombre' => $primerBien?->dependencia?->unidadAdministradora?->responsable?->nombre_completo ?? 'ENRY GOMEZ MAIZ',
+            'res_u_cedula' => $primerBien?->dependencia?->responsable?->cedula ?? '',
+            'res_u_nombre' => $primerBien?->dependencia?->responsable?->nombre_completo ?? '',
         ];
 
         $pdf = $this->make('P');
@@ -211,18 +214,18 @@ class FpdfReportService
             $x = $pdf->GetX();
             $y = $pdf->GetY();
 
-            $pdf->Cell($widths[0], 6, $this->t((string)($bien->codigo ?? '')), 1, 0, 'C');
+            $pdf->Cell($widths[0], 6, $this->t((string) ($bien->codigo ?? '')), 1, 0, 'C');
 
             // Descripción con truncado para no romper la celda
-            $pdf->Cell($widths[1], 6, $this->t($this->truncate((string)($bien->descripcion ?? ''), 50)), 1);
+            $pdf->Cell($widths[1], 6, $this->t($this->truncate((string) ($bien->descripcion ?? ''), 50)), 1);
 
             // Precio
-            $precio = (float)($bien->precio ?? 0);
+            $precio = (float) ($bien->precio ?? 0);
             $pdf->Cell($widths[2], 6, number_format($precio, 2, ',', '.'), 1, 0, 'R');
             $totalBs += $precio;
 
             // Dependencia (nombre corto)
-            $pdf->Cell($widths[3], 6, $this->t($this->truncate($bien->dependencia->nombre ?? '', 15)), 1, 0, 'C');
+            $pdf->Cell($widths[3], 6, $this->t($this->truncate($bien->dependencia?->nombre ?? '', 15)), 1, 0, 'C');
 
             // Fotos (SI/NO)
             $pdf->Cell($widths[4], 6, ($bien->fotografia ? 'SI' : 'NO'), 1, 0, 'C');
@@ -232,7 +235,7 @@ class FpdfReportService
         }
 
         // 5. Espacio vacío si no hay datos
-        if (!$hasData) {
+        if (! $hasData) {
             $pdf->Cell(array_sum($widths), 10, $this->t('No se encontraron registros.'), 1, 1, 'C');
         }
 
@@ -255,6 +258,7 @@ class FpdfReportService
         if ($text instanceof \UnitEnum) {
             $text = $text->value;
         }
+
         return iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $text);
     }
 
@@ -272,6 +276,7 @@ class FpdfReportService
         if (is_object($value) && method_exists($value, '__toString')) {
             return (string) $value;
         }
+
         return (string) $value;
     }
 
@@ -295,7 +300,7 @@ class FpdfReportService
 
         foreach ($bienesArray as $bien) {
             $depNombre = optional($bien->dependencia)->nombre ?? 'Sin Dependencia';
-            if (!isset($agrupados[$depNombre])) {
+            if (! isset($agrupados[$depNombre])) {
                 $agrupados[$depNombre] = [];
             }
             $agrupados[$depNombre][] = $bien;
@@ -313,7 +318,7 @@ class FpdfReportService
             $pdf->SetFillColor(128, 0, 32); // Vino tinto
             $pdf->SetTextColor(255, 255, 255);
             $pdf->SetFont('Arial', 'B', 10);
-            $pdf->Cell(0, 8, 'DEPENDENCIA: ' . strtoupper($this->t($depNombre)), 1, 1, 'L', true);
+            $pdf->Cell(0, 8, 'DEPENDENCIA: '.strtoupper($this->t($depNombre)), 1, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
 
             // Tabla de bienes
@@ -329,29 +334,31 @@ class FpdfReportService
             $pdf->SetFont('Arial', '', 7);
             $totalBs = 0;
             foreach ($bienesGrupo as $bien) {
-                $precio = (float)($bien->precio ?? 0);
+                $precio = (float) ($bien->precio ?? 0);
                 $totalBs += $precio;
 
-                $pdf->Cell($widths[0], 5, $this->t((string)($bien->codigo ?? '')), 1, 0, 'C');
-                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string)($bien->descripcion ?? ''), 45)), 1);
+                $pdf->Cell($widths[0], 5, $this->t((string) ($bien->codigo ?? '')), 1, 0, 'C');
+                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string) ($bien->descripcion ?? ''), 45)), 1);
                 $pdf->Cell($widths[2], 5, number_format($precio, 2, ',', '.'), 1, 0, 'R');
-                $pdf->Cell($widths[3], 5, $this->t($bien->tipo_bien ?? '-'), 1, 0, 'C');
-                $pdf->Cell($widths[4], 5, $this->t($bien->estado ?? '-'), 1, 0, 'C');
-                $pdf->Cell($widths[5], 5, $this->t($this->truncate($bien->dependencia->unidadAdministradora->nombre ?? '-', 15)), 1, 0, 'C');
+                $pdf->Cell($widths[3], 5, $this->t($this->toString($bien->tipo_bien ?? '-')), 1, 0, 'C');
+                $pdf->Cell($widths[4], 5, $this->t($this->toString($bien->estado ?? '-')), 1, 0, 'C');
+                $pdf->Cell($widths[5], 5, $this->t($this->truncate($bien->dependencia?->unidadAdministradora?->nombre ?? '-', 15)), 1, 0, 'C');
                 $pdf->Cell($widths[6], 5, $bien->fecha_adquisicion ? $bien->fecha_adquisicion->format('d/m/Y') : '-', 1, 0, 'C');
                 $pdf->Ln();
             }
 
             // Total del grupo
             $pdf->SetFont('Arial', 'B', 8);
-            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL ' . count($bienesGrupo) . ' BIENES', 1, 0, 'L');
+            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL '.count($bienesGrupo).' BIENES', 1, 0, 'L');
             $pdf->Cell($widths[2], 6, number_format($totalBs, 2, ',', '.'), 1, 0, 'R');
             $pdf->Cell($widths[3] + $widths[4] + $widths[5] + $widths[6], 6, '', 1, 0, 'C');
             $pdf->Ln(8);
         }
 
-        $pdf->Output('I', $fileName);
-        return response()->headers->set('Content-Type', 'application/pdf');
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     /**
@@ -366,7 +373,7 @@ class FpdfReportService
 
         foreach ($bienesArray as $bien) {
             $uniNombre = optional(optional($bien->dependencia)->unidadAdministradora)->nombre ?? 'Sin Unidad';
-            if (!isset($agrupados[$uniNombre])) {
+            if (! isset($agrupados[$uniNombre])) {
                 $agrupados[$uniNombre] = [];
             }
             $agrupados[$uniNombre][] = $bien;
@@ -382,7 +389,7 @@ class FpdfReportService
             $pdf->SetFillColor(0, 82, 147); // Azul institucional
             $pdf->SetTextColor(255, 255, 255);
             $pdf->SetFont('Arial', 'B', 10);
-            $pdf->Cell(0, 8, 'UNIDAD ADMINISTRADORA: ' . strtoupper($this->t($uniNombre)), 1, 1, 'L', true);
+            $pdf->Cell(0, 8, 'UNIDAD ADMINISTRADORA: '.strtoupper($this->t($uniNombre)), 1, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
 
             $widths = [25, 90, 25, 35, 30, 25, 30];
@@ -397,28 +404,30 @@ class FpdfReportService
             $pdf->SetFont('Arial', '', 7);
             $totalBs = 0;
             foreach ($bienesGrupo as $bien) {
-                $precio = (float)($bien->precio ?? 0);
+                $precio = (float) ($bien->precio ?? 0);
                 $totalBs += $precio;
 
-                $pdf->Cell($widths[0], 5, $this->t((string)($bien->codigo ?? '')), 1, 0, 'C');
-                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string)($bien->descripcion ?? ''), 45)), 1);
+                $pdf->Cell($widths[0], 5, $this->t((string) ($bien->codigo ?? '')), 1, 0, 'C');
+                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string) ($bien->descripcion ?? ''), 45)), 1);
                 $pdf->Cell($widths[2], 5, number_format($precio, 2, ',', '.'), 1, 0, 'R');
-                $pdf->Cell($widths[3], 5, $this->t($bien->tipo_bien ?? '-'), 1, 0, 'C');
-                $pdf->Cell($widths[4], 5, $this->t($bien->estado ?? '-'), 1, 0, 'C');
-                $pdf->Cell($widths[5], 5, $this->t($this->truncate($bien->dependencia->nombre ?? '-', 15)), 1, 0, 'C');
+                $pdf->Cell($widths[3], 5, $this->t($this->toString($bien->tipo_bien ?? '-')), 1, 0, 'C');
+                $pdf->Cell($widths[4], 5, $this->t($this->toString($bien->estado ?? '-')), 1, 0, 'C');
+                $pdf->Cell($widths[5], 5, $this->t($this->truncate($bien->dependencia?->nombre ?? '-', 15)), 1, 0, 'C');
                 $pdf->Cell($widths[6], 5, $bien->fecha_adquisicion ? $bien->fecha_adquisicion->format('d/m/Y') : '-', 1, 0, 'C');
                 $pdf->Ln();
             }
 
             $pdf->SetFont('Arial', 'B', 8);
-            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL ' . count($bienesGrupo) . ' BIENES', 1, 0, 'L');
+            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL '.count($bienesGrupo).' BIENES', 1, 0, 'L');
             $pdf->Cell($widths[2], 6, number_format($totalBs, 2, ',', '.'), 1, 0, 'R');
             $pdf->Cell($widths[3] + $widths[4] + $widths[5] + $widths[6], 6, '', 1, 0, 'C');
             $pdf->Ln(8);
         }
 
-        $pdf->Output('I', $fileName);
-        return response()->headers->set('Content-Type', 'application/pdf');
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     /**
@@ -433,7 +442,7 @@ class FpdfReportService
 
         foreach ($bienesArray as $bien) {
             $orgNombre = optional(optional(optional($bien->dependencia)->unidadAdministradora)->organismo)->nombre ?? 'Sin Organismo';
-            if (!isset($agrupados[$orgNombre])) {
+            if (! isset($agrupados[$orgNombre])) {
                 $agrupados[$orgNombre] = [];
             }
             $agrupados[$orgNombre][] = $bien;
@@ -449,7 +458,7 @@ class FpdfReportService
             $pdf->SetFillColor(34, 85, 51); // Verde
             $pdf->SetTextColor(255, 255, 255);
             $pdf->SetFont('Arial', 'B', 10);
-            $pdf->Cell(0, 8, 'ORGANISMO: ' . strtoupper($this->t($orgNombre)), 1, 1, 'L', true);
+            $pdf->Cell(0, 8, 'ORGANISMO: '.strtoupper($this->t($orgNombre)), 1, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
 
             $widths = [25, 80, 25, 30, 25, 40, 35];
@@ -464,28 +473,30 @@ class FpdfReportService
             $pdf->SetFont('Arial', '', 7);
             $totalBs = 0;
             foreach ($bienesGrupo as $bien) {
-                $precio = (float)($bien->precio ?? 0);
+                $precio = (float) ($bien->precio ?? 0);
                 $totalBs += $precio;
 
-                $pdf->Cell($widths[0], 5, $this->t((string)($bien->codigo ?? '')), 1, 0, 'C');
-                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string)($bien->descripcion ?? ''), 40)), 1);
+                $pdf->Cell($widths[0], 5, $this->t((string) ($bien->codigo ?? '')), 1, 0, 'C');
+                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string) ($bien->descripcion ?? ''), 40)), 1);
                 $pdf->Cell($widths[2], 5, number_format($precio, 2, ',', '.'), 1, 0, 'R');
-                $pdf->Cell($widths[3], 5, $this->t($bien->tipo_bien ?? '-'), 1, 0, 'C');
-                $pdf->Cell($widths[4], 5, $this->t($bien->estado ?? '-'), 1, 0, 'C');
-                $pdf->Cell($widths[5], 5, $this->t($this->truncate($bien->dependencia->unidadAdministradora->nombre ?? '-', 20)), 1, 0, 'C');
-                $pdf->Cell($widths[6], 5, $this->t($this->truncate($bien->dependencia->nombre ?? '-', 18)), 1, 0, 'C');
+                $pdf->Cell($widths[3], 5, $this->t($this->toString($bien->tipo_bien ?? '-')), 1, 0, 'C');
+                $pdf->Cell($widths[4], 5, $this->t($this->toString($bien->estado ?? '-')), 1, 0, 'C');
+                $pdf->Cell($widths[5], 5, $this->t($this->truncate($bien->dependencia?->unidadAdministradora?->nombre ?? '-', 20)), 1, 0, 'C');
+                $pdf->Cell($widths[6], 5, $this->t($this->truncate($bien->dependencia?->nombre ?? '-', 18)), 1, 0, 'C');
                 $pdf->Ln();
             }
 
             $pdf->SetFont('Arial', 'B', 8);
-            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL ' . count($bienesGrupo) . ' BIENES', 1, 0, 'L');
+            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL '.count($bienesGrupo).' BIENES', 1, 0, 'L');
             $pdf->Cell($widths[2], 6, number_format($totalBs, 2, ',', '.'), 1, 0, 'R');
             $pdf->Cell($widths[3] + $widths[4] + $widths[5] + $widths[6], 6, '', 1, 0, 'C');
             $pdf->Ln(8);
         }
 
-        $pdf->Output('I', $fileName);
-        return response()->headers->set('Content-Type', 'application/pdf');
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     /**
@@ -499,8 +510,8 @@ class FpdfReportService
         $bienesArray = $bienes instanceof \Illuminate\Support\Collection ? $bienes->all() : iterator_to_array($bienes);
 
         foreach ($bienesArray as $bien) {
-            $tipo = $bien->tipo_bien ?? 'Sin Tipo';
-            if (!isset($agrupados[$tipo])) {
+            $tipo = $this->toString($bien->tipo_bien ?? 'Sin Tipo');
+            if (! isset($agrupados[$tipo])) {
                 $agrupados[$tipo] = [];
             }
             $agrupados[$tipo][] = $bien;
@@ -516,7 +527,7 @@ class FpdfReportService
             $pdf->SetFillColor(128, 0, 32);
             $pdf->SetTextColor(255, 255, 255);
             $pdf->SetFont('Arial', 'B', 10);
-            $pdf->Cell(0, 8, 'TIPO DE BIEN: ' . strtoupper($this->t($tipo)), 1, 1, 'L', true);
+            $pdf->Cell(0, 8, 'TIPO DE BIEN: '.strtoupper($this->t($tipo)), 1, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
 
             $widths = [30, 100, 30, 35, 40, 30];
@@ -531,27 +542,29 @@ class FpdfReportService
             $pdf->SetFont('Arial', '', 7);
             $totalBs = 0;
             foreach ($bienesGrupo as $bien) {
-                $precio = (float)($bien->precio ?? 0);
+                $precio = (float) ($bien->precio ?? 0);
                 $totalBs += $precio;
 
-                $pdf->Cell($widths[0], 5, $this->t((string)($bien->codigo ?? '')), 1, 0, 'C');
-                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string)($bien->descripcion ?? ''), 50)), 1);
+                $pdf->Cell($widths[0], 5, $this->t((string) ($bien->codigo ?? '')), 1, 0, 'C');
+                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string) ($bien->descripcion ?? ''), 50)), 1);
                 $pdf->Cell($widths[2], 5, number_format($precio, 2, ',', '.'), 1, 0, 'R');
-                $pdf->Cell($widths[3], 5, $this->t($bien->estado ?? '-'), 1, 0, 'C');
-                $pdf->Cell($widths[4], 5, $this->t($this->truncate($bien->dependencia->nombre ?? '-', 20)), 1, 0, 'C');
+                $pdf->Cell($widths[3], 5, $this->t($this->toString($bien->estado ?? '-')), 1, 0, 'C');
+                $pdf->Cell($widths[4], 5, $this->t($this->truncate($bien->dependencia?->nombre ?? '-', 20)), 1, 0, 'C');
                 $pdf->Cell($widths[5], 5, $bien->fecha_adquisicion ? $bien->fecha_adquisicion->format('d/m/Y') : '-', 1, 0, 'C');
                 $pdf->Ln();
             }
 
             $pdf->SetFont('Arial', 'B', 8);
-            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL ' . count($bienesGrupo) . ' BIENES', 1, 0, 'L');
+            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL '.count($bienesGrupo).' BIENES', 1, 0, 'L');
             $pdf->Cell($widths[2], 6, number_format($totalBs, 2, ',', '.'), 1, 0, 'R');
             $pdf->Cell($widths[3] + $widths[4] + $widths[5], 6, '', 1, 0, 'C');
             $pdf->Ln(8);
         }
 
-        $pdf->Output('I', $fileName);
-        return response()->headers->set('Content-Type', 'application/pdf');
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     /**
@@ -565,8 +578,8 @@ class FpdfReportService
         $bienesArray = $bienes instanceof \Illuminate\Support\Collection ? $bienes->all() : iterator_to_array($bienes);
 
         foreach ($bienesArray as $bien) {
-            $estado = $bien->estado ?? 'Sin Estado';
-            if (!isset($agrupados[$estado])) {
+            $estado = $this->toString($bien->estado ?? 'Sin Estado');
+            if (! isset($agrupados[$estado])) {
                 $agrupados[$estado] = [];
             }
             $agrupados[$estado][] = $bien;
@@ -591,7 +604,7 @@ class FpdfReportService
             $pdf->SetFillColor($color[0], $color[1], $color[2]);
             $pdf->SetTextColor(255, 255, 255);
             $pdf->SetFont('Arial', 'B', 10);
-            $pdf->Cell(0, 8, 'ESTADO: ' . strtoupper($this->t($estado)), 1, 1, 'L', true);
+            $pdf->Cell(0, 8, 'ESTADO: '.strtoupper($this->t($estado)), 1, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
 
             $widths = [30, 100, 30, 35, 40, 30];
@@ -606,27 +619,29 @@ class FpdfReportService
             $pdf->SetFont('Arial', '', 7);
             $totalBs = 0;
             foreach ($bienesGrupo as $bien) {
-                $precio = (float)($bien->precio ?? 0);
+                $precio = (float) ($bien->precio ?? 0);
                 $totalBs += $precio;
 
-                $pdf->Cell($widths[0], 5, $this->t((string)($bien->codigo ?? '')), 1, 0, 'C');
-                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string)($bien->descripcion ?? ''), 50)), 1);
+                $pdf->Cell($widths[0], 5, $this->t((string) ($bien->codigo ?? '')), 1, 0, 'C');
+                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string) ($bien->descripcion ?? ''), 50)), 1);
                 $pdf->Cell($widths[2], 5, number_format($precio, 2, ',', '.'), 1, 0, 'R');
-                $pdf->Cell($widths[3], 5, $this->t($bien->tipo_bien ?? '-'), 1, 0, 'C');
-                $pdf->Cell($widths[4], 5, $this->t($this->truncate($bien->dependencia->nombre ?? '-', 20)), 1, 0, 'C');
+                $pdf->Cell($widths[3], 5, $this->t($this->toString($bien->tipo_bien ?? '-')), 1, 0, 'C');
+                $pdf->Cell($widths[4], 5, $this->t($this->truncate($bien->dependencia?->nombre ?? '-', 20)), 1, 0, 'C');
                 $pdf->Cell($widths[5], 5, $bien->fecha_adquisicion ? $bien->fecha_adquisicion->format('d/m/Y') : '-', 1, 0, 'C');
                 $pdf->Ln();
             }
 
             $pdf->SetFont('Arial', 'B', 8);
-            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL ' . count($bienesGrupo) . ' BIENES', 1, 0, 'L');
+            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL '.count($bienesGrupo).' BIENES', 1, 0, 'L');
             $pdf->Cell($widths[2], 6, number_format($totalBs, 2, ',', '.'), 1, 0, 'R');
             $pdf->Cell($widths[3] + $widths[4] + $widths[5], 6, '', 1, 0, 'C');
             $pdf->Ln(8);
         }
 
-        $pdf->Output('I', $fileName);
-        return response()->headers->set('Content-Type', 'application/pdf');
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 
     /**
@@ -658,28 +673,30 @@ class FpdfReportService
 
         foreach ($bienesArray as $bien) {
             $hasData = true;
-            $precio = (float)($bien->precio ?? 0);
+            $precio = (float) ($bien->precio ?? 0);
             $totalBs += $precio;
 
-            $pdf->Cell($widths[0], 6, $this->t((string)($bien->codigo ?? '')), 1, 0, 'C');
-            $pdf->Cell($widths[1], 6, $this->t($this->truncate((string)($bien->descripcion ?? ''), 40)), 1);
+            $pdf->Cell($widths[0], 6, $this->t((string) ($bien->codigo ?? '')), 1, 0, 'C');
+            $pdf->Cell($widths[1], 6, $this->t($this->truncate((string) ($bien->descripcion ?? ''), 40)), 1);
             $pdf->Cell($widths[2], 6, number_format($precio, 2, ',', '.'), 1, 0, 'R');
-            $pdf->Cell($widths[3], 6, $this->t($bien->tipo_bien ?? '-'), 1, 0, 'C');
-            $pdf->Cell($widths[4], 6, $this->t($bien->estado ?? '-'), 1, 0, 'C');
+            $pdf->Cell($widths[3], 6, $this->t($this->toString($bien->tipo_bien ?? '-')), 1, 0, 'C');
+            $pdf->Cell($widths[4], 6, $this->t($this->toString($bien->estado ?? '-')), 1, 0, 'C');
             $pdf->Ln();
         }
 
-        if (!$hasData) {
+        if (! $hasData) {
             $pdf->Cell(0, 10, $this->t('No hay bienes registrados en el rango de fecha seleccionado'), 0, 1, 'C');
         } else {
             // Totales
             $pdf->SetFont('Arial', 'B', 9);
-            $pdf->Cell($widths[0] + $widths[1], 7, 'TOTAL: ' . count($bienesArray) . ' BIENES', 1, 0, 'L');
+            $pdf->Cell($widths[0] + $widths[1], 7, 'TOTAL: '.count($bienesArray).' BIENES', 1, 0, 'L');
             $pdf->Cell($widths[2], 7, number_format($totalBs, 2, ',', '.'), 1, 0, 'R');
             $pdf->Cell($widths[3] + $widths[4], 7, '', 1, 0, 'C');
         }
 
-        $pdf->Output('I', $fileName);
-        return response()->headers->set('Content-Type', 'application/pdf');
+        return response($pdf->Output('S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$fileName.'"',
+        ]);
     }
 }

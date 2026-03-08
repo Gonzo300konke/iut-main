@@ -7,7 +7,7 @@
 <x-breadcrumbs :items="[['label' => 'Bienes', 'url' => route('bienes.index')], ['label' => $bien->codigo, 'url' => route('bienes.show', $bien)], ['label' => 'Editar']]" />
 @endpush
     <div class="max-w-4xl mx-auto">
-        <div class="bg-white shadow-xl rounded-xl overflow-hidden border border-gray-100">
+        <div class="bg-white dark:bg-slate-900 shadow-xl dark:shadow-slate-800 rounded-xl overflow-hidden border border-gray-100 dark:border-slate-700">
             {{-- Encabezado idéntico a Create --}}
             <div class="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-5">
                 <h1 class="text-xl font-bold text-white flex items-center gap-2">

@@ -23,7 +23,7 @@ use Illuminate\Support\Str;
         </div>
     @endif
 
-    <div class="bg-white shadow rounded-lg p-6 space-y-6">
+    <div class="bg-white shadow-sm rounded-lg p-6 space-y-6 border border-gray-100">
         <!-- Botón regresar -->
         <div>
             <a

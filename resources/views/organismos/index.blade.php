@@ -31,7 +31,7 @@
     @endif
 
     <!-- Panel de filtros -->
-    <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+    <div class="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
         <div class="p-6 border-b border-gray-100">
             <h2 class="text-lg font-semibold text-gray-800">Filtros de búsqueda</h2>
         </div>
@@ -44,7 +44,7 @@
                     <input type="text" name="buscar" id="buscar"
                            value="{{ request('buscar') ?? '' }}" maxlength="40"
                            placeholder="Nombre o código..."
-                           class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200/50 transition-all filtro-auto filtro-input">
+                           class="w-full border border-gray-300 bg-white text-gray-900 rounded-xl px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200/50 transition-all filtro-auto filtro-input">
                     <p id="error-msg-buscar" class="mt-1.5 text-xs text-red-600 font-medium hidden">
                         Solo letras, números y espacios permitidos
                     </p>
@@ -56,7 +56,7 @@
                     <input type="text" name="codigo" id="codigo" inputmode="numeric"
                            value="{{ request('codigo') ?? '' }}" maxlength="8"
                            placeholder="Solo números (máx. 8 dígitos)"
-                           class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200/50 transition-all filtro-auto filtro-input">
+                           class="w-full border border-gray-300 bg-white text-gray-900 rounded-xl px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200/50 transition-all filtro-auto filtro-input">
                     <p id="error-codigo-msg" class="mt-1.5 text-xs text-red-600 font-medium hidden">
                         Solo números permitidos (máx. 8 dígitos)
                     </p>

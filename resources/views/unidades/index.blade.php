@@ -31,7 +31,7 @@
     @endif
 
     <!-- Panel de filtros -->
-    <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+    <div class="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden">
         <div class="p-6 border-b border-gray-100">
             <h2 class="text-lg font-semibold text-gray-800">Filtros de búsqueda</h2>
         </div>
@@ -43,7 +43,7 @@
                     <label for="search" class="block text-sm font-medium text-gray-700 mb-1.5">Búsqueda rápida</label>
                     <input type="text" name="search" id="search" value="{{ request('search') ?? '' }}"
                            maxlength="40" placeholder="Código o nombre..."
-                           class="w-full border border-gray-300 rounded-xl px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200/50 transition-all filtro-auto filtro-input">
+                           class="w-full border border-gray-300 bg-white text-gray-900 rounded-xl px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200/50 transition-all filtro-auto filtro-input">
                     <p id="error-msg" class="mt-1.5 text-xs text-red-600 font-medium hidden">
                         Solo letras, números y espacios permitidos
                     </p>
@@ -53,7 +53,7 @@
                 <div>
                     <label for="organismo_id" class="block text-sm font-medium text-gray-700 mb-1.5">Organismo</label>
                     <select name="organismo_id" id="organismo_id"
-                            class="w-full border border-gray-300 rounded-xl px-4 py-2.5 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200/50 transition-all filtro-auto">
+                            class="w-full border border-gray-300 bg-white text-gray-900 rounded-xl px-4 py-2.5 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200/50 transition-all filtro-auto">
                         <option value="">Todos los organismos</option>
                         @foreach($organismos as $organismo)
                             <option value="{{ $organismo->id }}" {{ request('organismo_id') == $organismo->id ? 'selected' : '' }}>
@@ -109,28 +109,28 @@
     </div>
 
     <!-- Tabla de unidades -->
-    <div id="tablaUnidades" class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden transition-opacity duration-200">
+    <div id="tablaUnidades" class="bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden transition-opacity duration-200">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="min-w-full divide-y divide-slate-200">
+                <thead class="bg-slate-50">
                     <tr>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Código</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nombre</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Organismo</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Dependencias</th>
-                        <th class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Acciones</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Código</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Nombre</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Organismo</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Dependencias</th>
+                        <th class="px-6 py-4 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Acciones</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 bg-white">
+                <tbody class="divide-y divide-slate-100 bg-white">
                     @forelse($unidades as $unidad)
-                        <tr class="hover:bg-indigo-50/30 transition-colors duration-150">
+                        <tr class="hover:bg-slate-50 transition-colors duration-150">
                             <td class="px-6 py-5 text-sm font-mono font-semibold text-indigo-700 tracking-tight">
                                 {{ $unidad->codigo }}
                             </td>
-                            <td class="px-6 py-5 text-sm font-medium text-gray-900">
+                            <td class="px-6 py-5 text-sm font-medium text-slate-900">
                                 {{ $unidad->nombre }}
                             </td>
-                            <td class="px-6 py-5 text-sm text-gray-700">
+                            <td class="px-6 py-5 text-sm text-slate-700">
                                 {{ $unidad->organismo?->nombre ?? '—' }}
                             </td>
                             <td class="px-6 py-5 whitespace-nowrap">
@@ -139,7 +139,7 @@
                                         {{ $unidad->dependencias_count ?? $unidad->dependencias?->count() }} dependencias
                                     </span>
                                 @else
-                                    <span class="text-gray-400 italic">—</span>
+                                    <span class="text-slate-400 italic">—</span>
                                 @endif
                             </td>
                             <td class="px-6 py-5 text-right whitespace-nowrap">
@@ -152,9 +152,9 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-16 text-center text-gray-500 italic text-base">
+                            <td colspan="5" class="px-6 py-16 text-center text-slate-500 italic text-base">
                                 No se encontraron unidades administradoras.
-                                <p class="mt-2 text-sm text-gray-400">
+                                <p class="mt-2 text-sm text-slate-400">
                                     Ajusta los filtros o registra una nueva unidad.
                                 </p>
                             </td>

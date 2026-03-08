@@ -8,7 +8,7 @@
 @endpush
 
 <div class="max-w-2xl mx-auto">
-    <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
+    <div class="bg-white dark:bg-slate-900 shadow-xl dark:shadow-slate-800 rounded-2xl overflow-hidden border border-gray-100 dark:border-slate-700">
 
         <div class="bg-gradient-to-r from-indigo-600 to-purple-700 px-8 py-5">
             <h1 class="text-xl font-bold text-white flex items-center gap-2">

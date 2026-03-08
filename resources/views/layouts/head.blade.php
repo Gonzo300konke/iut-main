@@ -1,4 +1,4 @@
-<nav class="bg-[#510817] dark:bg-slate-950 text-white shadow-lg border-b border-[#6D1426]">
+<nav class="bg-[#510817] text-white shadow-lg border-b border-[#6D1426]">
     <div class="max-w-7xl mx-auto px-6">
         <div class="flex items-center h-16">
 
@@ -114,15 +114,6 @@
 
             {{-- Sección de Usuario / Acciones --}}
             <div class="flex items-center gap-2 whitespace-nowrap ml-auto">
-
-                {{-- Dark Mode Toggle (visible for all) --}}
-                <button id="dark-mode-btn" title="Modo oscuro"
-                    class="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition">
-                    <svg id="dark-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-                    </svg>
-                </button>
-
                 @auth
                     {{-- Menú perfil/auditoría --}}
                     <div class="relative" id="user-menu-wrap">
@@ -139,25 +130,25 @@
                             </svg>
                         </button>
                         <div id="user-menu-dropdown"
-                            class="hidden absolute right-0 top-full mt-2 w-48 dark:bg-slate-800 rounded-xl shadow-xl border dark:border-slate-700 z-50 overflow-hidden py-1">
+                            class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden py-1">
                             <a href="{{ route('perfil.show') }}"
-                                class="flex items-center gap-2 px-4 py-2.5 text-sm dark:text-gray-200 dark:hover:bg-slate-700 text-gray-700 hover:bg-gray-50 transition">
+                                class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                 👤 Mi Perfil
                             </a>
                             <a href="{{ route('dashboard') }}"
-                                class="flex items-center gap-2 px-4 py-2.5 text-sm dark:text-gray-200 dark:hover:bg-slate-700 text-gray-700 hover:bg-gray-50 transition">
+                                class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                 📊 Dashboard
                             </a>
                             @if(auth()->user()->isAdmin())
                             <a href="{{ route('auditoria.index') }}"
-                                class="flex items-center gap-2 px-4 py-2.5 text-sm dark:text-gray-200 dark:hover:bg-slate-700 text-gray-700 hover:bg-gray-50 transition">
+                                class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                                 🔍 Auditoría
                             </a>
                             @endif
-                            <hr class="my-1 dark:border-slate-700 border-gray-100">
+                            <hr class="my-1 border-gray-100">
                             <form method="POST" action="{{ route('logout') }}" class="m-0">
                                 @csrf
-                                <button type="submit" class="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm dark:text-red-400 text-red-600 dark:hover:bg-slate-700 hover:bg-red-50 transition">
+                                <button type="submit" class="w-full text-left flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
                                     🚪 Cerrar Sesión
                                 </button>
                             </form>
