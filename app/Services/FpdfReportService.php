@@ -11,50 +11,42 @@ class FpdfReportService
      */
     protected function make(string $orientation = 'P'): FPDF
     {
-        $logoPath = public_path('images/logo.png');
+        $bannerPath = public_path('images/baner.jpeg');
         $instName = config('app.name', 'Institución');
-        $instAddress = config('app.address', '');
 
-        $pdf = new class($orientation, 'mm', 'Letter', $logoPath, $instName, $instAddress) extends FPDF
+        $pdf = new class($orientation, 'mm', 'Letter', $bannerPath, $instName) extends FPDF
         {
-            protected $logo;
+            protected $banner;
 
             protected $instName;
 
-            protected $instAddress;
-
-            public function __construct($orientation, $unit, $size, $logo, $instName, $instAddress)
+            public function __construct($orientation, $unit, $size, $banner, $instName)
             {
                 parent::__construct($orientation, $unit, $size);
-                $this->logo = $logo;
+                $this->banner = $banner;
                 $this->instName = $instName;
-                $this->instAddress = $instAddress;
             }
 
             // Header called automatically on each page
             public function Header()
             {
-                // Logo left
-                if ($this->logo && file_exists($this->logo)) {
-                    $this->Image($this->logo, 10, 8, 24);
+                // Banner institucional en la parte superior
+                if ($this->banner && file_exists($this->banner)) {
+                    // Calcular dimensiones para que el banner ocupe todo el ancho
+                    $pageWidth = $this->GetPageWidth();
+                    $bannerHeight = 20; // Altura del banner en mm
+
+                    // Centrar el banner
+                    $this->Image($this->banner, 10, 8, $pageWidth - 20, $bannerHeight);
+
+                    // Espacio después del banner
+                    $this->SetY(8 + $bannerHeight + 3);
+                } else {
+                    // Si no hay banner, mostrar nombre de la institución
+                    $this->SetFont('Arial', 'B', 14);
+                    $this->Cell(0, 8, utf8_decode($this->instName), 0, 1, 'C');
+                    $this->Ln(2);
                 }
-
-                // Institution name centered
-                $this->SetFont('Arial', 'B', 14);
-                $this->Cell(0, 8, utf8_decode($this->instName), 0, 1, 'C');
-
-                // Address / subtitle
-                if (! empty($this->instAddress)) {
-                    $this->SetFont('Arial', '', 9);
-                    $this->Cell(0, 5, utf8_decode($this->instAddress), 0, 1, 'C');
-                }
-
-                // Divider line
-                $this->Ln(2);
-                $this->SetDrawColor(200, 200, 200);
-                $this->SetLineWidth(0.3);
-                $this->Line(10, $this->GetY(), $this->w - 10, $this->GetY());
-                $this->Ln(4);
             }
 
             // Footer called automatically on each page
@@ -68,7 +60,7 @@ class FpdfReportService
         };
 
         $pdf->AliasNbPages();
-        $pdf->SetMargins(10, 15, 10);
+        $pdf->SetMargins(10, 35, 10); // Margen superior aumentado para el banner
         $pdf->SetAutoPageBreak(true, 20);
         $pdf->AddPage();
 
@@ -77,80 +69,78 @@ class FpdfReportService
 
     protected function renderHeader(\FPDF $pdf, string $title, ?string $subtitle, string $generatedAt, array $data): void
     {
-        // --- FILA 1: ENCABEZADO SUPERIOR (Institución, Título y Fecha) ---
-        $pdf->SetFont('Arial', 'B', 8);
+        // Título principal del reporte
+        $pdf->SetFont('Arial', 'B', 14);
+        $pdf->SetFillColor(0, 51, 102); // Azul institucional oscuro
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->Cell(0, 10, $this->t(strtoupper($title)), 0, 1, 'C', true);
+        $pdf->Ln(2);
 
-        // Guardamos la posición inicial para que los tres cuadros tengan la misma altura
-        $yInicio = $pdf->GetY();
+        // Subtítulo si existe
+        if ($subtitle) {
+            $pdf->SetFont('Arial', 'I', 10);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->Cell(0, 6, $this->t($subtitle), 0, 1, 'C');
+            $pdf->Ln(1);
+        }
 
-        // 1.1 Cuadro Izquierdo: Datos de la Institución
-        $pdf->MultiCell(70, 4.5, "UPTOS \"CLODOSBALDO RUSSIAN\"\nUNIDAD DE BIENES PÚBLICOS", 1, 'L');
-        $altFila1 = $pdf->GetY() - $yInicio; // Calculamos la altura alcanzada
+        // Fecha de generación
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->SetTextColor(100, 100, 100);
+        $pdf->Cell(0, 5, $this->t('Fecha de generación: ').$generatedAt, 0, 1, 'R');
+        $pdf->Ln(3);
 
-        // 1.2 Cuadro Centro: Título del reporte (Usamos SetXY para posicionarlo al lado)
-        $pdf->SetXY(80, $yInicio);
-        $pdf->SetFont('Arial', 'B', 10);
-        $pdf->Cell(95, $altFila1, $this->t(strtoupper($title)), 1, 0, 'C');
+        // Información institucional solo si hay datos
+        if (! empty($data) && ! empty(array_filter($data))) {
+            $pdf->SetFont('Arial', 'B', 9);
+            $pdf->SetFillColor(240, 240, 240);
+            $pdf->SetTextColor(0, 0, 0);
 
-        // 1.3 Cuadro Derecho: Fecha (Dividido en etiqueta y valor)
-        $pdf->SetXY(175, $yInicio);
-        $pdf->SetFont('Arial', 'B', 8);
-        $pdf->Cell(31, 5, $this->t('Fecha'), 1, 1, 'L');
-        $pdf->SetX(175);
-        $pdf->SetFont('Arial', '', 8);
-        $pdf->Cell(31, $altFila1 - 5, $generatedAt, 1, 1, 'L');
+            // Organismo
+            if (! empty($data['org_nombre']) && $data['org_nombre'] !== 'N/A') {
+                $pdf->Cell(0, 6, $this->t('ORGANISMO'), 0, 1, 'L', true);
+                $pdf->SetFont('Arial', '', 8);
+                $pdf->Cell(0, 5, $this->t($data['org_nombre']), 0, 1, 'L');
+                $pdf->Ln(2);
+            }
 
-        // --- FILA 2: SECCIÓN ORGANISMO ---
-        $pdf->SetFillColor(240, 240, 240); // Gris claro para los títulos
-        $pdf->SetFont('Arial', 'B', 8);
-        $pdf->Cell(0, 5, $this->t('ORGANISMO'), 1, 1, 'L', true);
+            // Unidad Administradora
+            if (! empty($data['uni_nombre']) && $data['uni_nombre'] !== 'N/A') {
+                $pdf->SetFont('Arial', 'B', 9);
+                $pdf->Cell(0, 6, $this->t('UNIDAD ADMINISTRADORA'), 0, 1, 'L', true);
+                $pdf->SetFont('Arial', '', 8);
+                $pdf->Cell(0, 5, $this->t($data['uni_nombre']), 0, 1, 'L');
+                $pdf->Ln(2);
+            }
 
-        // Sub-encabezados de Organismo
-        $pdf->Cell(25, 5, $this->t('Código'), 1, 0, 'L');
-        $pdf->Cell(0, 5, $this->t('Denominación'), 1, 1, 'L');
+            // Dependencia
+            if (! empty($data['dep_nombre']) && $data['dep_nombre'] !== 'N/A') {
+                $pdf->SetFont('Arial', 'B', 9);
+                $pdf->Cell(0, 6, $this->t('DEPENDENCIA'), 0, 1, 'L', true);
+                $pdf->SetFont('Arial', '', 8);
+                $pdf->Cell(0, 5, $this->t($data['dep_nombre']), 0, 1, 'L');
+                $pdf->Ln(2);
+            }
 
-        // Datos de Organismo
-        $pdf->SetFont('Arial', '', 8);
-        $pdf->Cell(25, 6, $data['org_codigo'] ?? '0', 1, 0, 'C');
-        $pdf->Cell(0, 6, $this->t($data['org_nombre'] ?? 'MINISTERIO DEL PODER POPULAR PARA LA EDUCACIÓN UNIVERSITARIA'), 1, 1, 'L');
+            // Responsable
+            if (! empty($data['res_u_nombre'])) {
+                $pdf->SetFont('Arial', 'B', 9);
+                $pdf->Cell(0, 6, $this->t('RESPONSABLE'), 0, 1, 'L', true);
+                $pdf->SetFont('Arial', '', 8);
+                $responsable = $data['res_u_nombre'];
+                if (! empty($data['res_u_cedula'])) {
+                    $responsable .= ' - C.I.: '.$data['res_u_cedula'];
+                }
+                $pdf->Cell(0, 5, $this->t($responsable), 0, 1, 'L');
+                $pdf->Ln(2);
+            }
+        }
 
-        // --- FILA 3: SECCIÓN UNIDAD Y DEPENDENCIA ---
-        $pdf->SetFont('Arial', 'B', 8);
-        $pdf->Cell(98, 5, $this->t('UNIDAD ADMINISTRADORA'), 1, 0, 'L', true);
-        $pdf->Cell(98, 5, $this->t('DEPENDENCIA USUARIA'), 1, 1, 'L', true);
-
-        // Sub-encabezados de Unidad y Dependencia
-        $pdf->Cell(20, 5, $this->t('Código'), 1, 0, 'L');
-        $pdf->Cell(78, 5, $this->t('Denominación'), 1, 0, 'L');
-        $pdf->Cell(20, 5, $this->t('Código'), 1, 0, 'L');
-        $pdf->Cell(78, 5, $this->t('Denominación'), 1, 1, 'L');
-
-        // Datos de Unidad y Dependencia
-        $pdf->SetFont('Arial', '', 8);
-        $pdf->Cell(20, 6, $data['uni_codigo'] ?? '', 1, 0, 'C');
-        $pdf->Cell(78, 6, $this->t($data['uni_nombre'] ?? ''), 1, 0, 'L');
-        $pdf->Cell(20, 6, $data['dep_codigo'] ?? '', 1, 0, 'C');
-        $pdf->Cell(78, 6, $this->t($data['dep_nombre'] ?? ''), 1, 1, 'L');
-
-        // --- FILA 4: SECCIÓN RESPONSABLES ---
-        $pdf->SetFont('Arial', 'B', 8);
-        $pdf->Cell(98, 5, $this->t('RESPONSABLE PATRIMONIAL PRIMARIO'), 1, 0, 'L', true);
-        $pdf->Cell(98, 5, $this->t('RESPONSABLE PATRIMONIAL POR USO'), 1, 1, 'L', true);
-
-        // Sub-encabezados de Responsables
-        $pdf->Cell(25, 5, $this->t('Cédula'), 1, 0, 'L');
-        $pdf->Cell(73, 5, $this->t('Apellidos y Nombres'), 1, 0, 'L');
-        $pdf->Cell(25, 5, $this->t('Cédula'), 1, 0, 'L');
-        $pdf->Cell(73, 5, $this->t('Apellidos y Nombres'), 1, 1, 'L');
-
-        // Datos de Responsables
-        $pdf->SetFont('Arial', '', 8);
-        $pdf->Cell(25, 6, $data['res_p_cedula'] ?? '', 1, 0, 'L');
-        $pdf->Cell(73, 6, $this->t($data['res_p_nombre'] ?? ''), 1, 0, 'L');
-        $pdf->Cell(25, 6, $data['res_u_cedula'] ?? '', 1, 0, 'L');
-        $pdf->Cell(73, 6, $this->t($data['res_u_nombre'] ?? ''), 1, 1, 'L');
-
-        $pdf->Ln(4); // Espacio antes de empezar la tabla de bienes
+        // Línea separadora
+        $pdf->SetDrawColor(0, 51, 102);
+        $pdf->SetLineWidth(0.5);
+        $pdf->Line(10, $pdf->GetY(), $pdf->GetPageWidth() - 10, $pdf->GetY());
+        $pdf->Ln(4);
     }
 
     /**
@@ -292,7 +282,7 @@ class FpdfReportService
      */
     public function generarPorDependencia(string $fileName, string $title, ?string $subtitle, string $generatedAt, iterable $bienes)
     {
-        $pdf = $this->make('L'); // Horizontal para mejor visualización de grupos
+        $pdf = $this->make('L'); // Horizontal para mejor visualización
 
         // Agrupar bienes por dependencia
         $agrupados = [];
@@ -308,52 +298,77 @@ class FpdfReportService
 
         $this->renderHeader($pdf, $title, $subtitle, $generatedAt, []);
 
+        $pdf->SetTextColor(0, 0, 0);
+        $totalGeneral = 0;
+        $cantidadGeneral = 0;
+
         foreach ($agrupados as $depNombre => $bienesGrupo) {
             // Verificar espacio para nueva página
-            if ($pdf->GetY() > 180) {
+            if ($pdf->GetY() > 170) {
                 $pdf->AddPage();
             }
 
-            // Encabezado del grupo
-            $pdf->SetFillColor(128, 0, 32); // Vino tinto
+            // Encabezado del grupo - Estilo institucional
+            $pdf->SetFillColor(0, 51, 102); // Azul institucional
             $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetFont('Arial', 'B', 10);
-            $pdf->Cell(0, 8, 'DEPENDENCIA: '.strtoupper($this->t($depNombre)), 1, 1, 'L', true);
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->Cell(0, 8, $this->t('DEPENDENCIA: '.strtoupper($depNombre)), 0, 1, 'L', true);
             $pdf->SetTextColor(0, 0, 0);
+            $pdf->Ln(1);
 
-            // Tabla de bienes
-            $widths = [25, 90, 25, 35, 30, 25, 30];
-            $headers = ['Código', 'Descripción', 'Precio', 'Tipo', 'Estado', 'U. Admin.', 'Fecha'];
+            // Encabezados de tabla
+            $widths = [30, 95, 30, 35, 30, 40];
+            $headers = ['Código', 'Descripción', 'Precio (Bs.)', 'Tipo', 'Estado', 'Fecha Adq.'];
 
-            $pdf->SetFont('Arial', 'B', 8);
+            $pdf->SetFillColor(220, 220, 220);
+            $pdf->SetFont('Arial', 'B', 9);
             foreach ($headers as $i => $header) {
-                $pdf->Cell($widths[$i], 6, $this->t($header), 1, 0, 'C');
+                $pdf->Cell($widths[$i], 7, $this->t($header), 1, 0, 'C', true);
             }
             $pdf->Ln();
 
-            $pdf->SetFont('Arial', '', 7);
+            // Datos
+            $pdf->SetFont('Arial', '', 8);
             $totalBs = 0;
-            foreach ($bienesGrupo as $bien) {
+            $alturaFila = 6;
+
+            foreach ($bienesGrupo as $index => $bien) {
                 $precio = (float) ($bien->precio ?? 0);
                 $totalBs += $precio;
 
-                $pdf->Cell($widths[0], 5, $this->t((string) ($bien->codigo ?? '')), 1, 0, 'C');
-                $pdf->Cell($widths[1], 5, $this->t($this->truncate((string) ($bien->descripcion ?? ''), 45)), 1);
-                $pdf->Cell($widths[2], 5, number_format($precio, 2, ',', '.'), 1, 0, 'R');
-                $pdf->Cell($widths[3], 5, $this->t($this->toString($bien->tipo_bien ?? '-')), 1, 0, 'C');
-                $pdf->Cell($widths[4], 5, $this->t($this->toString($bien->estado ?? '-')), 1, 0, 'C');
-                $pdf->Cell($widths[5], 5, $this->t($this->truncate($bien->dependencia?->unidadAdministradora?->nombre ?? '-', 15)), 1, 0, 'C');
-                $pdf->Cell($widths[6], 5, $bien->fecha_adquisicion ? $bien->fecha_adquisicion->format('d/m/Y') : '-', 1, 0, 'C');
-                $pdf->Ln();
+                // Alternar color de fondo para mejor legibilidad
+                $fill = ($index % 2 == 0);
+                if ($fill) {
+                    $pdf->SetFillColor(248, 248, 248);
+                }
+
+                $pdf->Cell($widths[0], $alturaFila, $this->t((string) ($bien->codigo ?? '')), 1, 0, 'C', $fill);
+                $pdf->Cell($widths[1], $alturaFila, $this->t($this->truncate((string) ($bien->descripcion ?? ''), 50)), 1, 0, 'L', $fill);
+                $pdf->Cell($widths[2], $alturaFila, number_format($precio, 2, ',', '.'), 1, 0, 'R', $fill);
+                $pdf->Cell($widths[3], $alturaFila, $this->t($this->toString($bien->tipo_bien ?? '-')), 1, 0, 'C', $fill);
+                $pdf->Cell($widths[4], $alturaFila, $this->t($this->toString($bien->estado ?? '-')), 1, 0, 'C', $fill);
+                $pdf->Cell($widths[5], $alturaFila, $bien->fecha_adquisicion ? $bien->fecha_adquisicion->format('d/m/Y') : '-', 1, 1, 'C', $fill);
             }
 
-            // Total del grupo
-            $pdf->SetFont('Arial', 'B', 8);
-            $pdf->Cell($widths[0] + $widths[1], 6, 'TOTAL '.count($bienesGrupo).' BIENES', 1, 0, 'L');
-            $pdf->Cell($widths[2], 6, number_format($totalBs, 2, ',', '.'), 1, 0, 'R');
-            $pdf->Cell($widths[3] + $widths[4] + $widths[5] + $widths[6], 6, '', 1, 0, 'C');
-            $pdf->Ln(8);
+            // Subtotal del grupo
+            $pdf->SetFont('Arial', 'B', 9);
+            $pdf->SetFillColor(230, 230, 230);
+            $pdf->Cell($widths[0] + $widths[1], 7, $this->t('SUBTOTAL ('.count($bienesGrupo).' bienes)'), 1, 0, 'R', true);
+            $pdf->Cell($widths[2], 7, number_format($totalBs, 2, ',', '.'), 1, 0, 'R', true);
+            $pdf->Cell($widths[3] + $widths[4] + $widths[5], 7, '', 1, 1, 'C', true);
+            $pdf->Ln(5);
+
+            $totalGeneral += $totalBs;
+            $cantidadGeneral += count($bienesGrupo);
         }
+
+        // Total general
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFillColor(0, 51, 102);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->Cell($widths[0] + $widths[1], 8, $this->t('TOTAL GENERAL ('.$cantidadGeneral.' bienes)'), 1, 0, 'R', true);
+        $pdf->Cell($widths[2], 8, number_format($totalGeneral, 2, ',', '.'), 1, 0, 'R', true);
+        $pdf->Cell($widths[3] + $widths[4] + $widths[5], 8, '', 1, 1, 'C', true);
 
         return response($pdf->Output('S'), 200, [
             'Content-Type' => 'application/pdf',
