@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\BienController;
+use App\Http\Controllers\BienExcelController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DependenciaController;
 use App\Http\Controllers\ProfileController;
@@ -82,6 +83,12 @@ Route::middleware(['auth', 'redirigir.rol', 'prevent-back'])->group(function () 
         Route::get('reporte',        [BienController::class, 'generarReporte'])     ->name('reporte');
         Route::get('galeria-completa', [BienController::class, 'galeriaCompleta'])->name('galeria');
         Route::get('{bien}/pdf',     [BienController::class, 'exportPdf'])         ->name('pdf');
+
+        // Import/Export Excel
+        Route::get('importar',       [BienExcelController::class, 'showImportForm']) ->name('importar.form');
+        Route::post('importar',      [BienExcelController::class, 'importar'])        ->name('importar');
+        Route::get('descargar-template', [BienExcelController::class, 'descargarTemplate']) ->name('descargar-template');
+        Route::get('exportar',       [BienExcelController::class, 'exportar'])        ->name('exportar');
 
         // Desincorporación (GET → formulario, POST → procesar y descargar acta)
         Route::get('{bien}/desincorporar',    [BienController::class, 'showDesincorporarForm'])->name('desincorporar.form');
