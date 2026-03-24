@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
 
     {{-- Título dinámico con fallback --}}
     <title>@yield('title', 'Oficina de Bienes Nacionales | UPTOS')</title>
@@ -38,7 +39,7 @@
     {{-- Banner Institucional --}}
     <header class="w-full bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <img src="https://www.uptos.edu.ve/wp-content/uploads/2026/02/cropped-cropped-WhatsApp-Image-2026-02-11-at-10.17.38-PM-1.jpeg"
+            <img src="{{ asset('images/baner.jpeg') }}"
                  class="h-10 md:h-14 w-auto object-contain hover:scale-105 transition-transform" alt="Logo UPTOS">
             <div class="hidden md:block text-right">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Venezuela</p>
@@ -51,9 +52,11 @@
     </header>
 
     {{-- Contenido Principal --}}
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        @stack('breadcrumbs')
-        @yield('content')
+    <main class="w-full px-2 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
+        <div class="max-w-7xl mx-auto">
+            @stack('breadcrumbs')
+            @yield('content')
+        </div>
     </main>
 
     {{-- Script reveal --}}

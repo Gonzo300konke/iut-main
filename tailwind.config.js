@@ -1,3 +1,5 @@
+import defaultTheme from 'tailwindcss/defaultTheme';
+
 export default {
   content: [
     './resources/**/*.blade.php',
@@ -7,6 +9,10 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      screens: {
+        'xs': '400px',
+        ...defaultTheme.screens,
+      },
       colors: {
         'dark-surface': {
           50: '#f8fafc',

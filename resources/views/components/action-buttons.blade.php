@@ -118,8 +118,8 @@
 
 @once
     {{-- Modal para confirmación/el mensaje de no permiso (incluido una sola vez por página) con estilos y animación Tailwind --}}
-    <div id="delete-modal-backdrop" class="modal-overlay hidden" aria-hidden="true">
-        <div id="delete-modal" class="bg-white rounded-lg shadow-2xl max-w-xl w-full mx-4 p-6 transform transition-all duration-200 ease-out scale-95 opacity-0">
+    <div id="delete-modal-backdrop" class="modal-overlay hidden fixed inset-0 z-50" aria-hidden="true">
+        <div id="delete-modal" class="bg-white rounded-lg shadow-2xl max-w-lg w-full mx-4 p-6 transform transition-all duration-200 ease-out scale-95 opacity-0 overflow-hidden">
             <div class="flex items-start space-x-4">
                 <div id="delete-modal-icon" class="flex-shrink-0">
                     {{-- default warning icon (may be replaced for permission denied) --}}
@@ -225,7 +225,75 @@
             btnConfirm.addEventListener('click', function(e){
                 e.preventDefault();
                 if(currentForm){
-                    currentForm.submit();
+                    // Enviar formulario y manejar respuesta
+                    const formAction = currentForm.action;
+                    const formMethod = currentForm.method;
+                    const formData = new FormData(currentForm);
+                    
+                    fetch(formAction, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'Accept': 'application/json'
+                        },
+                        body: formData
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // Eliminar exitoso - recargar página o mostrar éxito
+                            closeModal();
+                            window.location.reload();
+                        } else if (response.status === 403) {
+                            // Error de permisos
+                            response.json().then(data => {
+                                openModal({
+                                    title: 'Permiso denegado',
+                                    message: data.error || 'No tienes permisos para realizar esta acción.',
+                                    showConfirm: false,
+                                    denied: true
+                                });
+                            }).catch(() => {
+                                openModal({
+                                    title: 'Error',
+                                    message: 'Error de permisos. Contacta al administrador.',
+                                    showConfirm: false,
+                                    denied: true
+                                });
+                            });
+                        } else if (response.status === 404) {
+                            openModal({
+                                title: 'Error',
+                                message: 'El recurso no fue encontrado.',
+                                showConfirm: false,
+                                denied: true
+                            });
+                        } else {
+                            // Otros errores
+                            response.json().then(data => {
+                                openModal({
+                                    title: 'Error',
+                                    message: data.error || data.message || 'Ocurrió un error al procesar la solicitud.',
+                                    showConfirm: false,
+                                    denied: true
+                                });
+                            }).catch(() => {
+                                openModal({
+                                    title: 'Error',
+                                    message: 'Ocurrió un error al procesar la solicitud.',
+                                    showConfirm: false,
+                                    denied: true
+                                });
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        openModal({
+                            title: 'Error de conexión',
+                            message: 'No se pudo conectar con el servidor. Verifica tu conexión e intenta nuevamente.',
+                            showConfirm: false,
+                            denied: true
+                        });
+                    });
                 }
             });
 

@@ -69,11 +69,6 @@ use Illuminate\Support\Str;
                     </div>
 
                     <div>
-                        <p class="text-sm text-gray-600">Ubicación</p>
-                        <p class="text-base font-medium text-gray-800">{{ $bien->ubicacion ?? '—' }}</p>
-                    </div>
-
-                    <div>
                         <p class="text-sm text-gray-600">Estado</p>
                         <p class="text-base font-medium text-gray-800">{{ $bien->estado?->name ?? (string)$bien->estado }}</p>
                     </div>

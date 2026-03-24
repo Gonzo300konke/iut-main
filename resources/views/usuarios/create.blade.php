@@ -17,6 +17,27 @@
                 </div>
             @endif
 
+            {{-- Mensajes de error y éxito --}}
+            @if(session('error'))
+                <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-600 text-red-700 rounded-lg">
+                    <p class="text-sm font-medium">{{ session('error') }}</p>
+                </div>
+            @endif
+            @if(session('success'))
+                <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-600 text-green-700 rounded-lg">
+                    <p class="text-sm font-medium">{{ session('success') }}</p>
+                </div>
+            @endif
+            @if($errors->any())
+                <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-600 text-red-700 rounded-lg">
+                    <ul class="text-sm list-disc list-inside">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <form action="{{ route('usuarios.store') }}" method="POST" id="usuarioForm" class="space-y-6">
                 @csrf
 

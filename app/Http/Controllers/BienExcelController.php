@@ -188,7 +188,7 @@ class BienExcelController extends Controller
     public function exportar(Request $request)
     {
         try {
-            $query = Bien::with(['dependencia', 'responsable']);
+            $query = Bien::with(['dependencia.responsable']);
 
             // Aplicar filtros si existen
             if ($request->filled('estado')) {
@@ -236,8 +236,8 @@ class BienExcelController extends Controller
                 $sheet->setCellValue('F' . $rowNum, $bien->fecha_registro ? $bien->fecha_registro->format('Y-m-d') : '');
                 $sheet->setCellValue('G' . $rowNum, $bien->dependencia?->codigo ?? '');
                 $sheet->setCellValue('H' . $rowNum, $bien->dependencia?->nombre ?? '');
-                $sheet->setCellValue('I' . $rowNum, $bien->responsable?->cedula ?? '');
-                $sheet->setCellValue('J' . $rowNum, $bien->responsable?->nombre ?? '');
+                $sheet->setCellValue('I' . $rowNum, $bien->dependencia?->responsable?->cedula ?? '');
+                $sheet->setCellValue('J' . $rowNum, $bien->dependencia?->responsable?->nombre ?? '');
                 $rowNum++;
             }
             

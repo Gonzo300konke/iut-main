@@ -18,6 +18,7 @@ class Usuario extends Authenticatable
         'cedula',
         'nombre',
         'apellido',
+        'foto_perfil',
         'correo',
         'hash_password',
         'activo',

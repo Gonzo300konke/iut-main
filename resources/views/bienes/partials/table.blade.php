@@ -14,7 +14,6 @@
                     <th class="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-widest">Precio</th>
                     <th class="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-widest">Foto</th>
                     <th class="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-widest">Estado</th>
-                    <th class="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-widest">Ubicación</th>
                     <th class="px-6 py-4 text-left text-xs font-black text-slate-700 uppercase tracking-widest">Fecha Registro</th>
                     <th class="px-6 py-4 text-right text-xs font-black text-slate-700 uppercase tracking-widest">Acciones</th>
                 </tr>
@@ -85,9 +84,6 @@
                             <span class="inline-flex px-3 py-1 text-xs font-bold rounded-full {{ $estadoColor }}">
                                 {{ $estadoLabel }}
                             </span>
-                        </td>
-                        <td class="px-6 py-5 text-sm text-slate-600">
-                            {{ $bien->ubicacion ?? '-' }}
                         </td>
                         <td class="px-6 py-5 text-sm text-slate-600">
                             {{ optional($bien->fecha_registro)->format('d/m/Y') }}

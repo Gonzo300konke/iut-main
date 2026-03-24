@@ -22,7 +22,7 @@ class BienesExport implements FromCollection, WithHeadings, WithMapping, ShouldA
      */
     public function __construct($bienes = null)
     {
-        $this->bienes = $bienes ?? Bien::with(['dependencia', 'responsable'])->get();
+        $this->bienes = $bienes ?? Bien::with(['dependencia.responsable'])->get();
     }
 
     /**
@@ -66,8 +66,8 @@ class BienesExport implements FromCollection, WithHeadings, WithMapping, ShouldA
             $bien->fecha_registro ? $bien->fecha_registro->format('Y-m-d') : '',
             $bien->dependencia?->codigo ?? '',
             $bien->dependencia?->nombre ?? '',
-            $bien->responsable?->cedula ?? '',
-            $bien->responsable?->nombre ?? '',
+            $bien->dependencia?->responsable?->cedula ?? '',
+            $bien->dependencia?->responsable?->nombre ?? '',
         ];
     }
 

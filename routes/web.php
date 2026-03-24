@@ -29,6 +29,13 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome')->middleware('prevent-back');
 
+// Ruta para descargar el manual de usuario en PDF
+Route::get('/manual-usuario', function () {
+    $pdf = \Illuminate\Support\Facades\App::make('dompdf.wrapper');
+    $pdf->loadView('manual.index');
+    return $pdf->download('Manual_Usuario_Sistema_Bienes.pdf');
+})->name('manual.usuario');
+
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->name('dashboard')
     ->middleware(['auth', 'prevent-back']);
@@ -64,6 +71,8 @@ Route::middleware(['auth', 'redirigir.rol', 'prevent-back'])->group(function () 
     Route::get('/perfil', [ProfileController::class, 'show'])->name('perfil.show');
     Route::patch('/perfil', [ProfileController::class, 'updateProfile'])->name('perfil.update');
     Route::patch('/perfil/password', [ProfileController::class, 'updatePassword'])->name('perfil.password');
+    Route::patch('/perfil/foto', [ProfileController::class, 'updateFoto'])->name('perfil.foto.update');
+    Route::delete('/perfil/foto', [ProfileController::class, 'eliminarFoto'])->name('perfil.foto.delete');
 
     // ────────────────────────────────────────────────
     // BÚSQUEDA GLOBAL

@@ -83,7 +83,7 @@
 <body>
 
     <div class="encabezado">
-        <img src="https://www.uptos.edu.ve/wp-content/uploads/2026/02/cropped-cropped-WhatsApp-Image-2026-02-11-at-10.17.38-PM-1.jpeg"
+        <img src="{{ public_path('images/logo.png') }}"
              class="logo" alt="Escudo UPTOS">
         <div class="titulo">REPÚBLICA BOLIVARIANA DE VENEZUELA</div>
         <div class="subtitulo">UNIVERSIDAD POLITÉCNICA TERRITORIAL DEL OESTE DE SUCRE</div>

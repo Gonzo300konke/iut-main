@@ -26,7 +26,6 @@ class SearchController extends Controller
         // Bienes (limitado a 5 resultados)
         Bien::where('codigo', 'LIKE', $like)
             ->orWhere('descripcion', 'LIKE', $like)
-            ->orWhere('ubicacion', 'LIKE', $like)
             ->limit(5)->get()
             ->each(fn ($b) => $results[] = [
                 'type'  => 'Bien',

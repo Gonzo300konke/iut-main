@@ -250,7 +250,7 @@
         const tipoBienSelect = document.getElementById('tipo_bien');
         const container = document.getElementById('campos-tipo-bien');
 
-        const valoresExistentes = @json($bien);
+        const valoresExistentes = @json($subtipoData);
         const oldValues = @json(old());
 
         tipoBienSelect.addEventListener('change', function () {

@@ -22,6 +22,21 @@
             <form action="{{ route('bienes.store') }}" method="POST" enctype="multipart/form-data" class="p-8 space-y-8">
                 @csrf
 
+                {{-- Resumen de errores de validación --}}
+                @if($errors->any())
+                    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-600 text-red-700 rounded-lg">
+                        <div class="flex items-center gap-2 mb-2">
+                            <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
+                            <span class="font-bold">Por favor corrige los siguientes errores:</span>
+                        </div>
+                        <ul class="text-sm list-disc list-inside space-y-1">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 {{-- Sección 1: Ubicación Administrativa --}}
                 <div class="space-y-4">
                     <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200 border-b dark:border-slate-700 pb-2 flex items-center gap-2">

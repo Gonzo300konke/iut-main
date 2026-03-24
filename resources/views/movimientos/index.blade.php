@@ -148,12 +148,17 @@
                                     {{ $mov->fecha?->format('d/m/Y') ?? '—' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex px-2.5 py-1 text-xs font-medium rounded-full {{ match($mov->tipo) {
-                                        'Registro'     => 'bg-emerald-100 text-emerald-800',
-                                        'Actualización' => 'bg-amber-100  text-amber-800',
-                                        'Eliminación'  => 'bg-rose-100   text-rose-800',
-                                        default        => 'bg-gray-100   text-gray-700',
-                                    } }}">
+                                    @php
+                                        $tipoClass = match($mov->tipo) {
+                                            'Registro' => 'bg-emerald-100 text-emerald-800',
+                                            'Actualización' => 'bg-amber-100 text-amber-800',
+                                            'Eliminación' => 'bg-rose-100 text-rose-800',
+                                            'DESINCORPORACION' => 'bg-red-100 text-red-800',
+                                            'TRASLADO' => 'bg-blue-100 text-blue-800',
+                                            default => 'bg-gray-100 text-gray-700',
+                                        };
+                                    @endphp
+                                    <span class="inline-flex px-2.5 py-1 text-xs font-medium rounded-full {{ $tipoClass }}">
                                         {{ $mov->tipo }}
                                     </span>
                                 </td>

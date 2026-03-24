@@ -125,7 +125,6 @@
             <div class="bg-white rounded px-3 py-2 text-blue-700">código (obligatorio)</div>
             <div class="bg-white rounded px-3 py-2 text-blue-700">descripcion</div>
             <div class="bg-white rounded px-3 py-2 text-blue-700">precio</div>
-            <div class="bg-white rounded px-3 py-2 text-blue-700">ubicacion</div>
             <div class="bg-white rounded px-3 py-2 text-blue-700">estado</div>
             <div class="bg-white rounded px-3 py-2 text-blue-700">codigo_dependencia</div>
             <div class="bg-white rounded px-3 py-2 text-blue-700">cedula_responsable</div>

@@ -23,12 +23,10 @@ class Bien extends Model
     // Atributos asignables en masa
     protected $fillable = [
         'dependencia_id',
-        'responsable_id',
         'codigo',
         'descripcion',
         'precio',
         'fotografia',
-        'ubicacion',
         'estado',
         'fecha_registro',
         'tipo_bien',
@@ -42,8 +40,7 @@ class Bien extends Model
         if ($term) {
             $query->where(function ($q) use ($term) {
                 $q->where('codigo', 'LIKE', "%{$term}%")
-                    ->orWhere('descripcion', 'LIKE', "%{$term}%")
-                    ->orWhere('ubicacion', 'LIKE', "%{$term}%");
+                    ->orWhere('descripcion', 'LIKE', "%{$term}%");
             });
         }
     }
@@ -63,10 +60,7 @@ class Bien extends Model
         return $this->belongsTo(Dependencia::class);
     }
 
-    public function responsable()
-    {
-        return $this->belongsTo(Responsable::class);
-    }
+    // El responsable se accede a través de la dependencia: $bien->dependencia->responsable
 
     public function movimientos()
     {

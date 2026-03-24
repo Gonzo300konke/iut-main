@@ -18,6 +18,88 @@
     </div>
     @endif
 
+    {{-- ── Foto de perfil ─────────────────────────────────────────────── --}}
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+        <div class="bg-gradient-to-r from-[#800020] to-[#5a0016] px-6 py-4">
+            <h2 class="text-white font-bold text-base">Foto de Perfil</h2>
+        </div>
+        <div class="p-6">
+            <div class="flex items-center gap-6">
+                {{-- Foto actual --}}
+                <div class="flex-shrink-0">
+                    @if($usuario->foto_perfil)
+                        <img src="{{ asset('storage/fotos_perfil/' . $usuario->foto_perfil) }}" 
+                             alt="Foto de perfil" 
+                             class="w-24 h-24 rounded-full object-cover border-4 border-gray-200 shadow-lg">
+                    @else
+                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-[#800020] to-[#5a0016] flex items-center justify-center border-4 border-gray-200 shadow-lg">
+                            <span class="text-3xl font-bold text-white">
+                                {{ strtoupper(substr($usuario->nombre, 0, 1)) }}{{ strtoupper(substr($usuario->apellido, 0, 1)) }}
+                            </span>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Formulario de subida --}}
+                <div class="flex-1">
+                    <form method="POST" action="{{ route('perfil.foto.update') }}" 
+                          enctype="multipart/form-data" 
+                          class="space-y-3">
+                        @csrf
+                        @method('PATCH')
+                        
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">Subir nueva foto</label>
+                            <input type="file" 
+                                   name="foto_perfil" 
+                                   accept="image/jpeg,image/png,image/jpg,image/gif"
+                                   class="w-full px-4 py-2.5 border-2 @error('foto_perfil') border-red-400 @else border-gray-200 @enderror rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800020] transition text-sm">
+                            @error('foto_perfil')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                            <p class="text-xs text-gray-500 mt-1">Formatos: JPEG, PNG, JPG, GIF. Máximo 2MB</p>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button type="submit"
+                                class="px-4 py-2 bg-[#800020] text-white rounded-xl font-bold text-sm hover:bg-[#5a0016] transition">
+                                Subir Foto
+                            </button>
+                            
+                            @if($usuario->foto_perfil)
+                                <button type="button"
+                                    onclick="document.getElementById('eliminar-foto-modal').classList.remove('hidden')"
+                                    class="px-4 py-2 bg-red-100 text-red-600 rounded-xl font-bold text-sm hover:bg-red-200 transition">
+                                    Eliminar
+                                </button>
+                            @endif
+                        </div>
+                    </form>
+
+                    {{-- Modal de confirmación para eliminar --}}
+                    @if($usuario->foto_perfil)
+                        <div id="eliminar-foto-modal" class="hidden mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+                            <p class="text-sm text-red-700 mb-3">¿Estás seguro de que quieres eliminar tu foto de perfil?</p>
+                            <form method="POST" action="{{ route('perfil.foto.delete') }}" class="flex gap-2">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="px-4 py-2 bg-red-600 text-white rounded-xl font-bold text-sm hover:bg-red-700 transition">
+                                    Sí, eliminar
+                                </button>
+                                <button type="button"
+                                    onclick="document.getElementById('eliminar-foto-modal').classList.add('hidden')"
+                                    class="px-4 py-2 bg-gray-200 text-gray-600 rounded-xl font-bold text-sm hover:bg-gray-300 transition">
+                                    Cancelar
+                                </button>
+                            </form>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- ── Información del perfil ──────────────────────────────────── --}}
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
         <div class="bg-gradient-to-r from-[#800020] to-[#5a0016] px-6 py-4">

@@ -8,19 +8,13 @@ use App\Models\Bien;
 use App\Models\Dependencia;
 use App\Models\Organismo;
 use App\Models\UnidadAdministradora;
-use App\Services\CodigoUnicoService;
-use App\Services\FpdfReportService;
-use App\Models\BienElectronico;
-use App\Models\BienVehiculo;
-use App\Models\BienMobiliario;
-use App\Models\BienOtro;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\BienTypeService;
+use App\Services\CodigoUnicoService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Codedge\Fpdf\Fpdf\Fpdf;
 
 class BienController extends Controller
 {
@@ -30,107 +24,108 @@ class BienController extends Controller
     {
         $this->bienTypeService = $bienTypeService;
     }
+
     /**
      * Listar todos los bienes.
      */
     public function index(Request $request)
-{
-    // 1. Validación de entrada
-    $validated = $request->validate([
-        'search'         => ['nullable', 'string', 'max:255'],
-        'organismo_id'   => ['nullable', 'integer', 'exists:organismos,id'],
-        'unidad_id'      => ['nullable', 'integer', 'exists:unidades_administradoras,id'],
-        'dependencias'   => ['nullable', 'array'],
-        'dependencias.*' => ['integer', 'exists:dependencias,id'],
-        'estado'         => ['nullable', 'array'],
-        'estado.*'       => ['string', Rule::in(array_map(fn($e) => $e->value, EstadoBien::cases()))],
-        'fecha_desde'    => ['nullable', 'date'],
-        'tipo_bien' => ['nullable', 'string'],
-        'fecha_hasta'    => ['nullable', 'date', 'after_or_equal:fecha_desde'],
-        'sort'           => ['nullable', 'string', Rule::in(['codigo', 'descripcion', 'precio', 'fecha_registro', 'estado'])],
-        'direction'      => ['nullable', 'string', Rule::in(['asc', 'desc'])],
-    ]);
+    {
+        // 1. Validación de entrada
+        $validated = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'organismo_id' => ['nullable', 'integer', 'exists:organismos,id'],
+            'unidad_id' => ['nullable', 'integer', 'exists:unidades_administradoras,id'],
+            'dependencias' => ['nullable', 'array'],
+            'dependencias.*' => ['integer', 'exists:dependencias,id'],
+            'estado' => ['nullable', 'array'],
+            'estado.*' => ['string', Rule::in(array_map(fn ($e) => $e->value, EstadoBien::cases()))],
+            'fecha_desde' => ['nullable', 'date'],
+            'tipo_bien' => ['nullable', 'string'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
+            'sort' => ['nullable', 'string', Rule::in(['codigo', 'descripcion', 'precio', 'fecha_registro', 'estado'])],
+            'direction' => ['nullable', 'string', Rule::in(['asc', 'desc'])],
+        ]);
 
-    // 2. Construcción de la consulta con relaciones
-    $query = Bien::with([
-        'dependencia.responsable',
-        'dependencia.unidadAdministradora.organismo',
-    ]);
+        // 2. Construcción de la consulta con relaciones
+        $query = Bien::with([
+            'dependencia.responsable',
+            'dependencia.unidadAdministradora.organismo',
+        ]);
 
-    // 🔎 Filtros dinámicos
-    if (!empty($validated['search'])) {
-        $query->search($validated['search']);
+        // 🔎 Filtros dinámicos
+        if (! empty($validated['search'])) {
+            $query->search($validated['search']);
+        }
+
+        if (! empty($validated['estado'])) {
+            $query->whereIn('estado', $validated['estado']);
+        }
+        if ($request->filled('tipo_bien')) {
+            $query->where('tipo_bien', $request->tipo_bien);
+        }
+
+        // Filtrado por Fechas
+        $query->when($validated['fecha_desde'] ?? null, fn ($q, $f) => $q->whereDate('fecha_registro', '>=', $f))
+            ->when($validated['fecha_hasta'] ?? null, fn ($q, $f) => $q->whereDate('fecha_registro', '<=', $f));
+
+        // Filtrado por Relaciones (Jerarquía)
+        if (! empty($validated['dependencias'])) {
+            $query->whereIn('dependencia_id', $validated['dependencias']);
+        } elseif (! empty($validated['unidad_id'])) {
+            $query->whereHas('dependencia', fn ($q) => $q->where('unidad_administradora_id', $validated['unidad_id']));
+        } elseif (! empty($validated['organismo_id'])) {
+            $query->whereHas('dependencia.unidadAdministradora', fn ($q) => $q->where('organismo_id', $validated['organismo_id']));
+        }
+
+        // ⚡️ Ordenamiento y Paginación
+        $sort = $validated['sort'] ?? 'fecha_registro';
+        $direction = $validated['direction'] ?? 'desc';
+
+        $bienes = $query->orderBy($sort, $direction)
+            ->paginate(10)
+            ->appends($request->query());
+
+        // 3. Respuesta AJAX (Solo la tabla)
+        if ($request->ajax()) {
+            return view('bienes.partials.table', compact('bienes'))->render();
+        }
+
+        // 4. Carga de datos para selectores (Solo para carga inicial no-AJAX)
+        $organismos = Organismo::orderBy('nombre')->get();
+
+        $unidades = UnidadAdministradora::query()
+            ->when($validated['organismo_id'] ?? null, fn ($q, $id) => $q->where('organismo_id', $id))
+            ->orderBy('nombre')
+            ->get();
+
+        $dependencias = Dependencia::query()
+            ->with('unidadAdministradora')
+            ->when($validated['unidad_id'] ?? null, fn ($q, $id) => $q->where('unidad_administradora_id', $id))
+            ->when(($validated['organismo_id'] ?? null) && empty($validated['unidad_id']),
+                fn ($q) => $q->whereHas('unidadAdministradora', fn ($sub) => $sub->where('organismo_id', $validated['organismo_id']))
+            )
+            ->orderBy('nombre')
+            ->get();
+
+        $estados = collect(EstadoBien::cases())->mapWithKeys(
+            fn (EstadoBien $estado) => [$estado->value => $estado->label()]
+        );
+        $tiposBien = [
+            'mueble' => 'Bien Mueble',
+            'vehiculo' => 'Vehículo',
+            'electronico' => 'Bien Electrónico', // 🆕 Agregado
+        ];
+
+        return view('bienes.index', [
+            'bienes' => $bienes,
+            'filters' => $validated,
+            'organismos' => $organismos,
+            'unidades' => $unidades,
+            'dependencias' => $dependencias,
+            'estados' => $estados,
+            'tiposBien' => $tiposBien,
+        ]);
     }
-
-    if (!empty($validated['estado'])) {
-        $query->whereIn('estado', $validated['estado']);
-    }
-    if ($request->filled('tipo_bien')) {
-    $query->where('tipo_bien', $request->tipo_bien);
-}
-
-    // Filtrado por Fechas
-    $query->when($validated['fecha_desde'] ?? null, fn($q, $f) => $q->whereDate('fecha_registro', '>=', $f))
-          ->when($validated['fecha_hasta'] ?? null, fn($q, $f) => $q->whereDate('fecha_registro', '<=', $f));
-
-    // Filtrado por Relaciones (Jerarquía)
-    if (!empty($validated['dependencias'])) {
-        $query->whereIn('dependencia_id', $validated['dependencias']);
-    } elseif (!empty($validated['unidad_id'])) {
-        $query->whereHas('dependencia', fn($q) => $q->where('unidad_administradora_id', $validated['unidad_id']));
-    } elseif (!empty($validated['organismo_id'])) {
-        $query->whereHas('dependencia.unidadAdministradora', fn($q) => $q->where('organismo_id', $validated['organismo_id']));
-    }
-
-    // ⚡️ Ordenamiento y Paginación
-    $sort = $validated['sort'] ?? 'fecha_registro';
-    $direction = $validated['direction'] ?? 'desc';
-
-    $bienes = $query->orderBy($sort, $direction)
-                    ->paginate(10)
-                    ->appends($request->query());
-
-    // 3. Respuesta AJAX (Solo la tabla)
-    if ($request->ajax()) {
-        return view('bienes.partials.table', compact('bienes'))->render();
-    }
-
-    // 4. Carga de datos para selectores (Solo para carga inicial no-AJAX)
-    $organismos = Organismo::orderBy('nombre')->get();
-
-    $unidades = UnidadAdministradora::query()
-        ->when($validated['organismo_id'] ?? null, fn($q, $id) => $q->where('organismo_id', $id))
-        ->orderBy('nombre')
-        ->get();
-
-    $dependencias = Dependencia::query()
-        ->with('unidadAdministradora')
-        ->when($validated['unidad_id'] ?? null, fn($q, $id) => $q->where('unidad_administradora_id', $id))
-        ->when(($validated['organismo_id'] ?? null) && empty($validated['unidad_id']),
-            fn($q) => $q->whereHas('unidadAdministradora', fn($sub) => $sub->where('organismo_id', $validated['organismo_id']))
-        )
-        ->orderBy('nombre')
-        ->get();
-
-    $estados = collect(EstadoBien::cases())->mapWithKeys(
-        fn(EstadoBien $estado) => [$estado->value => $estado->label()]
-    );
-    $tiposBien = [
-    'mueble'      => 'Bien Mueble',
-    'vehiculo'    => 'Vehículo',
-    'electronico' => 'Bien Electrónico', // 🆕 Agregado
-];
-
-    return view('bienes.index', [
-        'bienes'       => $bienes,
-        'filters'      => $validated,
-        'organismos'   => $organismos,
-        'unidades'     => $unidades,
-        'dependencias' => $dependencias,
-        'estados'      => $estados,
-        'tiposBien' => $tiposBien,
-    ]);
-}
 
     /**
      * Procesa la desincorporación de un bien
@@ -147,7 +142,7 @@ class BienController extends Controller
         $dependencias = Dependencia::with('responsable')->get();
 
         $tiposBien = collect(TipoBien::cases())->mapWithKeys(
-            fn(TipoBien $tipo) => [$tipo->value => $tipo->label()]
+            fn (TipoBien $tipo) => [$tipo->value => $tipo->label()]
         );
 
         return view('bienes.create', compact('dependencias', 'tiposBien', 'codigoSugerido'));
@@ -169,17 +164,16 @@ class BienController extends Controller
                 function ($attribute, $value, $fail) {
                     if (CodigoUnicoService::codigoExiste($value)) {
                         $info = CodigoUnicoService::obtenerUbicacionCodigo($value);
-                        $fail("El código ya está asignado a: " . $info['tabla'] . " (" . $info['nombre'] . ")");
+                        $fail("El código '$value' ya está asignado a: ".$info['tabla'].' ('.$info['nombre'].'). Por favor use otro código.');
                     }
-                }
+                },
             ],
             'descripcion' => ['required', 'string', 'max:255'],
-            'precio' => ['required', 'numeric', 'min:0'],
-            'fotografia' => ['nullable', 'image', 'max:2048'],
-            'ubicacion' => ['nullable', 'string', 'max:255'],
+            'precio' => ['required', 'numeric', 'min:0', 'max:999999999.99'],
+            'fotografia' => ['nullable', 'image', 'max:2048', 'mimes:jpeg,png,jpg,gif,webp'],
             'estado' => ['required', Rule::enum(EstadoBien::class)],
             'tipo_bien' => ['required', Rule::enum(TipoBien::class)],
-            'fecha_registro' => ['required', 'date'],
+            'fecha_registro' => ['required', 'date', 'before_or_equal:today'],
             'acta_desincorporacion' => ['nullable', 'required_if:estado,DESINCORPORADO', 'file', 'mimes:pdf', 'max:2048'],
             'motivo_desincorporacion' => ['nullable', 'required_if:estado,DESINCORPORADO', 'string', 'max:500'],
         ];
@@ -202,7 +196,7 @@ class BienController extends Controller
                     if (\Illuminate\Support\Facades\Storage::disk('public')->exists($ex->fotografia)) {
                         $path = \Illuminate\Support\Facades\Storage::disk('public')->path($ex->fotografia);
                         if (file_exists($path) && md5_file($path) === $uploadedHash) {
-                            return back()->withErrors(['fotografia' => 'La fotografía ya está asociada a otro bien (ID: ' . $ex->id . ').'])->withInput();
+                            return back()->withErrors(['fotografia' => 'La fotografía ya está asociada a otro bien (ID: '.$ex->id.').'])->withInput();
                         }
                     }
                 } catch (\Throwable $e) {
@@ -212,7 +206,9 @@ class BienController extends Controller
             }
 
             $foto = $this->procesarFotografia($request);
-            if ($foto) $validated['fotografia'] = $foto;
+            if ($foto) {
+                $validated['fotografia'] = $foto;
+            }
         }
 
         // Separar datos que NO pertenecen a la tabla bienes
@@ -227,23 +223,34 @@ class BienController extends Controller
             'especificaciones', 'cantidad', 'presentacion',
         ])->toArray();
 
-        $bien = Bien::create($datosBien);
+        try {
+            $bien = Bien::create($datosBien);
 
-        // Guardar datos específicos del tipo con datos validados
-        if ($tipo) {
-            $this->bienTypeService->sync($bien, $tipo, $validated);
+            // Guardar datos específicos del tipo con datos validados
+            if ($tipo) {
+                $this->bienTypeService->sync($bien, $tipo, $validated);
+            }
+
+            // Crear registro de desincorporación si aplica
+            if ($bien->estado === EstadoBien::DESINCORPORADO && $actaFile) {
+                $actaPath = $actaFile->store('actas_desincorporacion', 'public');
+                $bien->desincorporado()->create([
+                    'motivo_desincorporacion' => $motivoDesincorporacion ?? 'Sin motivo especificado',
+                    'acta_desincorporacion' => $actaPath,
+                ]);
+            }
+
+            // Mensaje de confirmación detallado
+            $mensaje = '✅ Bien "'.$bien->descripcion.'" (Código: '.$bien->codigo.') ha sido registrado exitosamente.';
+
+            return redirect()->route('bienes.index')->with('success', $mensaje);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Error de base de datos
+            return back()->withErrors(['error' => 'Error al guardar el bien en la base de datos. Por favor verifique los datos e intente nuevamente.'])->withInput();
+        } catch (\Exception $e) {
+            // Otro tipo de error
+            return back()->withErrors(['error' => 'Ocurrió un error inesperado: '.$e->getMessage()])->withInput();
         }
-
-        // Crear registro de desincorporación si aplica
-        if ($bien->estado === EstadoBien::DESINCORPORADO && $actaFile) {
-            $actaPath = $actaFile->store('actas_desincorporacion', 'public');
-            $bien->desincorporado()->create([
-                'motivo_desincorporacion' => $motivoDesincorporacion ?? 'Sin motivo especificado',
-                'acta_desincorporacion' => $actaPath,
-            ]);
-        }
-
-        return redirect()->route('bienes.index')->with('success', 'Bien creado correctamente.');
     }
 
     /**
@@ -252,6 +259,7 @@ class BienController extends Controller
     public function show(Bien $bien)
     {
         $bien->load(['dependencia.responsable', 'movimientos']);
+
         return view('bienes.show', compact('bien'));
     }
 
@@ -271,23 +279,27 @@ class BienController extends Controller
         ])->setPaper('letter');
 
         $fileName = sprintf('bien_%s_%s.pdf', Str::slug($bien->codigo ?? 'sin_codigo', '_'), Str::slug(Str::limit($bien->descripcion, 50, ''), '_'));
+
         return $pdf->download($fileName);
     }
 
     private function procesarFotografia(Request $request, ?Bien $bien = null): ?string
     {
-        if (!$request->hasFile('fotografia'))
+        if (! $request->hasFile('fotografia')) {
             return null;
+        }
         $file = $request->file('fotografia');
-        if ($bien && $bien->fotografia && !str_starts_with($bien->fotografia, 'http')) {
+        if ($bien && $bien->fotografia && ! str_starts_with($bien->fotografia, 'http')) {
             Storage::disk('public')->delete($bien->fotografia);
         }
-        $filename = uniqid('bien_') . '.' . $file->getClientOriginalExtension();
+        $filename = uniqid('bien_').'.'.$file->getClientOriginalExtension();
+
         return $file->storeAs('bienes', $filename, 'public');
     }
+
     /**
- * Mostrar el formulario para editar un bien específico.
- */
+     * Mostrar el formulario para editar un bien específico.
+     */
     public function edit(Bien $bien)
     {
         // Eager-load relaciones de subtipo para popular campos dinámicos
@@ -296,11 +308,11 @@ class BienController extends Controller
         $dependencias = Dependencia::with('responsable')->get();
 
         $tiposBien = collect(TipoBien::cases())->mapWithKeys(
-            fn(TipoBien $tipo) => [$tipo->value => $tipo->label()]
+            fn (TipoBien $tipo) => [$tipo->value => $tipo->label()]
         );
 
         $estados = collect(EstadoBien::cases())->mapWithKeys(
-            fn(EstadoBien $estado) => [$estado->value => $estado->label()]
+            fn (EstadoBien $estado) => [$estado->value => $estado->label()]
         );
 
         // Datos del subtipo actual para los campos dinámicos en JS
@@ -322,14 +334,13 @@ class BienController extends Controller
                 function ($attribute, $value, $fail) use ($bien) {
                     if (CodigoUnicoService::codigoExiste($value, 'bienes', $bien->id)) {
                         $info = CodigoUnicoService::obtenerUbicacionCodigo($value);
-                        $fail("Código en uso por " . $info['tabla']);
+                        $fail('Código en uso por '.$info['tabla']);
                     }
-                }
+                },
             ],
             'descripcion' => ['sometimes', 'string', 'max:255'],
             'precio' => ['sometimes', 'numeric', 'min:0'],
             'fotografia' => ['nullable', 'image', 'max:2048'],
-            'ubicacion' => ['nullable', 'string', 'max:255'],
             'estado' => ['sometimes', Rule::enum(EstadoBien::class)],
             'tipo_bien' => ['sometimes', Rule::enum(TipoBien::class)],
             'fecha_registro' => ['sometimes', 'date'],
@@ -344,7 +355,9 @@ class BienController extends Controller
         // Procesar fotografía
         if ($request->hasFile('fotografia')) {
             $foto = $this->procesarFotografia($request, $bien);
-            if ($foto) $validated['fotografia'] = $foto;
+            if ($foto) {
+                $validated['fotografia'] = $foto;
+            }
         }
 
         // Separar datos que NO pertenecen a la tabla bienes
@@ -381,43 +394,80 @@ class BienController extends Controller
 
     /**
      * Procesar la desincorporación de un bien.
+     * Al desincorporsar, se copian todos los datos a la tabla bienes_desincorporados
+     * y se elimina el bien de la tabla principal.
      */
-   public function desincorporar(Request $request, Bien $bien)
-{
-    $validated = $request->validate([
-        'motivo' => 'required|string|min:10|max:2000',
-    ]);
+    public function desincorporar(Request $request, Bien $bien)
+    {
+        $validated = $request->validate([
+            'motivo' => 'required|string|min:10|max:2000',
+        ]);
 
-    $bien->estado = \App\Enums\EstadoBien::DESINCORPORADO;
-    $bien->save();
+        // Guardar los datos del bien antes de eliminarlo
+        $bienData = $bien->toArray();
 
-    // Generar y guardar el acta de desincorporación
-    $service = new \App\Services\ActaDesincorporacionService();
-    $actaPath = $service->generar(
-        bien: $bien,
-        motivo: $request->motivo,
-        usuario: auth()->user()
-    );
+        // Generar y guardar el acta de desincorporación
+        $service = new \App\Services\ActaDesincorporacionService;
+        $actaPath = $service->generar(
+            bien: $bien,
+            motivo: $request->motivo,
+            usuario: auth()->user()
+        );
 
-    // Registrar movimiento con la ruta del acta
-    \App\Models\Movimiento::create([
-        'bien_id'     => $bien->id,
-        'usuario_id'  => auth()->id(),
-        'tipo'        => 'DESINCORPORACION',
-        'observaciones' => $request->motivo,
-        'fecha'       => now(),
-        'acta_path'   => $actaPath,
-    ]);
+        // Crear registro en la tabla de bienes desincorporados con todos los datos
+        \App\Models\BienDesincorporado::create([
+            'bien_id' => $bien->id,
+            'dependencia_id' => $bien->dependencia_id,
+            'responsable_id' => $bien->responsable_id,
+            'codigo' => $bien->codigo,
+            'descripcion' => $bien->descripcion,
+            'precio' => $bien->precio,
+            'fotografia' => $bien->fotografia,
+            'estado' => 'DESINCORPORADO',
+            'fecha_registro' => $bien->fecha_registro,
+            'tipo_bien' => $bien->tipo_bien?->value,
+            'caracteristicas' => $bien->caracteristicas,
+            'motivo_desincorporacion' => $request->motivo,
+            'acta_desincorporacion' => $actaPath,
+            'fecha_desincorporacion' => now(),
+        ]);
 
-    return redirect()->route('bienes.index')->with('success', 'Desincorporación registrada exitosamente. El acta ha sido generada y guardada.');
-}
+        // Registrar movimiento con la ruta del acta
+        \App\Models\Movimiento::create([
+            'bien_id' => $bien->id,
+            'usuario_id' => auth()->id(),
+            'tipo' => 'DESINCORPORACION',
+            'observaciones' => $request->motivo,
+            'fecha' => now(),
+            'acta_path' => $actaPath,
+        ]);
+
+        // Eliminar registros de subtipos relacionados
+        if ($bien->electronico) {
+            $bien->electronico->delete();
+        }
+        if ($bien->mobiliario) {
+            $bien->mobiliario->delete();
+        }
+        if ($bien->vehiculo) {
+            $bien->vehiculo->delete();
+        }
+        if ($bien->otro) {
+            $bien->otro->delete();
+        }
+
+        // Eliminar el bien de la tabla principal
+        $bien->delete();
+
+        return redirect()->route('bienes.index')->with('success', 'Bien desincorporado y eliminado del inventario. El acta ha sido generada y guardada.');
+    }
 
     /**
      * Desincorporar un bien.
      */
     public function destroy(Bien $bien)
     {
-        if (!auth()->user()->canDeleteData()) {
+        if (! auth()->user()->canDeleteData()) {
             return response()->json(['message' => 'No tienes permisos para desincorporar bienes.'], 403);
         }
 
@@ -441,11 +491,11 @@ class BienController extends Controller
             ->where('fotografia', '!=', '')
             ->select('id', 'codigo', 'descripcion', 'fotografia')
             ->get()
-            ->map(fn($b) => (object) [
+            ->map(fn ($b) => (object) [
                 'id' => $b->id,
                 'codigo' => $b->codigo,
                 'descripcion' => $b->descripcion,
-                'url' => Storage::url($b->fotografia)
+                'url' => Storage::url($b->fotografia),
             ]);
 
         return view('bienes.galeria-completa', compact('imagenes'));
@@ -515,7 +565,9 @@ class BienController extends Controller
     private function obtenerDatosSubtipo(Bien $bien): array
     {
         $tipo = $bien->tipo_bien?->value;
-        if (!$tipo) return [];
+        if (! $tipo) {
+            return [];
+        }
 
         $relacion = match (strtoupper($tipo)) {
             'ELECTRONICO' => $bien->electronico,
@@ -544,35 +596,39 @@ class BienController extends Controller
         $query = Bien::with(['dependencia.responsable', 'dependencia.unidadAdministradora.organismo']);
 
         // Aplicar filtros
-        if (!empty($validated['search']))
+        if (! empty($validated['search'])) {
             $query->search($validated['search']);
-        if (!empty($validated['estado'])) {
+        }
+        if (! empty($validated['estado'])) {
             $estados = is_array($validated['estado']) ? $validated['estado'] : [$validated['estado']];
             $query->whereIn('estado', $estados);
         }
-        if (!empty($validated['dependencias'])) {
+        if (! empty($validated['dependencias'])) {
             $deps = is_array($validated['dependencias']) ? $validated['dependencias'] : [$validated['dependencias']];
             $query->whereIn('dependencia_id', $deps);
         }
-        if (!empty($validated['tipo_bien']))
+        if (! empty($validated['tipo_bien'])) {
             $query->where('tipo_bien', $validated['tipo_bien']);
-        if (!empty($validated['organismo_id'])) {
-            $query->whereHas('dependencia.unidadAdministradora', function($q) use ($validated) {
+        }
+        if (! empty($validated['organismo_id'])) {
+            $query->whereHas('dependencia.unidadAdministradora', function ($q) use ($validated) {
                 $q->where('organismo_id', $validated['organismo_id']);
             });
         }
-        if (!empty($validated['unidad_id'])) {
-            $query->whereHas('dependencia', function($q) use ($validated) {
+        if (! empty($validated['unidad_id'])) {
+            $query->whereHas('dependencia', function ($q) use ($validated) {
                 $q->where('unidad_administradora_id', $validated['unidad_id']);
             });
         }
-        if (!empty($validated['fecha_desde']))
+        if (! empty($validated['fecha_desde'])) {
             $query->whereDate('fecha_registro', '>=', $validated['fecha_desde']);
-        if (!empty($validated['fecha_hasta']))
+        }
+        if (! empty($validated['fecha_hasta'])) {
             $query->whereDate('fecha_registro', '<=', $validated['fecha_hasta']);
+        }
 
         $bienes = $query->get();
-        $reporteService = new \App\Services\FpdfReportService();
+        $reporteService = new \App\Services\FpdfReportService;
 
         // Determinar el tipo de reporte según el filtro aplicado
         $tipoReporte = $this->determinarTipoReporte($validated);
@@ -581,8 +637,9 @@ class BienController extends Controller
         switch ($tipoReporte) {
             case 'dependencia':
                 $titulo = 'REPORTE DE BIENES POR DEPENDENCIA';
+
                 return $reporteService->generarPorDependencia(
-                    'reporte_bienes_por_dependencia_' . now()->format('dmY_His') . '.pdf',
+                    'reporte_bienes_por_dependencia_'.now()->format('dmY_His').'.pdf',
                     $titulo,
                     'Listado de bienes agrupados por dependencia',
                     now()->format('d/m/Y H:i'),
@@ -590,8 +647,9 @@ class BienController extends Controller
                 );
             case 'unidad':
                 $titulo = 'REPORTE DE BIENES POR UNIDAD ADMINISTRADORA';
+
                 return $reporteService->generarPorUnidad(
-                    'reporte_bienes_por_unidad_' . now()->format('dmY_His') . '.pdf',
+                    'reporte_bienes_por_unidad_'.now()->format('dmY_His').'.pdf',
                     $titulo,
                     'Listado de bienes agrupados por unidad administradora',
                     now()->format('d/m/Y H:i'),
@@ -599,8 +657,9 @@ class BienController extends Controller
                 );
             case 'organismo':
                 $titulo = 'REPORTE DE BIENES POR ORGANISMO';
+
                 return $reporteService->generarPorOrganismo(
-                    'reporte_bienes_por_organismo_' . now()->format('dmY_His') . '.pdf',
+                    'reporte_bienes_por_organismo_'.now()->format('dmY_His').'.pdf',
                     $titulo,
                     'Listado de bienes agrupados por organismo',
                     now()->format('d/m/Y H:i'),
@@ -608,8 +667,9 @@ class BienController extends Controller
                 );
             case 'tipo_bien':
                 $titulo = 'REPORTE DE BIENES POR TIPO';
+
                 return $reporteService->generarPorTipo(
-                    'reporte_bienes_por_tipo_' . now()->format('dmY_His') . '.pdf',
+                    'reporte_bienes_por_tipo_'.now()->format('dmY_His').'.pdf',
                     $titulo,
                     'Listado de bienes agrupados por tipo de bien',
                     now()->format('d/m/Y H:i'),
@@ -617,8 +677,9 @@ class BienController extends Controller
                 );
             case 'estado':
                 $titulo = 'REPORTE DE BIENES POR ESTADO';
+
                 return $reporteService->generarPorEstado(
-                    'reporte_bienes_por_estado_' . now()->format('dmY_His') . '.pdf',
+                    'reporte_bienes_por_estado_'.now()->format('dmY_His').'.pdf',
                     $titulo,
                     'Listado de bienes agrupados por estado',
                     now()->format('d/m/Y H:i'),
@@ -626,17 +687,18 @@ class BienController extends Controller
                 );
             case 'fecha':
                 $titulo = 'REPORTE DE BIENES POR RANGO DE FECHA';
+
                 return $reporteService->generarPorFecha(
-                    'reporte_bienes_por_fecha_' . now()->format('dmY_His') . '.pdf',
+                    'reporte_bienes_por_fecha_'.now()->format('dmY_His').'.pdf',
                     $titulo,
-                    'Listado de bienes en rango de fecha: ' .
-                        ($validated['fecha_desde'] ?? 'Inicio') . ' - ' . ($validated['fecha_hasta'] ?? 'Fin'),
+                    'Listado de bienes en rango de fecha: '.
+                        ($validated['fecha_desde'] ?? 'Inicio').' - '.($validated['fecha_hasta'] ?? 'Fin'),
                     now()->format('d/m/Y H:i'),
                     $bienes
                 );
             default:
                 return $reporteService->downloadBienesListado(
-                    'reporte_bienes_' . now()->format('dmY_His') . '.pdf',
+                    'reporte_bienes_'.now()->format('dmY_His').'.pdf',
                     $titulo,
                     'Listado general de bienes institucionales',
                     now()->format('d/m/Y H:i'),
@@ -651,30 +713,31 @@ class BienController extends Controller
     private function determinarTipoReporte(array $filtros): string
     {
         // Prioridad: dependencia > unidad > organismo > tipo_bien > estado > fecha
-        if (!empty($filtros['dependencias'])) {
+        if (! empty($filtros['dependencias'])) {
             $deps = is_array($filtros['dependencias']) ? $filtros['dependencias'] : [$filtros['dependencias']];
             if (count($deps) > 0) {
                 return 'dependencia';
             }
         }
-        if (!empty($filtros['unidad_id'])) {
+        if (! empty($filtros['unidad_id'])) {
             return 'unidad';
         }
-        if (!empty($filtros['organismo_id'])) {
+        if (! empty($filtros['organismo_id'])) {
             return 'organismo';
         }
-        if (!empty($filtros['tipo_bien'])) {
+        if (! empty($filtros['tipo_bien'])) {
             return 'tipo_bien';
         }
-        if (!empty($filtros['estado'])) {
+        if (! empty($filtros['estado'])) {
             $estados = is_array($filtros['estado']) ? $filtros['estado'] : [$filtros['estado']];
             if (count($estados) > 0) {
                 return 'estado';
             }
         }
-        if (!empty($filtros['fecha_desde']) || !empty($filtros['fecha_hasta'])) {
+        if (! empty($filtros['fecha_desde']) || ! empty($filtros['fecha_hasta'])) {
             return 'fecha';
         }
+
         return 'general';
     }
 
@@ -698,12 +761,12 @@ class BienController extends Controller
     public function transferir(\Illuminate\Http\Request $request, Bien $bien)
     {
         $request->validate([
-            'dependencia_id' => ['required', 'exists:dependencias,id', 'different:' . $bien->dependencia_id],
-            'motivo'         => ['required', 'string', 'max:500'],
+            'dependencia_id' => ['required', 'exists:dependencias,id', 'different:'.$bien->dependencia_id],
+            'motivo' => ['required', 'string', 'max:500'],
         ], [
-            'dependencia_id.required'  => 'Debe seleccionar la dependencia de destino.',
+            'dependencia_id.required' => 'Debe seleccionar la dependencia de destino.',
             'dependencia_id.different' => 'La dependencia de destino debe ser diferente a la actual.',
-            'motivo.required'          => 'El motivo de la transferencia es requerido.',
+            'motivo.required' => 'El motivo de la transferencia es requerido.',
         ]);
 
         $dependenciaAnteriorId = $bien->dependencia_id;
@@ -714,7 +777,7 @@ class BienController extends Controller
         $destino = Dependencia::find($request->dependencia_id);
 
         // Generar y guardar el acta de traslado
-        $service = new \App\Services\ActaTrasladoService();
+        $service = new \App\Services\ActaTrasladoService;
         $actaPath = $service->generar(
             bien: $bien,
             motivo: $request->motivo,
@@ -725,12 +788,12 @@ class BienController extends Controller
 
         // Registrar movimiento con la ruta del acta
         $movimiento = \App\Models\Movimiento::create([
-            'bien_id'    => $bien->id,
+            'bien_id' => $bien->id,
             'usuario_id' => auth()->id(),
-            'tipo'       => 'TRASLADO',
-            'descripcion'=> "Traslado desde [{$dependenciaAnteriorNombre}] a [{$destino->nombre}]. Motivo: {$request->motivo}",
-            'fecha'      => now(),
-            'acta_path'  => $actaPath,
+            'tipo' => 'TRASLADO',
+            'descripcion' => "Traslado desde [{$dependenciaAnteriorNombre}] a [{$destino->nombre}]. Motivo: {$request->motivo}",
+            'fecha' => now(),
+            'acta_path' => $actaPath,
         ]);
 
         return redirect()->route('movimientos.show', $movimiento)->with('success', 'Traslado registrado exitosamente. El acta de traslado ha sido generada y guardada.');

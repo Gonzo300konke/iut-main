@@ -66,8 +66,9 @@
 </div>
 
 @if(session('success'))
-    <div class="mb-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg shadow-sm">
-        {{ session('success') }}
+    <div class="mb-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg shadow-sm flex items-center gap-3">
+        <x-heroicon-o-check-circle class="w-6 h-6 text-green-600 flex-shrink-0" />
+        <span>{{ session('success') }}</span>
     </div>
 @endif
 

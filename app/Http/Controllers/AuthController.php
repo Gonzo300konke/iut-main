@@ -92,9 +92,13 @@ class AuthController extends Controller
 
     public function setPassword(Request $request)
     {
+        // Preservar datos de sesión ANTES de cualquier validación o redirección
+        // Esto asegura que al fallar la validación, los datos no se pierdan
         $datos = session('registro_api_usuario');
-        if (! $datos) {
-            // Intentar recuperar desde el API si llega cedula (opcional)
+        
+        // Solo intentar recuperar desde API si es la primera vez (no es un retry de validación)
+        // y solo si tenemos la cédula del formulario
+        if (!$datos) {
             if ($request->filled('cedula')) {
                 $rec = $this->buscarPersonaEnApiPorCedula($this->normalizeCedulaDigits((string) $request->input('cedula')));
                 if ($rec) {
@@ -106,11 +110,14 @@ class AuthController extends Controller
                         'status'     => (string) ($rec['status'] ?? '0'),
                         'pin_str'    => (string) ($rec['pin_str'] ?? ''),
                     ];
-                } else {
-                    return redirect()->route('login');
+                    // Guardar en sesión para siguientes intentos
+                    session(['registro_api_usuario' => $datos]);
                 }
-            } else {
-                return redirect()->route('login');
+            }
+            
+            // Si aún no tenemos datos, mostrar el formulario
+            if (!$datos) {
+                return redirect()->route('login')->with('error', 'Sesión expirada. Por favor, ingrese su cédula nuevamente.');
             }
         }
 
