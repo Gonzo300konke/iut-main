@@ -93,6 +93,15 @@
                     <span>Movimientos</span>
                 </a>
 
+                <a href="{{ route('responsables.index') }}"
+                   class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-slate-800 hover:text-indigo-300"
+                   @class(['bg-slate-800 text-indigo-400 shadow-inner' => request()->routeIs('responsables.*')])>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2m14-10a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    <span>Responsables</span>
+                </a>
+
                 <a href="{{ route('usuarios.index') }}"
                    class="flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200 hover:bg-slate-800 hover:text-indigo-300"
                    @class(['bg-slate-800 text-indigo-400 shadow-inner' => request()->routeIs('usuarios.*')])>

@@ -70,13 +70,11 @@
 
     {{-- Banner Institucional --}}
     <header class="w-full bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <img src="https://www.uptos.edu.ve/wp-content/uploads/2026/02/cropped-cropped-WhatsApp-Image-2026-02-11-at-10.17.38-PM-1.jpeg"
-                 class="h-10 md:h-14 w-auto object-contain hover:scale-105 transition-transform" alt="Logo UPTOS">
-            <div class="hidden md:block text-right">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Venezuela</p>
-                <p class="text-[10px] font-bold text-[#640B21] uppercase">M.P.P. Educación Universitaria</p>
-            </div>
+        {{-- Imagen banner contenida --}}
+        <div class="max-w-7xl mx-auto px-4 py-2">
+            <img src="{{ asset('images/baner.jpeg') }}"
+                 class="w-full max-w-4xl h-auto object-contain mx-auto"
+                 alt="Banner Institucional">
         </div>
         @include('layouts.head')
     </header>
