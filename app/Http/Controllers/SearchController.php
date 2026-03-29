@@ -17,60 +17,76 @@ class SearchController extends Controller
         $q = trim($request->get('q', ''));
 
         if (strlen($q) < 2) {
-            return response()->json(['results' => []]);
+            return response()->json([]);
         }
 
         $like = '%' . $q . '%';
         $results = [];
 
         // Bienes (limitado a 5 resultados)
-        Bien::where('codigo', 'LIKE', $like)
+        $bienes = Bien::where('codigo', 'LIKE', $like)
             ->orWhere('descripcion', 'LIKE', $like)
-            ->limit(5)->get()
-            ->each(fn ($b) => $results[] = [
-                'type'  => 'Bien',
-                'icon'  => '📦',
-                'label' => "{$b->codigo} — {$b->descripcion}",
-                'url'   => route('bienes.show', $b),
-            ]);
+            ->limit(5)->get();
+
+        foreach ($bienes as $b) {
+            $results[] = [
+                'type'     => 'Bien',
+                'icon'     => '📦',
+                'title'    => $b->codigo,
+                'subtitle' => $b->descripcion,
+                'url'      => route('bienes.show', $b),
+            ];
+        }
 
         // Dependencias (limitado a 4 resultados)
-        Dependencia::where('nombre', 'LIKE', $like)
+        $dependencias = Dependencia::where('nombre', 'LIKE', $like)
             ->orWhere('codigo', 'LIKE', $like)
-            ->limit(4)->get()
-            ->each(fn ($d) => $results[] = [
-                'type'  => 'Dependencia',
-                'icon'  => '📂',
-                'label' => $d->nombre,
-                'url'   => route('dependencias.show', $d),
-            ]);
+            ->limit(4)->get();
+
+        foreach ($dependencias as $d) {
+            $results[] = [
+                'type'     => 'Dependencia',
+                'icon'     => '📂',
+                'title'    => $d->nombre,
+                'subtitle' => $d->codigo ?? '',
+                'url'      => route('dependencias.show', $d),
+            ];
+        }
 
         // Unidades (limitado a 3 resultados)
-        UnidadAdministradora::where('nombre', 'LIKE', $like)
+        $unidades = UnidadAdministradora::where('nombre', 'LIKE', $like)
             ->orWhere('codigo', 'LIKE', $like)
-            ->limit(3)->get()
-            ->each(fn ($u) => $results[] = [
-                'type'  => 'Unidad',
-                'icon'  => '🏢',
-                'label' => $u->nombre,
-                'url'   => route('unidades.show', $u),
-            ]);
+            ->limit(3)->get();
+
+        foreach ($unidades as $u) {
+            $results[] = [
+                'type'     => 'Unidad',
+                'icon'     => '🏢',
+                'title'    => $u->nombre,
+                'subtitle' => $u->codigo ?? '',
+                'url'      => route('unidades.show', $u),
+            ];
+        }
 
         // Usuarios (limitado a 3 resultados)
-        Usuario::where('nombre', 'LIKE', $like)
+        $usuarios = Usuario::where('nombre', 'LIKE', $like)
             ->orWhere('apellido', 'LIKE', $like)
             ->orWhere('cedula', 'LIKE', $like)
-            ->limit(3)->get()
-            ->each(fn ($u) => $results[] = [
-                'type'  => 'Usuario',
-                'icon'  => '👤',
-                'label' => "{$u->nombre} {$u->apellido} — {$u->cedula}",
-                'url'   => route('usuarios.show', $u),
-            ]);
+            ->limit(3)->get();
+
+        foreach ($usuarios as $u) {
+            $results[] = [
+                'type'     => 'Usuario',
+                'icon'     => '👤',
+                'title'    => "{$u->nombre} {$u->apellido}",
+                'subtitle' => $u->cedula,
+                'url'      => route('usuarios.show', $u),
+            ];
+        }
 
         // Limitar total de resultados para mejor rendimiento
         $results = array_slice($results, 0, 15);
 
-        return response()->json(['results' => $results]);
+        return response()->json($results);
     }
 }

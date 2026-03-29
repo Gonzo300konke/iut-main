@@ -126,7 +126,7 @@
             <div class="flex items-center gap-2 whitespace-nowrap">
                 @auth
                     {{-- Botón menú móvil --}}
-                    <button id="mobile-menu-btn" type="button" 
+                    <button id="mobile-menu-btn" type="button"
                         class="lg:hidden p-1.5 sm:p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition">
                         <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -138,8 +138,8 @@
                         <button id="user-menu-btn"
                             class="hidden sm:flex items-center gap-2 text-sm font-medium px-3 py-2 rounded-lg hover:bg-slate-700 transition border border-slate-600">
                             @if(auth()->user()->foto_perfil)
-                                <img src="{{ asset('storage/fotos_perfil/' . auth()->user()->foto_perfil) }}" 
-                                     alt="Foto" 
+                                <img src="{{ asset('storage/fotos_perfil/' . auth()->user()->foto_perfil) }}"
+                                     alt="Foto"
                                      class="h-6 w-6 rounded-full object-cover">
                             @else
                                 <div class="h-6 w-6 rounded-full bg-[#640B21] flex items-center justify-center text-white text-xs font-bold">
@@ -212,8 +212,11 @@
                     fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
                 </svg>
+                <div id="global-search-results-mobile"
+                    class="absolute top-full mt-1 left-0 right-0 bg-white shadow-xl rounded-xl border border-gray-100 z-50 hidden overflow-hidden max-h-80 overflow-y-auto">
+                </div>
             </div>
-            
+
             {{-- Enlaces de navegación móvil --}}
             <a href="{{ route('dashboard') }}" class="flex items-center gap-2 px-3 py-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition @if(request()->routeIs('dashboard')) bg-slate-700 text-white @endif">
                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
@@ -251,7 +254,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 7h6l4 4v6a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2zm3 5v4m3-2v2m3-4v4"/></svg>
                 <span>Reportes</span>
             </a>
-            
+
             {{-- Sección de usuario móvil --}}
             <hr class="my-3 border-slate-600">
             @auth
@@ -276,7 +279,7 @@
     // Toggle menú móvil
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
     const mobileMenu = document.getElementById('mobile-menu');
-    
+
     if (mobileMenuBtn && mobileMenu) {
         mobileMenuBtn.addEventListener('click', () => {
             mobileMenu.classList.toggle('hidden');

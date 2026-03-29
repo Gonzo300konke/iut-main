@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
+    <meta name="search-route" content="{{ route('buscar.global') }}">
 
     {{-- Título dinámico con fallback --}}
     <title>@yield('title', 'Oficina de Bienes Nacionales | UPTOS')</title>
